@@ -11,7 +11,7 @@
 
 </br>
 
-[![CI](https://github.com/mirusser/rfc-rag/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mirusser/rfc-rag/actions/workflows/ci.yml)
+[![CI](https://github.com/mirusser/rfc-rag/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/mirusser/rfc-rag/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue?style=flat-square)](LICENSE)
 <br>
 

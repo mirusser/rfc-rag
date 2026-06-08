@@ -30,8 +30,8 @@ coverage_provider: "artifact"
 release_strategy: "manual-tag"
 
 # Branch policy
-ci_branches: ["main"]
-release_branches: ["main"]
+ci_branches: ["master"]
+release_branches: ["master"]
 deploy_branches: []
 
 # Security scanning

@@ -11,7 +11,7 @@ on:
   pull_request:
     types: [opened, synchronize, ready_for_review]
   push:
-    branches: [main]
+    branches: [master]
 
 concurrency:
   group: semgrep-${{ github.event.pull_request.number || github.sha }}
