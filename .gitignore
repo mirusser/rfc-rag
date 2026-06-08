@@ -1,0 +1,68 @@
+# ── Build artifacts ──────────────────────────────────────────────────────────
+bin/
+obj/
+
+# ── Test & coverage ──────────────────────────────────────────────────────────
+TestResults/
+coverage-report/
+expected-*.txt
+tests/InfraGate.RfcRag.Tests/TestData/
+
+# ── Generated files ──────────────────────────────────────────────────────────
+/deploy/generated
+deploy/generated/*.env
+*-generated.txt
+generated-keys.txt
+.env.rfc-rag
+
+# ── Secrets & environment ────────────────────────────────────────────────────
+*.env
+test-*.env
+
+# ── Kubernetes ───────────────────────────────────────────────────────────────
+.kube/
+
+# ── MCP / InfraGate runtime ──────────────────────────────────────────────────
+.mcp.json
+.mcp-approvals/
+.mcp-dataprotection-keys/
+.mcp-guardrails/
+.mcp-logs/
+.mcp-observer/
+.mcp-remediation/
+dataprotection-keys/
+src/InfraGate.McpGateway/.mcp-guardrails/audit.jsonl
+
+# ── Data store ───────────────────────────────────────────────────────────────
+data/state_store.db/mem%3Ahealth.bin
+data/state_store.db/mem%3Aindex%3Abm25.bin
+
+# ── Quality & analysis ───────────────────────────────────────────────────────
+.sonarqube/
+.sonarqube-local/
+.agents/Reports/sonarcloud-report.json
+.agents/Reports/sonarcloud-report.zip
+
+# ── CI / CD ──────────────────────────────────────────────────────────────────
+actions-runner/
+.act/
+
+# ── IDE & editor ─────────────────────────────────────────────────────────────
+.idea/
+InfraGate.sln.DotSettings.user
+
+# ── AI / agent tooling ───────────────────────────────────────────────────────
+.antigravitycli/
+.claude/
+.claude.json
+.claire/
+.codegraph/
+.codex/
+.gemini/
+.junie/
+.omo/
+.opencode/
+.serena/
+
+# ── Agent runtime & skills ───────────────────────────────────────────────────
+.agents/
