@@ -23,7 +23,7 @@ public sealed class RfcRagToolsTests
                 "https://www.rfc-editor.org/rfc/rfc2119", 0.95)]
         };
 
-        string json = await RfcRagTools.SearchRfc(fake, "test", 10, CancellationToken.None);
+        string json = await RfcRagTools.SearchRfc(fake, "test", 10, null, CancellationToken.None);
 
         Assert.NotNull(json);
         Assert.StartsWith("[", json);
@@ -222,7 +222,7 @@ public sealed class RfcRagToolsTests
     {
         var fake = new FakeSearchService { SearchResults = [] };
 
-        string json = await RfcRagTools.SearchRfc(fake, "HTTP", 10, CancellationToken.None);
+        string json = await RfcRagTools.SearchRfc(fake, "HTTP", 10, null, CancellationToken.None);
 
         using var doc = JsonDocument.Parse(json);
         Assert.Equal(JsonValueKind.Array, doc.RootElement.ValueKind);
@@ -565,7 +565,7 @@ public sealed class RfcRagToolsTests
         var fake = new FakeSearchService { SearchException = expected };
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => RfcRagTools.SearchRfc(fake, "test", 10, CancellationToken.None));
+            () => RfcRagTools.SearchRfc(fake, "test", 10, null, CancellationToken.None));
 
         Assert.Same(expected, ex);
     }
@@ -577,7 +577,7 @@ public sealed class RfcRagToolsTests
         SearchService search = await CreateSearchServiceWithDisposedDataSourceAsync(logger);
 
         await Assert.ThrowsAsync<ObjectDisposedException>(
-            () => search.SearchAsync("test", 10, CancellationToken.None));
+            () => search.SearchAsync("test", 10, null, CancellationToken.None));
 
         Assert.Contains(logger.Calls, call => call.Level == LogLevel.Error && call.Message.Contains("search_rfc", StringComparison.Ordinal));
     }
@@ -647,6 +647,42 @@ public sealed class RfcRagToolsTests
         using var doc = JsonDocument.Parse(json);
         Assert.Equal("4.4.4", doc.RootElement.GetProperty("section").GetProperty("section").GetString());
         Assert.Equal(0, doc.RootElement.GetProperty("children").GetArrayLength());
+    }
+
+    [Fact]
+    public async Task SearchRfc_WithNormativeKeyword_PassesToService()
+    {
+        var fake = new FakeSearchService
+        {
+            SearchResults = [new SearchResult(
+                Guid.NewGuid(), 8827, "WebRTC Security", "6.5", "Communications Security",
+                "MUST NOT send plain RTP", "rfc8827.txt",
+                "https://www.rfc-editor.org/rfc/rfc8827", 0.95)]
+        };
+
+        string json = await RfcRagTools.SearchRfc(fake, "unencrypted", 10, "MUST NOT", CancellationToken.None);
+
+        Assert.Equal("MUST NOT", fake.LastNormativeKeyword);
+        using var doc = JsonDocument.Parse(json);
+        Assert.Equal(8827, doc.RootElement[0].GetProperty("rfcNumber").GetInt32());
+    }
+
+    [Fact]
+    public async Task SearchRfc_WithoutNormativeKeyword_OmitsParameter()
+    {
+        var fake = new FakeSearchService
+        {
+            SearchResults = [new SearchResult(
+                Guid.NewGuid(), 2119, "Key words", "1", "Introduction",
+                "The key words MUST", "rfc2119.txt",
+                "https://www.rfc-editor.org/rfc/rfc2119", 0.95)]
+        };
+
+        string json = await RfcRagTools.SearchRfc(fake, "test", 10, cancellationToken: CancellationToken.None);
+
+        Assert.Null(fake.LastNormativeKeyword);
+        using var doc = JsonDocument.Parse(json);
+        Assert.Single(doc.RootElement.EnumerateArray());
     }
 
     private static async Task<SearchService> CreateSearchServiceWithDisposedDataSourceAsync(ILogger<SearchService> logger)

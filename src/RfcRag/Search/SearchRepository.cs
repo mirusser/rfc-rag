@@ -251,6 +251,36 @@ public sealed class SearchRepository
     }
 
     /// <summary>
+    /// Filter a set of section IDs to only those that contain a specific normative keyword.
+    /// Returns the subset of candidate section IDs that have a matching entry in normative_occurrences.
+    /// </summary>
+    public async Task<HashSet<Guid>> FilterSectionsByNormativeKeywordAsync(
+        IReadOnlyList<Guid> sectionIds,
+        string keyword,
+        CancellationToken cancellationToken)
+    {
+        if (sectionIds.Count == 0)
+            return [];
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(keyword);
+
+        var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using (connection.ConfigureAwait(false))
+        {
+            var ids = await connection.QueryAsync<Guid>(new CommandDefinition(
+                """
+                select distinct section_id
+                from rfc_rag.normative_occurrences
+                where section_id = any(@SectionIds) and keyword = upper(@Keyword)
+                """,
+                new { SectionIds = sectionIds.ToArray(), Keyword = keyword },
+                cancellationToken: cancellationToken)).ConfigureAwait(false);
+
+            return ids.ToHashSet();
+        }
+    }
+
+    /// <summary>
     /// Search ABNF grammar definitions by rule name or fragment.
     /// </summary>
     public async Task<IReadOnlyList<SearchResult>> SearchAbnfAsync(

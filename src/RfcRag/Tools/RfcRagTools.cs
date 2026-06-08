@@ -17,9 +17,10 @@ public static class RfcRagTools
         ISearchService search,
         [Description("Search query for RFC content.")] string query,
         [Description("Maximum ranked sections to return, from 1 to 100.")] int limit = 10,
+        [Description("Optional normative keyword filter (e.g., 'MUST NOT', 'SHOULD', 'REQUIRED'). When set, only sections containing this RFC 2119/8174 keyword are returned.")] string? normativeKeyword = null,
         CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<SearchResult> results = await search.SearchAsync(query, limit, cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<SearchResult> results = await search.SearchAsync(query, limit, normativeKeyword, cancellationToken).ConfigureAwait(false);
         return ToJson(results);
     }
 

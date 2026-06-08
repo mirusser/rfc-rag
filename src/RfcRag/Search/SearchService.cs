@@ -27,21 +27,35 @@ public sealed class SearchService : ISearchService
     public async Task<IReadOnlyList<SearchResult>> SearchAsync(
         string query,
         int limit,
+        string? normativeKeyword,
         CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(query);
 
         try
         {
+            int fetchLimit = normativeKeyword is not null ? limit * 3 : limit;
+
             IReadOnlyList<float[]> embeddings = await embeddingService.GenerateEmbeddingsAsync(
                 [query],
                 cancellationToken).ConfigureAwait(false);
 
-            return await searchRepository.SearchHybridAsync(
+            IReadOnlyList<SearchResult> results = await searchRepository.SearchHybridAsync(
                 query,
                 embeddings[0],
-                limit,
+                fetchLimit,
                 cancellationToken).ConfigureAwait(false);
+
+            if (!string.IsNullOrWhiteSpace(normativeKeyword))
+            {
+                var sectionIds = results.Select(r => r.Id).ToList();
+                HashSet<Guid> matchingIds = await searchRepository.FilterSectionsByNormativeKeywordAsync(
+                    sectionIds, normativeKeyword, cancellationToken).ConfigureAwait(false);
+
+                results = results.Where(r => matchingIds.Contains(r.Id)).Take(limit).ToArray();
+            }
+
+            return results;
         }
         catch (Exception ex)
         {

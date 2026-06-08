@@ -24,10 +24,12 @@ internal sealed class FakeSearchService : ISearchService
     public Exception? SearchException { get; set; }
     public Exception? SearchNormativeException { get; set; }
     public Exception? SearchAbnfException { get; set; }
+    public string? LastNormativeKeyword { get; private set; }
 
     public Task<IReadOnlyList<SearchResult>> SearchAsync(
-        string query, int limit, CancellationToken cancellationToken)
+        string query, int limit, string? normativeKeyword, CancellationToken cancellationToken)
     {
+        LastNormativeKeyword = normativeKeyword;
         if (SearchException is not null)
             throw SearchException;
         return Task.FromResult(SearchResults);
