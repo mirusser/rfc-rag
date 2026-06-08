@@ -25,7 +25,15 @@ Indexing takes ~10–15 minutes on first run. Incremental runs skip already-inde
 
 ### Why?
 
-RFCs are the backbone of internet standards, but finding the right section in the right RFC is painful. CTRL+F across 9,800 text files works poorly when you don't know the exact term. Semantic search understands that "how to structure JSON Web Tokens" means RFC 7519, even if the word "structure" never appears. Combined with normative keyword filtering (MUST, SHOULD, MUST NOT), you get precise, citeable results for RFC compliance work.
+RFCs are the backbone of internet standards, but finding the right section in the right RFC is painful. CTRL+F across 9,800 text files works poorly when you don't know the exact term. Semantic search understands that "how to structure JSON Web Tokens" means RFC 7519, even if the word "structure" never appears.
+
+The real gap is in compliance auditing. Say you're a security engineer who needs to find **every RFC section about encryption that prohibits something**. You have three bad options:
+
+1. **Read all ~9,800 RFCs** — impossible.
+2. **CTRL+F for "MUST NOT"** — 682,664 results, most about unrelated topics.
+3. **Semantic search for "encryption prohibition"** — finds relevant sections, but many don't actually contain a formal prohibition. You're still guessing which are binding requirements vs. casual discussion.
+
+This repo combines both: semantic search finds the *topic*, normative keyword filtering keeps only sections with RFC 2119/8174 requirement-level keywords (MUST, SHOULD, MUST NOT, etc.). The result is precise, citeable sections — you know exactly which RFC, which section, and which keyword makes it a binding requirement.
 
 ## 🗺️ Architecture
 
@@ -163,7 +171,7 @@ docker run --rm -i --network host \
 
 | Tool | Purpose |
 |---|---|
-| `search_normative` | Search normative keywords (MUST, SHOULD, MUST NOT, SHALL, etc.) across all RFCs |
+| `search_normative` | Search normative keywords (MUST, SHOULD, MUST NOT, SHALL, etc.) across all RFCs. See [docs/normative-search.md](docs/normative-search.md) for how normative keyword extraction and filtering work under the hood. |
 | `search_abnf` | Search extracted ABNF grammar definitions |
 | `find_updates_obsoletes` | Back-reference lookup — find RFCs that update or obsolete a given RFC |
 | `rfc_stats` | Indexed corpus statistics (total RFCs, sections, keywords, embeddings) |
@@ -233,6 +241,7 @@ dotnet test --filter "Category=Integration"
 ## 🧭 Project Map
 
 - MCP tool contracts and verification: [src/RfcRag/README.md](src/RfcRag/README.md)
+- Normative search internals: [docs/normative-search.md](docs/normative-search.md)
 - Test structure and conventions: [tests/RfcRag.Tests/README.md](tests/RfcRag.Tests/README.md)
 - Agent governance and skills: [AGENTS.md](AGENTS.md)
 - CI/CD workflow: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
