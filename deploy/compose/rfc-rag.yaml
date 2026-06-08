@@ -16,7 +16,7 @@
 #
 # Connect Claude Code / Codex CLI:
 #   claude mcp add-json --scope user rfc-rag \
-#     '{"type":"stdio","command":"docker","args":["exec","-i","rfc-rag-rfc-rag-1","dotnet","InfraGate.RfcRag.dll"]}'
+#     '{"type":"stdio","command":"docker","args":["exec","-i","rfc-rag-rfc-rag-1","dotnet","RfcRag.dll"]}'
 
 name: rfc-rag
 

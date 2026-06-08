@@ -1,0 +1,12 @@
+global using Dapper;
+global using RfcRag.Indexing;
+global using RfcRag.Infrastructure;
+global using RfcRag.Models;
+global using RfcRag.Parsing;
+global using RfcRag.Search;
+global using RfcRag.Settings;
+global using RfcRag.Tools;
+global using Microsoft.Extensions.AI;
+global using Microsoft.Extensions.Logging;
+global using Microsoft.Extensions.Options;
+global using Npgsql;

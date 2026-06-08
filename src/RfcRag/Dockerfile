@@ -1,8 +1,8 @@
-# Dockerfile
+# src/RfcRag/Dockerfile
 # Multi-stage build: filter (extract csproj) → build (restore + publish) → runtime (alpine)
 #
 # Build:
-#   docker build -t rfc-rag .
+#   docker build -t rfc-rag -f src/RfcRag/Dockerfile .
 #
 # Run (stdio MCP server — keeps running, listening on stdin):
 #   docker run --rm -i --network host \

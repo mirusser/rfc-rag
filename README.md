@@ -28,7 +28,7 @@ set -a && source .env.rfc-rag && set +a
 psql "Host=localhost;Database=rfc_rag;Username=postgres;Password=postgres" -c "CREATE EXTENSION IF NOT EXISTS vector;"
 
 # Build and run (auto-indexes on first start)
-dotnet run --project src/InfraGate.RfcRag/
+dotnet run --project src/RfcRag/
 ```
 
 On first run, the server indexes all ~9,800 RFCs (~10-15 minutes). Subsequent starts use
@@ -42,6 +42,13 @@ cp deploy/compose/rfc-rag.env.example .env.rfc-rag
 docker compose --env-file .env.rfc-rag -f deploy/compose/rfc-rag.yaml up
 ```
 
+To stop and clean up (including the PostgreSQL data volume):
+
+```bash
+docker compose -f deploy/compose/rfc-rag.yaml down -v
+docker volume rm rfc-rag_pgdata 2>/dev/null; true
+```
+
 ### Standalone Docker
 
 ```bash
@@ -49,9 +56,9 @@ docker build -t rfc-rag .
 
 docker run --rm -i --network host \
   -v ~/rfc-mirror:/rfc-mirror:ro \
-  -e InfraGate__RfcRag__PostgresConnectionString="Host=localhost;Database=rfc_rag;Username=postgres;Password=postgres" \
-  -e InfraGate__RfcRag__RfcMirrorPath=/rfc-mirror \
-  -e InfraGate__OpenRouter__ApiKey="sk-or-..." \
+  -e RfcRag__PostgresConnectionString="Host=localhost;Database=rfc_rag;Username=postgres;Password=postgres" \
+  -e RfcRag__RfcMirrorPath=/rfc-mirror \
+  -e OpenRouter__ApiKey="sk-or-..." \
   rfc-rag
 ```
 
@@ -59,14 +66,14 @@ docker run --rm -i --network host \
 
 | Environment Variable | Default | Description |
 |---|---|---|
-| `InfraGate__RfcRag__RfcMirrorPath` | `~/OtherRepos/rfc-mirror/` | Path to local RFC mirror |
-| `InfraGate__RfcRag__PostgresConnectionString` | (required) | PostgreSQL connection string |
-| `InfraGate__RfcRag__EmbeddingModel` | `openai/text-embedding-3-small` | OpenRouter embedding model |
-| `InfraGate__RfcRag__EmbeddingBatchSize` | `20` | Batch size for embedding API calls |
-| `InfraGate__RfcRag__OpenRouterEmbeddingEndpoint` | `https://openrouter.ai/api/v1` | OpenRouter API base URL |
-| `InfraGate__RfcRag__RunMigrationsOnStartup` | `true` | Auto-apply SQL schema migrations |
-| `InfraGate__RfcRag__EmbeddingDimensions` | `1536` | Embedding vector dimensions |
-| `InfraGate__OpenRouter__ApiKey` | (required) | OpenRouter API key |
+| `RfcRag__RfcMirrorPath` | `~/OtherRepos/rfc-mirror/` | Path to local RFC mirror |
+| `RfcRag__PostgresConnectionString` | (required) | PostgreSQL connection string |
+| `RfcRag__EmbeddingModel` | `openai/text-embedding-3-small` | OpenRouter embedding model |
+| `RfcRag__EmbeddingBatchSize` | `20` | Batch size for embedding API calls |
+| `RfcRag__OpenRouterEmbeddingEndpoint` | `https://openrouter.ai/api/v1` | OpenRouter API base URL |
+| `RfcRag__RunMigrationsOnStartup` | `true` | Auto-apply SQL schema migrations |
+| `RfcRag__EmbeddingDimensions` | `1536` | Embedding vector dimensions |
+| `OpenRouter__ApiKey` | (required) | OpenRouter API key |
 
 ## MCP Tools
 
@@ -81,7 +88,7 @@ docker run --rm -i --network host \
 - **`get_rfc_metadata`** — Single RFC metadata lookup
 - **`list_indexed_rfcs`** — Paginated list of indexed RFCs
 
-Full tool documentation in [src/InfraGate.RfcRag/README.md](src/InfraGate.RfcRag/README.md).
+Full tool documentation in [src/RfcRag/README.md](src/RfcRag/README.md).
 
 ## Connecting AI Agents
 
@@ -89,7 +96,7 @@ Full tool documentation in [src/InfraGate.RfcRag/README.md](src/InfraGate.RfcRag
 
 ```bash
 claude mcp add-json --scope user rfc-rag \
-  '{"type":"stdio","command":"dotnet","args":["run","--project","src/InfraGate.RfcRag/"]}'
+  '{"type":"stdio","command":"dotnet","args":["run","--project","src/RfcRag/"]}'
 ```
 
 ### Codex
@@ -98,14 +105,14 @@ claude mcp add-json --scope user rfc-rag \
 # ~/.codex/config.toml
 [mcp_servers.rfc-rag]
 command = "dotnet"
-args = ["run", "--project", "src/InfraGate.RfcRag/"]
+args = ["run", "--project", "src/RfcRag/"]
 ```
 
 ### Containerized MCP
 
 ```bash
 claude mcp add-json --scope user rfc-rag \
-  '{"type":"stdio","command":"docker","args":["exec","-i","rfc-rag-rfc-rag-1","dotnet","InfraGate.RfcRag.dll"]}'
+  '{"type":"stdio","command":"docker","args":["exec","-i","rfc-rag-rfc-rag-1","dotnet","RfcRag.dll"]}'
 ```
 
 ## Architecture

@@ -1,8 +1,8 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/InfraGate.RfcRag/InfraGate.RfcRag.csproj" />
+    <Project Path="src/RfcRag/RfcRag.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/InfraGate.RfcRag.Tests/InfraGate.RfcRag.Tests.csproj" />
+    <Project Path="tests/RfcRag.Tests/RfcRag.Tests.csproj" />
   </Folder>
 </Solution>
