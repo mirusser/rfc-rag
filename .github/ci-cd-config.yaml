@@ -1,0 +1,50 @@
+# CI/CD Configuration Contract — RFC RAG
+#
+# This file is the Single Source of Truth for all CI/CD parameters.
+# Generated for ci-cd-architect standard v1.2.0.
+#
+# Workflow files (.github/workflows/*.yml) are generated from this config.
+# Update values here, then regenerate workflows from templates.
+
+# ──────────────────────────────────────────────────────────
+# Archetype: .NET + MCP + Docker
+# ──────────────────────────────────────────────────────────
+language: "dotnet"
+project: "rfc-rag"
+
+# .NET SDK
+dotnet_version: "10.0.x"
+dotnet_solution: "RfcRag.slnx"
+
+# Docker
+use_docker: true
+
+# MCP server
+is_mcp: true
+expected_tools: 10
+
+# Coverage (no external provider — artifact only)
+coverage_provider: "artifact"
+
+# Release strategy (tag manually, push to publish)
+release_strategy: "manual-tag"
+
+# Branch policy
+ci_branches: ["main"]
+release_branches: ["main"]
+deploy_branches: []
+
+# Security scanning
+use_semgrep: true
+use_dependency_scan: true
+use_container_scan: true
+
+# Dependency management
+use_dependabot: true
+package_ecosystems: ["github-actions", "nuget"]
+
+# Sonar/SonarCloud (not configured)
+use_sonar: false
+
+# Documentation validation (not configured)
+use_docs_validation: false

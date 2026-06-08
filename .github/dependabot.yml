@@ -1,0 +1,24 @@
+# .github/dependabot.yml — Automated Dependency Updates
+#
+# Generated for ci-cd-architect standard v1.2.0.
+# Ecosystems: github-actions, nuget
+
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      nuget:
+        patterns:
+          - "*"
