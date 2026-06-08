@@ -65,4 +65,5 @@ InfraGate.sln.DotSettings.user
 .serena/
 
 # ── Agent runtime & skills ───────────────────────────────────────────────────
-.agents/
+.agents/*
+!.agents/skills/
