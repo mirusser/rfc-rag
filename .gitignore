@@ -6,7 +6,18 @@ obj/
 TestResults/
 coverage-report/
 expected-*.txt
-tests/RfcRag.Tests/TestData/
+
+# Bulk RFC mirror files in TestData (integration tests use a real mirror path).
+# Unit test fixture files (explicitly listed below) ARE committed.
+tests/RfcRag.Tests/TestData/*
+!tests/RfcRag.Tests/TestData/badfile.txt
+!tests/RfcRag.Tests/TestData/rfc2119.txt
+!tests/RfcRag.Tests/TestData/rfc3986.txt
+!tests/RfcRag.Tests/TestData/rfc8446.txt
+!tests/RfcRag.Tests/TestData/rfc9000.txt
+!tests/RfcRag.Tests/TestData/rfc9052.txt
+!tests/RfcRag.Tests/TestData/rfc9110.txt
+!tests/RfcRag.Tests/TestData/rfc9999.txt
 
 # ── Generated files ──────────────────────────────────────────────────────────
 /deploy/generated
