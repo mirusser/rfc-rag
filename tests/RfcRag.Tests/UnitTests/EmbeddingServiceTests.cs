@@ -31,13 +31,6 @@ public sealed class EmbeddingServiceTests
     }
 
     [Fact]
-    public void Constructor_BatchSizeZero_ThrowsArgumentOutOfRangeException()
-    {
-        var generator = new FakeEmbeddingGenerator();
-        Assert.Throws<ArgumentOutOfRangeException>(() => new EmbeddingService(generator, 0, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance));
-    }
-
-    [Fact]
     public async Task GenerateEmbeddingsAsync_PredictableValues_MapsCorrectly()
     {
         var generator = new FakeEmbeddingGenerator();

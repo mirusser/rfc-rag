@@ -204,6 +204,31 @@ Without `--confirm` the command prints a warning and exits without making any ch
 
 Full tool documentation in [src/RfcRag/README.md](src/RfcRag/README.md).
 
+## 💻 CLI Mode
+
+Pass `--cli <verb> [args]` to run a one-shot command instead of starting the MCP server. All output is JSON on stdout.
+
+```bash
+# Hybrid search
+dotnet run --project src/RfcRag/ -- --cli search "TLS handshake" --limit 5
+
+# Fetch a specific section
+dotnet run --project src/RfcRag/ -- --cli section 8446 4.1.2
+
+# Normative keyword search (optionally scoped to one RFC)
+dotnet run --project src/RfcRag/ -- --cli normative MUST --rfc 2119
+
+# Corpus statistics
+dotnet run --project src/RfcRag/ -- --cli stats
+```
+
+| Verb | Args | Description |
+|---|---|---|
+| `search` | `<query> [--limit N]` | Hybrid semantic + full-text search (default limit: 10) |
+| `section` | `<rfcNumber> <sectionId>` | Retrieve a single section by RFC number and section identifier |
+| `normative` | `<keyword> [--rfc N]` | Find sections containing a normative keyword (MUST, SHOULD, …) |
+| `stats` | *(none)* | Print indexed corpus statistics as JSON |
+
 ## ⌨️ Connecting AI Agents
 
 ### Claude Code
