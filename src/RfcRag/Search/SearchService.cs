@@ -1,28 +1,11 @@
 namespace RfcRag.Search;
 
-public sealed class SearchService : ISearchService
+public sealed class SearchService(
+    SearchRepository searchRepository,
+    MetadataRepository metadataRepository,
+    EmbeddingService embeddingService,
+    ILogger<SearchService> logger) : ISearchService
 {
-    private readonly SearchRepository searchRepository;
-    private readonly MetadataRepository metadataRepository;
-    private readonly EmbeddingService embeddingService;
-    private readonly ILogger<SearchService> logger;
-
-    public SearchService(
-        SearchRepository searchRepository,
-        MetadataRepository metadataRepository,
-        EmbeddingService embeddingService,
-        ILogger<SearchService> logger)
-    {
-        ArgumentNullException.ThrowIfNull(searchRepository);
-        ArgumentNullException.ThrowIfNull(metadataRepository);
-        ArgumentNullException.ThrowIfNull(embeddingService);
-        ArgumentNullException.ThrowIfNull(logger);
-
-        this.searchRepository = searchRepository;
-        this.metadataRepository = metadataRepository;
-        this.embeddingService = embeddingService;
-        this.logger = logger;
-    }
 
     public async Task<IReadOnlyList<SearchResult>> SearchAsync(
         string query,

@@ -2,29 +2,14 @@ namespace RfcRag.Infrastructure;
 
 using Dapper;
 
-internal sealed class RfcRagStartupService
+internal sealed class RfcRagStartupService(
+    IOptions<RfcRagOptions> options,
+    NpgsqlDataSource dataSource,
+    IIndexerService indexer,
+    ISearchService searchService,
+    ILoggerFactory loggerFactory)
 {
-    private readonly IOptions<RfcRagOptions> options;
-    private readonly NpgsqlDataSource dataSource;
-    private readonly IIndexerService indexer;
-    private readonly ILogger logger;
-
-    public RfcRagStartupService(
-        IOptions<RfcRagOptions> options,
-        NpgsqlDataSource dataSource,
-        IIndexerService indexer,
-        ILoggerFactory loggerFactory)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(dataSource);
-        ArgumentNullException.ThrowIfNull(indexer);
-        ArgumentNullException.ThrowIfNull(loggerFactory);
-
-        this.options = options;
-        this.dataSource = dataSource;
-        this.indexer = indexer;
-        this.logger = loggerFactory.CreateLogger("RfcRag");
-    }
+    private readonly ILogger logger = loggerFactory.CreateLogger("RfcRag");
 
     /// <summary>
     /// Runs startup orchestration: migrations, dimension validation, --reindex, and indexing.
@@ -44,8 +29,34 @@ internal sealed class RfcRagStartupService
             logger.LogInformation("RFC RAG PostgreSQL migrations applied.");
         }
 
+        bool resetEmbeddings = args.Any(a =>
+            string.Equals(a, "--reset-embeddings", StringComparison.OrdinalIgnoreCase));
+
+        if (resetEmbeddings)
+        {
+            return await HandleResetEmbeddingsAsync(args, opts.EmbeddingDimensions, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
         await ValidateEmbeddingDimensionsAsync(dataSource, opts.EmbeddingDimensions, logger)
             .ConfigureAwait(false);
+
+        int cliArgIndex = Array.FindIndex(args,
+            a => string.Equals(a, "--cli", StringComparison.OrdinalIgnoreCase));
+
+        if (cliArgIndex >= 0)
+        {
+            return await HandleCliAsync(args, cliArgIndex, cancellationToken).ConfigureAwait(false);
+        }
+
+        int benchmarkArgIndex = Array.FindIndex(args,
+            a => string.Equals(a, "--benchmark", StringComparison.OrdinalIgnoreCase));
+
+        if (benchmarkArgIndex >= 0)
+        {
+            return await HandleBenchmarkAsync(args, benchmarkArgIndex, cancellationToken)
+                .ConfigureAwait(false);
+        }
 
         string? reindexArg = args.FirstOrDefault(a =>
             a.StartsWith("--reindex", StringComparison.OrdinalIgnoreCase));
@@ -58,15 +69,15 @@ internal sealed class RfcRagStartupService
                 .ConfigureAwait(false);
         }
 
-        string? openRouterKey = Environment.GetEnvironmentVariable(
-            RfcRagOptions.OpenRouterApiKeyEnvironmentVariable);
+        bool hasEmbeddingCapability = opts.EmbeddingProvider == EmbeddingProvider.Local
+            || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(RfcRagOptions.OpenRouterApiKeyEnvironmentVariable));
 
-        if (string.IsNullOrWhiteSpace(openRouterKey))
+        if (!hasEmbeddingCapability)
         {
             logger.LogWarning(
                 "{EnvVar} is not set. Skipping startup indexing. " +
                 "Search queries against already-indexed data will still work. " +
-                "Set this environment variable to enable embedding generation.",
+                "Set this environment variable, or set RfcRag__EmbeddingProvider=Local, to enable embedding generation.",
                 RfcRagOptions.OpenRouterApiKeyEnvironmentVariable);
         }
         else
@@ -79,6 +90,88 @@ internal sealed class RfcRagStartupService
         }
 
         return true;
+    }
+
+    private async Task<bool> HandleResetEmbeddingsAsync(
+        string[] args,
+        int targetDimensions,
+        CancellationToken cancellationToken)
+    {
+        bool confirmed = args.Any(a =>
+            string.Equals(a, "--confirm", StringComparison.OrdinalIgnoreCase));
+
+        if (!confirmed)
+        {
+            logger.LogWarning(
+                "The --reset-embeddings flag will drop and recreate the 'rfc_sections.embedding' column " +
+                "at dimension {Dimensions}, destroying all existing embedding data. " +
+                "Re-run with --reset-embeddings --confirm to proceed.",
+                targetDimensions);
+            return false;
+        }
+
+        logger.LogInformation(
+            "Resetting embedding column to {Dimensions} dimensions.",
+            targetDimensions);
+
+        var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using (connection.ConfigureAwait(false))
+        {
+            var transaction = await connection.BeginTransactionAsync(cancellationToken)
+                .ConfigureAwait(false);
+            await using var _ = transaction.ConfigureAwait(false);
+
+            await connection.ExecuteAsync(
+                $"""
+                alter table rfc_rag.rfc_sections drop column if exists embedding;
+                alter table rfc_rag.rfc_sections add column embedding vector({targetDimensions});
+                """).ConfigureAwait(false);
+
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        logger.LogInformation(
+            "Embedding column reset to {Dimensions} dimensions. Starting full reindex.",
+            targetDimensions);
+
+        await indexer.IndexAllAsync(cancellationToken).ConfigureAwait(false);
+
+        logger.LogInformation("Reindex complete after embedding column reset.");
+        return false;
+    }
+
+    private async Task<bool> HandleCliAsync(
+        string[] args,
+        int cliArgIndex,
+        CancellationToken cancellationToken)
+    {
+        string[] cliArgs = args[(cliArgIndex + 1)..];
+        var cliCommand = new CliCommand(searchService, loggerFactory.CreateLogger<CliCommand>());
+        await cliCommand.RunAsync(cliArgs, cancellationToken).ConfigureAwait(false);
+        return false;
+    }
+
+    private async Task<bool> HandleBenchmarkAsync(
+        string[] args,
+        int benchmarkArgIndex,
+        CancellationToken cancellationToken)
+    {
+        string? queriesFilePath = benchmarkArgIndex + 1 < args.Length
+            ? args[benchmarkArgIndex + 1]
+            : null;
+
+        if (string.IsNullOrWhiteSpace(queriesFilePath) || queriesFilePath.StartsWith("--", StringComparison.Ordinal))
+        {
+            logger.LogError("Usage: --benchmark <queries-file-path>");
+            return false;
+        }
+
+        var benchmarkCommand = new BenchmarkCommand(
+            searchService,
+            loggerFactory.CreateLogger<BenchmarkCommand>());
+
+        await benchmarkCommand.RunAsync(queriesFilePath, topK: 10, cancellationToken).ConfigureAwait(false);
+        return false;
     }
 
     private async Task<bool> HandleReindexAsync(
@@ -118,11 +211,14 @@ internal sealed class RfcRagStartupService
             {
                 int? actualDimensions = await connection.QuerySingleOrDefaultAsync<int?>(
                     """
-                    select character_maximum_length
-                    from information_schema.columns
-                    where table_schema = 'rfc_rag'
-                      and table_name = 'rfc_sections'
-                      and column_name = 'embedding'
+                    select a.atttypmod
+                    from pg_attribute a
+                    join pg_class c on c.oid = a.attrelid
+                    join pg_namespace n on n.oid = c.relnamespace
+                    where n.nspname = 'rfc_rag'
+                      and c.relname = 'rfc_sections'
+                      and a.attname = 'embedding'
+                      and a.attnum > 0
                     """).ConfigureAwait(false);
 
                 if (actualDimensions is not null && actualDimensions.Value != expectedDimensions)

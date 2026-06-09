@@ -32,6 +32,7 @@ public static class ServiceCollectionExtensions
         }
 
         services.TryAddSingleton<RfcParser>();
+        services.TryAddSingleton<RfcXmlParser>();
         services.TryAddSingleton<SearchRepository>();
         services.TryAddSingleton<MetadataRepository>();
         services.TryAddSingleton<IndexingRepository>();
@@ -45,23 +46,14 @@ public static class ServiceCollectionExtensions
     {
         services.TryAddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(sp =>
         {
-            var openRouterKey = Environment.GetEnvironmentVariable(
-                RfcRagOptions.OpenRouterApiKeyEnvironmentVariable);
+            var opts = sp.GetRequiredService<IOptions<RfcRagOptions>>().Value;
 
-            if (string.IsNullOrWhiteSpace(openRouterKey))
+            if (opts.EmbeddingProvider == EmbeddingProvider.Local)
             {
-                return new MissingApiKeyEmbeddingGenerator();
+                return CreateLocalEmbeddingGenerator(opts);
             }
 
-            var options = sp.GetRequiredService<IOptions<RfcRagOptions>>().Value;
-            var openAiOptions = new OpenAIClientOptions
-            {
-                Endpoint = new Uri(options.OpenRouterEmbeddingEndpoint)
-            };
-
-            var client = new OpenAIClient(new System.ClientModel.ApiKeyCredential(openRouterKey), openAiOptions);
-            var embeddingClient = client.GetEmbeddingClient(options.EmbeddingModel);
-            return embeddingClient.AsIEmbeddingGenerator();
+            return CreateOpenRouterEmbeddingGenerator(opts);
         });
 
         services.TryAddSingleton<EmbeddingService>(sp =>
@@ -73,5 +65,25 @@ public static class ServiceCollectionExtensions
         });
 
         return services;
+    }
+
+    private static IEmbeddingGenerator<string, Embedding<float>> CreateOpenRouterEmbeddingGenerator(RfcRagOptions opts)
+    {
+        string? openRouterKey = Environment.GetEnvironmentVariable(RfcRagOptions.OpenRouterApiKeyEnvironmentVariable);
+        if (string.IsNullOrWhiteSpace(openRouterKey))
+        {
+            return new MissingApiKeyEmbeddingGenerator();
+        }
+
+        var openAiOptions = new OpenAIClientOptions { Endpoint = new Uri(opts.OpenRouterEmbeddingEndpoint) };
+        var client = new OpenAIClient(new System.ClientModel.ApiKeyCredential(openRouterKey), openAiOptions);
+        return client.GetEmbeddingClient(opts.EmbeddingModel).AsIEmbeddingGenerator();
+    }
+
+    private static IEmbeddingGenerator<string, Embedding<float>> CreateLocalEmbeddingGenerator(RfcRagOptions opts)
+    {
+        var openAiOptions = new OpenAIClientOptions { Endpoint = new Uri(opts.LocalEmbeddingEndpoint) };
+        var client = new OpenAIClient(new System.ClientModel.ApiKeyCredential("local"), openAiOptions);
+        return client.GetEmbeddingClient(opts.EmbeddingModel).AsIEmbeddingGenerator();
     }
 }

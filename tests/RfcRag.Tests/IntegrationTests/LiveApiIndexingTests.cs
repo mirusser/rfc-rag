@@ -122,6 +122,7 @@ public sealed class LiveApiFixture : IAsyncLifetime
             DataSource,
             new IndexingRepository(DataSource),
             new RfcParser(),
+            new RfcXmlParser(),
             EmbeddingService,
             Options.Create(rfcOptions),
             NullLogger<RfcIndexer>.Instance);

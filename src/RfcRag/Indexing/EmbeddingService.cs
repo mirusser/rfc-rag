@@ -4,29 +4,13 @@ namespace RfcRag.Indexing;
 /// Generates vector embeddings for RFC section text using the configured embedding provider.
 /// Handles batching, concurrent dispatch, rate limiting, and error recovery.
 /// </summary>
-public sealed class EmbeddingService
+public sealed class EmbeddingService(
+    IEmbeddingGenerator<string, Embedding<float>> generator,
+    int batchSize,
+    int maxConcurrency,
+    ILogger<EmbeddingService> logger)
 {
-    private readonly IEmbeddingGenerator<string, Embedding<float>> generator;
-    private readonly int batchSize;
-    private readonly SemaphoreSlim throttle;
-    private readonly ILogger<EmbeddingService> logger;
-
-    public EmbeddingService(
-        IEmbeddingGenerator<string, Embedding<float>> generator,
-        int batchSize,
-        int maxConcurrency,
-        ILogger<EmbeddingService> logger)
-    {
-        ArgumentNullException.ThrowIfNull(generator);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(batchSize);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxConcurrency);
-        ArgumentNullException.ThrowIfNull(logger);
-
-        this.generator = generator;
-        this.batchSize = batchSize;
-        this.throttle = new SemaphoreSlim(maxConcurrency, maxConcurrency);
-        this.logger = logger;
-    }
+    private readonly SemaphoreSlim throttle = new(maxConcurrency, maxConcurrency);
 
     /// <summary>
     /// Generates embeddings for a collection of text inputs.

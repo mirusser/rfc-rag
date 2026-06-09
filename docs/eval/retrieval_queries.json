@@ -1,0 +1,62 @@
+[
+  {
+    "query": "HTTP content negotiation Accept header method",
+    "expectedRfcAny": [9110, 7231],
+    "expectedSectionAny": []
+  },
+  {
+    "query": "TLS handshake ClientHello certificate cipher",
+    "expectedRfcAny": [8446],
+    "expectedSectionAny": []
+  },
+  {
+    "query": "URI scheme authority path encoding",
+    "expectedRfcAny": [3986],
+    "expectedSectionAny": []
+  },
+  {
+    "query": "TCP congestion control slow start window retransmission",
+    "expectedRfcAny": [5681],
+    "expectedSectionAny": []
+  },
+  {
+    "query": "QUIC packet transport stream flow connection",
+    "expectedRfcAny": [9000],
+    "expectedSectionAny": []
+  },
+  {
+    "query": "DNS domain name system nameserver resolution",
+    "expectedRfcAny": [1035],
+    "expectedSectionAny": []
+  },
+  {
+    "query": "MUST SHOULD normative requirement levels",
+    "expectedRfcAny": [2119],
+    "expectedSectionAny": []
+  },
+  {
+    "query": "HTTP response status request header",
+    "expectedRfcAny": [9110, 7231],
+    "expectedSectionAny": []
+  },
+  {
+    "query": "TLS record cipher protocol session",
+    "expectedRfcAny": [8446],
+    "expectedSectionAny": []
+  },
+  {
+    "query": "URI query path scheme authority components",
+    "expectedRfcAny": [3986],
+    "expectedSectionAny": []
+  },
+  {
+    "query": "QUIC stream flow transport packet multiplexing",
+    "expectedRfcAny": [9000],
+    "expectedSectionAny": []
+  },
+  {
+    "query": "MUST SHOULD REQUIRE normative behavior RFC",
+    "expectedRfcAny": [2119],
+    "expectedSectionAny": []
+  }
+]

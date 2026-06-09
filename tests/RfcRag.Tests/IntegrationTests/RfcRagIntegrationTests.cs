@@ -312,6 +312,7 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
             dataSource,
             indexingRepository,
             new RfcParser(),
+            new RfcXmlParser(),
             embeddingService,
             options,
             NullLogger<RfcIndexer>.Instance);

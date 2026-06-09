@@ -6,15 +6,8 @@ namespace RfcRag.Indexing;
 /// Write-side data access for RFC RAG indexing operations.
 /// Manages inserts, deletes, and upserts for indexed RFC content.
 /// </summary>
-public sealed class IndexingRepository
+public sealed class IndexingRepository(NpgsqlDataSource dataSource)
 {
-    private readonly NpgsqlDataSource dataSource;
-
-    public IndexingRepository(NpgsqlDataSource dataSource)
-    {
-        ArgumentNullException.ThrowIfNull(dataSource);
-        this.dataSource = dataSource;
-    }
 
     public async Task InsertSectionsAsync(
         NpgsqlConnection connection,

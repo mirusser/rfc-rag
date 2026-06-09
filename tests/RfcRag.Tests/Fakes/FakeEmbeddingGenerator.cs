@@ -6,7 +6,12 @@ namespace RfcRag.Tests.Fakes;
 
 internal sealed class FakeEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<float>>
 {
-    private const int EmbeddingDimensions = 1536;
+    private readonly int embeddingDimensions;
+
+    public FakeEmbeddingGenerator(int embeddingDimensions = 1536)
+    {
+        this.embeddingDimensions = embeddingDimensions;
+    }
 
     // Required by the embedding generator shape even though the fake metadata is constant.
 #pragma warning disable MA0041
@@ -23,13 +28,13 @@ internal sealed class FakeEmbeddingGenerator : IEmbeddingGenerator<string, Embed
 
         for (int i = 0; i < list.Count; i++)
         {
-            float[] vector = new float[EmbeddingDimensions];
+            float[] vector = new float[embeddingDimensions];
             // Use SHA256 for a process-stable deterministic hash.
             // GetHashCode(StringComparison.Ordinal) is randomized per-process in .NET 7+
             // and would produce different vector orderings each test run.
             byte[] hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(list[i]));
             int seed = BitConverter.ToInt32(hashBytes, 0);
-            for (int j = 0; j < EmbeddingDimensions; j++)
+            for (int j = 0; j < embeddingDimensions; j++)
             {
                 vector[j] = (float)((seed * (j + 1) * 0.001) % 1.0);
             }

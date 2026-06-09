@@ -157,6 +157,7 @@ public sealed class EmbeddingIntegrationTests : IAsyncLifetime
             dataSource,
             new IndexingRepository(dataSource),
             new RfcParser(),
+            new RfcXmlParser(),
             embeddingService,
             options,
             NullLogger<RfcIndexer>.Instance);

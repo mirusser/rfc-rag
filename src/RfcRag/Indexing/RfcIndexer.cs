@@ -3,37 +3,16 @@ using System.Text;
 
 namespace RfcRag.Indexing;
 
-public sealed class RfcIndexer : IIndexerService
+public sealed class RfcIndexer(
+    NpgsqlDataSource dataSource,
+    IndexingRepository repository,
+    RfcParser parser,
+    RfcXmlParser xmlParser,
+    EmbeddingService embeddingService,
+    IOptions<RfcRagOptions> options,
+    ILogger<RfcIndexer> logger) : IIndexerService
 {
-    private readonly NpgsqlDataSource dataSource;
-    private readonly IndexingRepository repository;
-    private readonly RfcParser parser;
-    private readonly EmbeddingService embeddingService;
-    private readonly RfcRagOptions options;
-    private readonly ILogger<RfcIndexer> logger;
-
-    public RfcIndexer(
-        NpgsqlDataSource dataSource,
-        IndexingRepository repository,
-        RfcParser parser,
-        EmbeddingService embeddingService,
-        IOptions<RfcRagOptions> options,
-        ILogger<RfcIndexer> logger)
-    {
-        ArgumentNullException.ThrowIfNull(dataSource);
-        ArgumentNullException.ThrowIfNull(repository);
-        ArgumentNullException.ThrowIfNull(parser);
-        ArgumentNullException.ThrowIfNull(embeddingService);
-        ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(logger);
-
-        this.dataSource = dataSource;
-        this.repository = repository;
-        this.parser = parser;
-        this.embeddingService = embeddingService;
-        this.options = options.Value;
-        this.logger = logger;
-    }
+    private readonly RfcRagOptions options = options.Value;
 
     public async Task IndexAllAsync(CancellationToken cancellationToken)
     {
@@ -47,6 +26,15 @@ public sealed class RfcIndexer : IIndexerService
             .EnumerateFiles(mirrorPath, "rfc*.txt", SearchOption.AllDirectories)
             .Select(TryCreateSourceFile)
             .OfType<RfcSourceFile>();
+
+        if (options.RfcParserType == Settings.RfcParserType.Xml)
+        {
+            sourceFiles = sourceFiles.Concat(
+                Directory
+                    .EnumerateFiles(mirrorPath, "rfc*.xml", SearchOption.AllDirectories)
+                    .Select(TryCreateSourceFile)
+                    .OfType<RfcSourceFile>());
+        }
 
         // Single query to load all existing hashes, avoiding N individual SELECTs during the parallel loop
         Dictionary<int, string> indexedHashes = await repository
@@ -124,7 +112,11 @@ public sealed class RfcIndexer : IIndexerService
 
         // Decode text from already-read bytes; no second file read needed
         string rawText = Encoding.UTF8.GetString(fileBytes);
-        RfcDocument document = parser.ParseContent(rawText, Path.GetFileName(sourceFile.Path));
+        string sourceFileName = Path.GetFileName(sourceFile.Path);
+        bool isXml = sourceFileName.EndsWith(".xml", StringComparison.OrdinalIgnoreCase);
+        RfcDocument document = isXml
+            ? xmlParser.ParseContent(rawText, sourceFileName)
+            : parser.ParseContent(rawText, sourceFileName);
 
         string relativePath = Path.GetRelativePath(mirrorPath, sourceFile.Path);
         IReadOnlyList<string> sectionTexts = document.Sections.Select(section => section.Text).ToArray();

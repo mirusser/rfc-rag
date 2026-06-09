@@ -7,15 +7,8 @@ namespace RfcRag.Search;
 /// Read-side data access for RFC metadata operations.
 /// Handles metadata retrieval, listing, back-reference lookup, and statistics.
 /// </summary>
-public sealed class MetadataRepository
+public sealed class MetadataRepository(NpgsqlDataSource dataSource)
 {
-    private readonly NpgsqlDataSource dataSource;
-
-    public MetadataRepository(NpgsqlDataSource dataSource)
-    {
-        ArgumentNullException.ThrowIfNull(dataSource);
-        this.dataSource = dataSource;
-    }
 
     /// <summary>
     /// Retrieve metadata for a specific RFC (title, updates, obsoletes).

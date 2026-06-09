@@ -1,5 +1,28 @@
 namespace RfcRag.Settings;
 
+/// <summary>Selects the RFC source format parser.</summary>
+public enum RfcParserType
+{
+    /// <summary>Parse plain-text RFC files (.txt). Default.</summary>
+    Text,
+
+    /// <summary>
+    /// Parse RFC XML 2 format files (.xml) in addition to plain-text files.
+    /// Requires RFC XML 2 (RFC 7991) source files.
+    /// </summary>
+    Xml
+}
+
+/// <summary>Selects the embedding provider used for indexing and search.</summary>
+public enum EmbeddingProvider
+{
+    /// <summary>Use OpenRouter's OpenAI-compatible embedding API (default).</summary>
+    OpenRouter,
+
+    /// <summary>Use a local OpenAI-compatible embedding server (e.g. Ollama, llama.cpp).</summary>
+    Local
+}
+
 /// <summary>
 /// Configuration options for the RFC RAG pipeline.
 /// Bound from the <c>RfcRag</c> configuration section.
@@ -47,4 +70,23 @@ public sealed record class RfcRagOptions
     /// Caps burst traffic to the embedding provider while allowing intra-file batch parallelism.
     /// </summary>
     public int MaxEmbeddingConcurrency { get; init; } = 8;
+
+    /// <summary>
+    /// Selects the embedding provider. Defaults to <see cref="EmbeddingProvider.OpenRouter"/>.
+    /// Set to <see cref="EmbeddingProvider.Local"/> to use a local OpenAI-compatible server.
+    /// </summary>
+    public EmbeddingProvider EmbeddingProvider { get; init; } = EmbeddingProvider.OpenRouter;
+
+    /// <summary>
+    /// Base URL for the local embedding server (e.g. <c>http://localhost:11434/v1</c>).
+    /// Used when <see cref="EmbeddingProvider"/> is <see cref="EmbeddingProvider.Local"/>.
+    /// </summary>
+    public string LocalEmbeddingEndpoint { get; init; } = "http://localhost:11434/v1";
+
+    /// <summary>
+    /// Selects the RFC parser type. <see cref="RfcParserType.Text"/> processes only
+    /// <c>rfc*.txt</c> files (default). <see cref="RfcParserType.Xml"/> additionally
+    /// processes <c>rfc*.xml</c> files using the RFC XML 2 format.
+    /// </summary>
+    public RfcParserType RfcParserType { get; init; } = RfcParserType.Text;
 }

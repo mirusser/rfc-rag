@@ -6,6 +6,7 @@ namespace RfcRag.Tests.UnitTests;
 public sealed class RfcParserTests
 {
     private readonly RfcParser parser = new();
+    private readonly RfcXmlParser xmlParser = new();
 
     [Fact]
     public async Task ParseAsync_RealRfc2119_ExtractsCorrectMetadata()
@@ -205,5 +206,118 @@ public sealed class RfcParserTests
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         Assert.Equal(GrammarStyleConstants.Cddl, document.Metadata.GrammarStyle);
+    }
+
+    [Fact]
+    public void XmlParser_ParseContent_ExtractsSectionsFromRfc2NamespacedXml()
+    {
+        const string xml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <rfc xmlns="urn:ietf:params:xml:ns:rfcxml"
+                 number="9999"
+                 category="std">
+              <front>
+                <title>Test RFC</title>
+                <author fullname="Alice Author"/>
+                <date year="2024"/>
+              </front>
+              <middle>
+                <section>
+                  <name>Introduction</name>
+                  <t>This document describes something important.</t>
+                  <t>It has two paragraphs.</t>
+                  <section>
+                    <name>Background</name>
+                    <t>Background information goes here.</t>
+                  </section>
+                </section>
+                <section>
+                  <name>Protocol</name>
+                  <t>The protocol works as follows.</t>
+                </section>
+              </middle>
+            </rfc>
+            """;
+
+        RfcDocument document = xmlParser.ParseContent(xml, "rfc9999.xml");
+
+        Assert.Equal(9999, document.Metadata.Number);
+        Assert.Equal("Test RFC", document.Metadata.Title);
+        Assert.Equal(3, document.Sections.Count);
+
+        RfcSection section1 = document.Sections[0];
+        Assert.Equal("1", section1.Section);
+        Assert.Equal("Introduction", section1.Heading);
+        Assert.Contains("something important", section1.Text);
+        Assert.Contains("two paragraphs", section1.Text);
+
+        RfcSection section11 = document.Sections[1];
+        Assert.Equal("1.1", section11.Section);
+        Assert.Equal("Background", section11.Heading);
+
+        RfcSection section2 = document.Sections[2];
+        Assert.Equal("2", section2.Section);
+        Assert.Equal("Protocol", section2.Heading);
+    }
+
+    [Fact]
+    public void XmlParser_ParseContent_HandlesBareRfcElement()
+    {
+        const string xml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <rfc number="1234">
+              <front><title>A Test</title></front>
+              <middle>
+                <section>
+                  <name>Only Section</name>
+                  <t>Some text here.</t>
+                </section>
+              </middle>
+            </rfc>
+            """;
+
+        RfcDocument document = xmlParser.ParseContent(xml, "rfc1234.xml");
+
+        Assert.Equal(1234, document.Metadata.Number);
+        Assert.Single(document.Sections);
+        Assert.Equal("Only Section", document.Sections[0].Heading);
+    }
+
+    [Fact]
+    public void XmlParser_ParseContent_ReturnsEmptyDocumentForMalformedXml()
+    {
+        const string xml = "not valid xml <<< >";
+
+        RfcDocument document = xmlParser.ParseContent(xml, "rfc4242.xml");
+
+        Assert.Equal(4242, document.Metadata.Number);
+        Assert.Empty(document.Sections);
+    }
+
+    [Fact]
+    public void XmlParser_ParseContent_ThrowsFormatExceptionForInvalidFilename()
+    {
+        Assert.Throws<FormatException>(() =>
+            xmlParser.ParseContent("<rfc/>", "badfile.xml"));
+    }
+
+    [Fact]
+    public void XmlParser_ParseContent_SetsSourcePathAndUrl()
+    {
+        const string xml = """
+            <rfc>
+              <front><title>Url Test</title></front>
+              <middle>
+                <section><name>Section</name><t>text</t></section>
+              </middle>
+            </rfc>
+            """;
+
+        RfcDocument document = xmlParser.ParseContent(xml, "rfc7777.xml");
+
+        RfcSection section = document.Sections[0];
+        Assert.Equal("rfc7777.xml", section.SourcePath);
+        Assert.Contains("rfc-editor.org", section.Url);
+        Assert.Contains("7777", section.Url);
     }
 }

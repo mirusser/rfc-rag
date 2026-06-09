@@ -11,7 +11,7 @@
 
 </br>
 
-[![CI](https://github.com/mirusser/rfc-rag/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/mirusser/rfc-rag/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/mirusser/rfc-rag/ci.yml?branch=master&style=flat-square&label=CI)](https://github.com/mirusser/rfc-rag/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue?style=flat-square)](LICENSE)
 <br>
 
@@ -19,7 +19,8 @@
 
 ## 📝 TL;DR
 
-**Index ~9,800 RFCs locally with pgvector + PostgreSQL full-text search, then query them from Claude Code or Codex via MCP tools.** Semantic search understands meaning, full-text catches exact terms, and hybrid retrieval (RRF) combines both. Section-level indexing means you get the relevant paragraph, not a 200-page PDF.
+**Index ~9,800 RFCs locally with pgvector + PostgreSQL full-text search, then query them from Claude Code or Codex via MCP tools.**   
+Semantic search understands meaning, full-text catches exact terms, and hybrid retrieval (RRF) combines both. Section-level indexing means you get the relevant paragraph, not a 200-page PDF.
 
 Indexing takes ~10–15 minutes on first run. Incremental runs skip already-indexed files (SHA256-based) and complete in seconds.
 
@@ -64,10 +65,10 @@ flowchart TB
     end
 
     subgraph serve["📡 MCP Server"]
-        Tools["🔧 MCP Tools\nsearch_rfc · get_rfc · get_rfc_section\nget_rfc_toc · search_normative\nsearch_abnf · find_updates_obsoletes\nrfc_stats · get_rfc_metadata\nlist_indexed_rfcs"]
+        Tools["🔧 MCP Tools"]
     end
 
-    Clients["🤖 AI Agents\nClaude Code · Codex"]
+    Clients["🤖 AI Agents"]
 
     Txt --> Parser
     Parser -->|"section text"| Embed -->|"(1536,) vector"| Sections
@@ -153,7 +154,31 @@ docker run --rm -i --network host \
 | `RfcRag__EmbeddingDimensions` | `1536` | Embedding vector dimensions |
 | `RfcRag__OpenRouterEmbeddingEndpoint` | `https://openrouter.ai/api/v1` | OpenRouter API base URL |
 | `RfcRag__RunMigrationsOnStartup` | `true` | Auto-apply SQL schema migrations |
-| `OpenRouter__ApiKey` | *(required)* | OpenRouter API key |
+| `RfcRag__EmbeddingProvider` | `OpenRouter` | Embedding provider: `OpenRouter` (default) or `Local` |
+| `RfcRag__LocalEmbeddingEndpoint` | `http://localhost:11434/v1` | Base URL of local embedding server — used when `EmbeddingProvider=Local` |
+| `RfcRag__RfcParserType` | `Text` | Parser mode: `Text` (plain-text `.txt` files, default) or `Xml` (also indexes RFC XML 2 `.xml` files) |
+| `OpenRouter__ApiKey` | *(required for OpenRouter)* | OpenRouter API key — not needed when `EmbeddingProvider=Local` |
+
+### Switching to a Local Embedding Provider
+
+By default embeddings are generated via OpenRouter. To use a local server (Ollama, llama.cpp) instead — no API key required:
+
+```bash
+# Example: Ollama with nomic-embed-text (768-dim)
+export RfcRag__EmbeddingProvider=Local
+export RfcRag__LocalEmbeddingEndpoint=http://localhost:11434/v1
+export RfcRag__EmbeddingModel=nomic-embed-text
+export RfcRag__EmbeddingDimensions=768   # must match the model's output dimension
+```
+
+If switching from a different model or provider, the `rfc_sections.embedding` column dimension must match. Reset it first:
+
+```bash
+# Drops and recreates the embedding column, then triggers a full reindex
+dotnet run --project src/RfcRag/ -- --reset-embeddings --confirm
+```
+
+Without `--confirm` the command prints a warning and exits without making any changes.
 
 ## 🧰 MCP Tools
 
@@ -225,6 +250,9 @@ dotnet test --filter "Category!=Integration"
 
 # Integration tests (requires Docker)
 dotnet test --filter "Category=Integration"
+
+# Retrieval quality suite — indexes TestData corpus and asserts top-10 hit rate (requires Docker)
+dotnet test tests/RfcRag.Tests/ --filter "Category=RetrievalQuality"
 ```
 
 ## 🧩 Compatibility
@@ -243,7 +271,6 @@ dotnet test --filter "Category=Integration"
 - MCP tool contracts and verification: [src/RfcRag/README.md](src/RfcRag/README.md)
 - Normative search internals: [docs/normative-search.md](docs/normative-search.md)
 - Test structure and conventions: [tests/RfcRag.Tests/README.md](tests/RfcRag.Tests/README.md)
-- Agent governance and skills: [AGENTS.md](AGENTS.md)
 - CI/CD workflow: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 - Production deployment: [`deploy/compose/rfc-rag.yaml`](deploy/compose/rfc-rag.yaml)
 
