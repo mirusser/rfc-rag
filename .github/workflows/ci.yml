@@ -266,5 +266,6 @@ jobs:
           files: ./nupkg/*
           generate_release_notes: true
           make_latest: true
+          prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

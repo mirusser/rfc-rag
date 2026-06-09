@@ -7,7 +7,7 @@ namespace RfcRag.Search;
 public sealed class SearchRepository(NpgsqlDataSource dataSource)
 {
 
-    private const string SectionProjection = 
+    private const string SectionProjection =
         """
         id as "Id",
         rfc_number as "RfcNumber",
@@ -21,7 +21,7 @@ public sealed class SearchRepository(NpgsqlDataSource dataSource)
         array[]::real[] as "Embedding"
         """;
 
-    private const string SearchResultProjection = 
+    private const string SearchResultProjection =
         """
         rfc_sections.id as "Id",
         rfc_sections.rfc_number as "RfcNumber",
