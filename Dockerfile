@@ -45,6 +45,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
 WORKDIR /app/rfc-rag
 COPY --from=build /app/rfc-rag .
 
+# krb5-libs: suppresses Npgsql "Cannot load library libgssapi_krb5.so.2" warning
+RUN apk add --no-cache krb5-libs
+
 ENV \
     RfcRag__RunMigrationsOnStartup=true \
     DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1

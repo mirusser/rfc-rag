@@ -152,18 +152,17 @@ jobs:
 
       - name: Smoke — verify server starts
         run: |
-          docker run -i --name rfc-rag-smoke --network host \
+          # Pipe sleep to keep stdin open; MCP stdio server exits on stdin EOF
+          sleep 60 | docker run -i --name rfc-rag-smoke --network host \
             -e RfcRag__PostgresConnectionString="Host=localhost;Database=rfc_rag;Username=postgres;Password=postgres" \
             -e RfcRag__RfcMirrorPath=/nonexistent \
             -e RfcRag__EmbeddingBatchSize=1 \
             -e RfcRag__OpenRouterEmbeddingEndpoint=https://httpstat.us/200 \
             rfc-rag:test &
-          PID=$!
           sleep 8
-          if kill -0 $PID 2>/dev/null; then
+          if docker inspect -f '{{.State.Running}}' rfc-rag-smoke 2>/dev/null | grep -q true; then
             echo "✅ MCP server started successfully"
-            kill $PID 2>/dev/null || true
-            wait $PID 2>/dev/null || true
+            docker stop rfc-rag-smoke 2>/dev/null || true
           else
             echo "❌ MCP server failed to start"
             docker logs rfc-rag-smoke 2>&1 || true
