@@ -38,7 +38,6 @@ services:
     restart: unless-stopped
 
   rfc-rag:
-    image: ghcr.io/mirusser/rfc-rag:${TAG:-latest}
     build:
       context: ../..
       dockerfile: Dockerfile

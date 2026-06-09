@@ -44,7 +44,7 @@ This repo combines both: semantic search finds the *topic*, normative keyword fi
 title: RFC RAG — Indexing and Query Flow
 ---
 flowchart TB
-    subgraph source["📁 RFC Mirror (~/OtherRepos/rfc-mirror/)"]
+    subgraph source["📁 RFC Mirror (~/rfc-mirror/)"]
         Txt["📄 *.txt files\n~9,800 RFCs"]
     end
 
@@ -54,6 +54,7 @@ flowchart TB
     end
 
     subgraph store["🗄️ PostgreSQL + pgvector"]
+        Indexed["indexed_rfcs\nSHA256 tracking"]
         Sections["rfc_sections\nvector(1536) + tsvector"]
         Norm["normative_occurrences\nkeyword index"]
         Abnf["rfc_abnf_blocks\ngrammar search"]
@@ -74,6 +75,7 @@ flowchart TB
     Txt --> Parser
     Parser -->|"section text"| Embed -->|"(1536,) vector"| Sections
     Parser -->|"metadata · ABNF · keywords"| Sections
+    Parser -->|"SHA256 · metadata"| Indexed
     Parser --> Norm
     Parser --> Abnf
     Sections --> Vector
@@ -86,7 +88,7 @@ flowchart TB
     Tools <-->|"MCP stdio"| Clients
 ```
 
-The parser extracts sections, metadata, normative keywords, and ABNF grammar blocks from RFC text files. Section text is embedded via OpenRouter (`text-embedding-3-small`, 1536-dim) and stored alongside `tsvector` for full-text search. Hybrid search fuses vector cosine similarity with lexical full-text scores using Reciprocal Rank Fusion (RRF). A separate MCP stdio server exposes 10 tools for AI agents.
+The parser extracts sections, metadata, normative keywords, and ABNF grammar blocks from RFC text files. Section text is embedded via OpenRouter (`text-embedding-3-small`, 1536-dim) and stored alongside `tsvector` for full-text search. Hybrid search fuses vector cosine similarity with lexical full-text scores using Reciprocal Rank Fusion (RRF). A separate MCP stdio server exposes 11 tools for AI agents.
 
 ## ⚡ Quick Start
 
@@ -115,6 +117,7 @@ Full configuration guide: [configuration.md](/docs/configuration.md)
 |---|---|
 | `search_rfc` | Hybrid search (vector + full-text) with RRF fusion. Supports `normative_keyword` filtering. |
 | `get_rfc` | RFC metadata, table of contents, and section preview |
+| `get_rfc_full` | Full concatenated text of an RFC (use sparingly) |
 | `get_rfc_section` | Specific section with child expansion for nested subsections |
 | `get_rfc_toc` | Table of contents as `section → heading` map |
 | `get_rfc_metadata` | Single RFC metadata lookup (title, authors, date, status) |
@@ -209,7 +212,7 @@ dotnet test tests/RfcRag.Tests/ --filter "Category=RetrievalQuality"
 - Test structure and conventions: [tests/RfcRag.Tests/README.md](tests/RfcRag.Tests/README.md)
 - CI/CD workflow: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 - Release process: [docs/releasing.md](docs/releasing.md)
-- Production deployment: [`deploy/compose/rfc-rag.yaml`](deploy/compose/rfc-rag.yaml)
+- Production deployment: [`deploy/compose/release/rfc-rag.yaml`](deploy/compose/release/rfc-rag.yaml)
 - Developer commands: [`Makefile`](Makefile)
 
 ## ⚖️ Boundaries

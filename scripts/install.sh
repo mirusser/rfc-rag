@@ -2,10 +2,10 @@
 # install.sh — bootstrap RFC RAG without cloning the repo
 #
 # Usage:
-#   bash <(curl -fsSL https://raw.githubusercontent.com/mirusser/rfc-rag/master/install.sh)
+#   bash <(curl -fsSL https://raw.githubusercontent.com/mirusser/rfc-rag/master/scripts/install.sh)
 #
 # What it does:
-#   1. Downloads deploy/compose/rfc-rag.yaml to the current directory
+#   1. Downloads deploy/compose/release/rfc-rag.yaml to the current directory
 #   2. Creates .env.rfc-rag from the example template (if not already present)
 #   3. Prints next steps
 
@@ -16,7 +16,7 @@ COMPOSE_OUT="rfc-rag.yaml"
 ENV_OUT=".env.rfc-rag"
 
 echo "Downloading RFC RAG compose file..."
-curl -fsSL "$REPO_RAW/deploy/compose/rfc-rag.yaml" -o "$COMPOSE_OUT"
+curl -fsSL "$REPO_RAW/deploy/compose/release/rfc-rag.yaml" -o "$COMPOSE_OUT"
 echo "  -> $COMPOSE_OUT"
 
 if [[ ! -f "$ENV_OUT" ]]; then

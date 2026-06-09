@@ -67,4 +67,4 @@ Run the published-image smoke test against the release tag before announcing:
 TAG=vX.Y.Z ./scripts/smoke-test-release.sh
 ```
 
-The script boots `deploy/compose/rfc-rag.yaml` with the published GHCR image, waits for PostgreSQL, starts the MCP server, verifies `tools/list` returns the expected tool count, queries `rfc_stats`, and tears everything down. It exits non-zero and dumps logs on failure.
+The script boots `deploy/compose/release/rfc-rag.yaml` with the published GHCR image, waits for PostgreSQL, starts the MCP server, verifies `tools/list` returns the expected tool count, queries `rfc_stats`, and tears everything down. It exits non-zero and dumps logs on failure.

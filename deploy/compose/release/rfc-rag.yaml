@@ -1,5 +1,5 @@
-# deploy/compose/rfc-rag.yaml
-# Standalone RFC RAG MCP server with pgvector PostgreSQL.
+# deploy/compose/release/rfc-rag.yaml
+# Standalone RFC RAG MCP server with pgvector PostgreSQL — RELEASE image.
 #
 # Prerequisites:
 #   1. RFC mirror on the host (one-time):
@@ -9,7 +9,7 @@
 # Run (after creating .env.rfc-rag at repo root):
 #   cp deploy/compose/rfc-rag.env.example .env.rfc-rag
 #   # edit .env.rfc-rag with your settings
-#   docker compose --env-file .env.rfc-rag -f deploy/compose/rfc-rag.yaml up
+#   docker compose --env-file .env.rfc-rag -f deploy/compose/release/rfc-rag.yaml up
 #
 # First run indexes all ~9800 RFCs (10-15 min). Subsequent starts are fast
 # (SHA256-based incremental indexing).
@@ -24,7 +24,7 @@ services:
   postgres:
     image: pgvector/pgvector:pg17
     env_file:
-      - ${RFC_RAG_ENV_FILE:-../../.env.rfc-rag}
+      - ${RFC_RAG_ENV_FILE:-../../../.env.rfc-rag}
     ports:
       - "${PG_BIND_ADDRESS:-127.0.0.1}:${PG_BIND_PORT:-5433}:5432"
     volumes:
@@ -38,15 +38,16 @@ services:
     restart: unless-stopped
 
   rfc-rag:
+    image: ghcr.io/mirusser/rfc-rag:${TAG:-latest}
     build:
-      context: ../..
+      context: ../../..
       dockerfile: Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
     stdin_open: true
     env_file:
-      - ${RFC_RAG_ENV_FILE:-../../.env.rfc-rag}
+      - ${RFC_RAG_ENV_FILE:-../../../.env.rfc-rag}
     volumes:
       - ${RFC_MIRROR_HOST_PATH:-/home/user/rfc-mirror}:/rfc-mirror:ro
     restart: unless-stopped

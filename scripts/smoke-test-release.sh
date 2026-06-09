@@ -22,7 +22,7 @@ if [ -z "$TAG" ]; then
 fi
 
 IMAGE="ghcr.io/mirusser/rfc-rag:${TAG}"
-COMPOSE_FILE="${COMPOSE_FILE:-deploy/compose/rfc-rag.yaml}"
+COMPOSE_FILE="${COMPOSE_FILE:-deploy/compose/release/rfc-rag.yaml}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 

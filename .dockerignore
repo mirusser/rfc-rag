@@ -1,0 +1,60 @@
+# ── Git ────────────────────────────────────────────────────────────────────────
+.git/
+
+# ── Build artifacts ──────────────────────────────────────────────────────────
+bin/
+obj/
+TestResults/
+coverage-report/
+*.binlog
+
+# ── Docker / compose ──────────────────────────────────────────────────────────
+Dockerfile
+.dockerignore
+
+# ── Codegraph (daemon.sock breaks tar) ────────────────────────────────────────
+.codegraph/
+
+# ── IDE & editor ──────────────────────────────────────────────────────────────
+.idea/
+*.DotSettings.user
+
+# ── AI / agent tooling ────────────────────────────────────────────────────────
+.antigravitycli/
+.claude/
+.claude.json
+.claire/
+.codex/
+.gemini/
+.junie/
+.omo/
+.opencode/
+.serena/
+.agents/
+
+# ── Quality & analysis ────────────────────────────────────────────────────────
+.sonarqube/
+.sonarqube-local/
+.agents/Reports/
+
+# ── CI / CD ───────────────────────────────────────────────────────────────────
+actions-runner/
+.act/
+
+# ── Secrets & environment ─────────────────────────────────────────────────────
+.env
+*.env
+.env.*
+
+# ── Kubernetes ────────────────────────────────────────────────────────────────
+.kube/
+
+# ── MCP / InfraGate runtime ───────────────────────────────────────────────────
+.mcp.json
+.mcp-approvals/
+.mcp-dataprotection-keys/
+.mcp-guardrails/
+.mcp-logs/
+.mcp-observer/
+.mcp-remediation/
+dataprotection-keys/
