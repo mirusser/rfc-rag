@@ -59,6 +59,22 @@ jobs:
           key: nuget-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
           restore-keys: nuget-
 
+      - name: Validate required secrets and vars
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+          SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
+        run: |
+          missing=()
+          [ -z "$SONAR_TOKEN" ]        && missing+=("secrets.SONAR_TOKEN")
+          [ -z "$SONAR_PROJECT_KEY" ]  && missing+=("vars.SONAR_PROJECT_KEY")
+          [ -z "$SONAR_ORGANIZATION" ] && missing+=("vars.SONAR_ORGANIZATION")
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing required configuration: ${missing[*]}"
+            echo "See the sonar.yml header comment for setup instructions."
+            exit 1
+          fi
+
       - name: Begin Sonar scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
