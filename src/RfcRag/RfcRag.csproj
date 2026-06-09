@@ -4,6 +4,15 @@
     <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>rfc-rag</ToolCommandName>
+    <PackageId>rfc-rag</PackageId>
+    <!-- Fallback version for local dotnet pack; CI overrides with -p:PackageVersion -->
+    <Version>0.0.1</Version>
+    <Description>Local RAG MCP server for RFCs: semantic + full-text search with section-level precision.</Description>
+    <PackageProjectUrl>https://github.com/mirusser/rfc-rag</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/mirusser/rfc-rag</RepositoryUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>

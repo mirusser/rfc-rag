@@ -1,4 +1,4 @@
-.PHONY: help quickstart quickstart-down quickstart-logs build test docker-build smoke-test
+.PHONY: help quickstart quickstart-down quickstart-logs build test docker-build smoke-test pull tool-install tool-update
 
 TAG ?= latest
 
@@ -25,3 +25,12 @@ docker-build:  ## Build the Docker image locally
 
 smoke-test:  ## Run release smoke test against TAG
 	TAG=$(TAG) ./scripts/smoke-test-release.sh
+
+pull:  ## Pull pre-built GHCR images (skips local source build)
+	TAG=$(TAG) docker compose --env-file .env.rfc-rag -f deploy/compose/rfc-rag.yaml pull
+
+tool-install:  ## Install rfc-rag as a dotnet global tool from NuGet
+	dotnet tool install -g rfc-rag
+
+tool-update:  ## Update the installed rfc-rag dotnet global tool
+	dotnet tool update -g rfc-rag
