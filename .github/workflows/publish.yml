@@ -43,6 +43,12 @@ jobs:
       id-token: write
 
     steps:
+      - name: Verify not a fork (workflow_run security)
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.head_repository.fork
+        run: |
+          echo "::error::Refusing to build untrusted code from fork repository"
+          exit 1
+
       - name: Checkout repository
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6
         with:

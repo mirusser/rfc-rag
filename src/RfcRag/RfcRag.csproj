@@ -8,7 +8,7 @@
     <ToolCommandName>rfc-rag</ToolCommandName>
     <PackageId>rfc-rag</PackageId>
     <!-- Fallback version for local dotnet pack; CI overrides with -p:PackageVersion -->
-    <Version>0.0.1</Version>
+    <Version>0.0.4</Version>
     <Description>Local RAG MCP server for RFCs: semantic + full-text search with section-level precision.</Description>
     <PackageProjectUrl>https://github.com/mirusser/rfc-rag</PackageProjectUrl>
     <RepositoryUrl>https://github.com/mirusser/rfc-rag</RepositoryUrl>

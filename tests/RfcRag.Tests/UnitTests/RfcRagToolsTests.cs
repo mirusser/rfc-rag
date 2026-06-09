@@ -6,6 +6,7 @@ using RfcRag.Tests.Fakes;
 using RfcRag.Tools;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using ModelContextProtocol.Protocol;
 using Npgsql;
 
 namespace RfcRag.Tests.UnitTests;
@@ -23,9 +24,9 @@ public sealed class RfcRagToolsTests
                 "https://www.rfc-editor.org/rfc/rfc2119", 0.95)]
         };
 
-        string json = await RfcRagTools.SearchRfc(fake, "test", 10, null, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.SearchRfc(fake, "test", 10, null, CancellationToken.None);
+        string json = JsonFrom(result);
 
-        Assert.NotNull(json);
         Assert.StartsWith("[", json);
         using var doc = JsonDocument.Parse(json);
         JsonElement root = doc.RootElement;
@@ -64,7 +65,8 @@ public sealed class RfcRagToolsTests
             ]
         };
 
-        string json = await RfcRagTools.GetRfc(fake, 2119, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.GetRfc(fake, 2119, CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         JsonElement root = doc.RootElement;
@@ -85,10 +87,9 @@ public sealed class RfcRagToolsTests
     {
         var fake = new FakeSearchService { RfcSections = [] };
 
-        string json = await RfcRagTools.GetRfc(fake, 9999, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.GetRfc(fake, 9999, CancellationToken.None);
 
-        using var doc = JsonDocument.Parse(json);
-        Assert.True(doc.RootElement.TryGetProperty("error", out _));
+        Assert.True(result.IsError == true);
     }
 
     [Fact]
@@ -120,7 +121,8 @@ public sealed class RfcRagToolsTests
             ]
         };
 
-        string json = await RfcRagTools.GetRfcFull(fake, 2119, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.GetRfcFull(fake, 2119, CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         JsonElement root = doc.RootElement;
@@ -137,16 +139,15 @@ public sealed class RfcRagToolsTests
     {
         var fake = new FakeSearchService { RfcSections = [] };
 
-        string json = await RfcRagTools.GetRfcFull(fake, 9999, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.GetRfcFull(fake, 9999, CancellationToken.None);
 
-        using var doc = JsonDocument.Parse(json);
-        Assert.True(doc.RootElement.TryGetProperty("error", out _));
+        Assert.True(result.IsError == true);
     }
 
     [Fact]
     public async Task GetRfcSection_WithResult_ReturnsSection()
     {
-        string json = await RfcRagTools.GetRfcSection(
+        CallToolResult result = await RfcRagTools.GetRfcSection(
             new FakeSearchService
             {
                 SingleSection = new RfcSection
@@ -164,6 +165,7 @@ public sealed class RfcRagToolsTests
              2119,
             "1",
             cancellationToken: CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         JsonElement root = doc.RootElement;
@@ -176,10 +178,9 @@ public sealed class RfcRagToolsTests
     {
         var fake = new FakeSearchService { SingleSection = null };
 
-        string json = await RfcRagTools.GetRfcSection(fake, 9999, "99", cancellationToken: CancellationToken.None);
+        CallToolResult result = await RfcRagTools.GetRfcSection(fake, 9999, "99", cancellationToken: CancellationToken.None);
 
-        using var doc = JsonDocument.Parse(json);
-        Assert.True(doc.RootElement.TryGetProperty("error", out _));
+        Assert.True(result.IsError == true);
     }
 
     [Fact]
@@ -193,7 +194,8 @@ public sealed class RfcRagToolsTests
                 "https://www.rfc-editor.org/rfc/rfc2119", 0.85)]
         };
 
-        string json = await RfcRagTools.SearchNormative(fake, "MUST", null, 10, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.SearchNormative(fake, "MUST", null, 10, CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         Assert.Equal(JsonValueKind.Array, doc.RootElement.ValueKind);
@@ -211,7 +213,8 @@ public sealed class RfcRagToolsTests
                 "https://www.rfc-editor.org/rfc/rfc9110", 0.75)]
         };
 
-        string json = await RfcRagTools.SearchAbnf(fake, "field-name", null, 10, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.SearchAbnf(fake, "field-name", null, 10, CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         Assert.Equal(JsonValueKind.Array, doc.RootElement.ValueKind);
@@ -222,7 +225,8 @@ public sealed class RfcRagToolsTests
     {
         var fake = new FakeSearchService { SearchResults = [] };
 
-        string json = await RfcRagTools.SearchRfc(fake, "HTTP", 10, null, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.SearchRfc(fake, "HTTP", 10, null, CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         Assert.Equal(JsonValueKind.Array, doc.RootElement.ValueKind);
@@ -234,7 +238,8 @@ public sealed class RfcRagToolsTests
     {
         var fake = new FakeSearchService { SearchResults = [] };
 
-        string json = await RfcRagTools.SearchNormative(fake, "MUST", null, 10, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.SearchNormative(fake, "MUST", null, 10, CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         Assert.Equal(JsonValueKind.Array, doc.RootElement.ValueKind);
@@ -246,7 +251,8 @@ public sealed class RfcRagToolsTests
     {
         var fake = new FakeSearchService { SearchResults = [] };
 
-        string json = await RfcRagTools.SearchAbnf(fake, "ALPHA", null, 10, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.SearchAbnf(fake, "ALPHA", null, 10, CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         Assert.Equal(JsonValueKind.Array, doc.RootElement.ValueKind);
@@ -258,10 +264,9 @@ public sealed class RfcRagToolsTests
     {
         var fake = new FakeSearchService { Metadata = null };
 
-        string json = await RfcRagTools.FindUpdatesObsoletes(fake, 9999, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.FindUpdatesObsoletes(fake, 9999, CancellationToken.None);
 
-        using var doc = JsonDocument.Parse(json);
-        Assert.True(doc.RootElement.TryGetProperty("error", out _));
+        Assert.True(result.IsError == true);
     }
 
     [Fact]
@@ -279,7 +284,8 @@ public sealed class RfcRagToolsTests
             BackReferences = [new RfcMetadata { Number = 9110, Title = "HTTP Semantics" }]
         };
 
-        string json = await RfcRagTools.FindUpdatesObsoletes(fake, 7230, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.FindUpdatesObsoletes(fake, 7230, CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         JsonElement root = doc.RootElement;
@@ -300,7 +306,8 @@ public sealed class RfcRagToolsTests
             }
         };
 
-        string json = await RfcRagTools.GetRfcMetadata(fake, 9110, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.GetRfcMetadata(fake, 9110, CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         JsonElement root = doc.RootElement;
@@ -313,10 +320,9 @@ public sealed class RfcRagToolsTests
     {
         var fake = new FakeSearchService { Metadata = null };
 
-        string json = await RfcRagTools.GetRfcMetadata(fake, 9999, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.GetRfcMetadata(fake, 9999, CancellationToken.None);
 
-        using var doc = JsonDocument.Parse(json);
-        Assert.True(doc.RootElement.TryGetProperty("error", out _));
+        Assert.True(result.IsError == true);
     }
 
     [Fact]
@@ -330,7 +336,8 @@ public sealed class RfcRagToolsTests
             ]
         };
 
-        string json = await RfcRagTools.ListIndexedRfcs(fake, 10, 0, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.ListIndexedRfcs(fake, 10, 0, CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         JsonElement root = doc.RootElement;
@@ -344,7 +351,8 @@ public sealed class RfcRagToolsTests
     {
         var fake = new FakeSearchService { IndexedRfcList = [] };
 
-        string json = await RfcRagTools.ListIndexedRfcs(fake, 10, 0, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.ListIndexedRfcs(fake, 10, 0, CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         Assert.Equal(0, doc.RootElement.GetProperty("total").GetInt32());
@@ -371,7 +379,8 @@ public sealed class RfcRagToolsTests
             }
         };
 
-        string json = await RfcRagTools.GetRfcMetadata(fake, 8446, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.GetRfcMetadata(fake, 8446, CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         Assert.Equal(GrammarStyleConstants.TlsPresentationLang, doc.RootElement.GetProperty("grammarStyle").GetString());
@@ -385,7 +394,8 @@ public sealed class RfcRagToolsTests
             StatsJson = """{"indexedRfcs":100,"sections":5000,"abnfBlocks":200,"normativeOccurrences":30000,"lastIndexedAtUtc":"2026-06-06T00:00:00Z"}"""
         };
 
-        string json = await RfcRagTools.RfcStats(fake, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.RfcStats(fake, CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         Assert.Equal(100, doc.RootElement.GetProperty("indexedRfcs").GetInt32());
@@ -411,7 +421,8 @@ public sealed class RfcRagToolsTests
             }
         };
 
-        string json = await RfcRagTools.GetRfcToc(fake, 8446, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.GetRfcToc(fake, 8446, CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         Assert.Equal("Handshake Protocol", doc.RootElement.GetProperty("4").GetString());
@@ -429,16 +440,15 @@ public sealed class RfcRagToolsTests
             TocMap = new Dictionary<string, string?>()
         };
 
-        string json = await RfcRagTools.GetRfcToc(fake, 9999, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.GetRfcToc(fake, 9999, CancellationToken.None);
 
-        using var doc = JsonDocument.Parse(json);
-        Assert.True(doc.RootElement.TryGetProperty("error", out _));
+        Assert.True(result.IsError == true);
     }
 
     [Fact]
     public async Task GetRfcSection_Depth0_ReturnsSingleSection()
     {
-        string json = await RfcRagTools.GetRfcSection(
+        CallToolResult result = await RfcRagTools.GetRfcSection(
             new FakeSearchService
             {
                 SingleSection = new RfcSection
@@ -452,6 +462,7 @@ public sealed class RfcRagToolsTests
              8446,
             "4.4",
             cancellationToken: CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         Assert.Equal(8446, doc.RootElement.GetProperty("rfcNumber").GetInt32());
@@ -473,7 +484,8 @@ public sealed class RfcRagToolsTests
             }
         };
 
-        string json = await RfcRagTools.GetRfcSection(fake, 8446, "4.4", depth: 1, cancellationToken: CancellationToken.None);
+        CallToolResult result = await RfcRagTools.GetRfcSection(fake, 8446, "4.4", depth: 1, cancellationToken: CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         Assert.Equal("4.4", doc.RootElement.GetProperty("section").GetProperty("section").GetString());
@@ -496,7 +508,8 @@ public sealed class RfcRagToolsTests
             }
         };
 
-        string json = await RfcRagTools.GetRfcSection(fake, 8446, "4.4", depth: 1, expand: true, cancellationToken: CancellationToken.None);
+        CallToolResult result = await RfcRagTools.GetRfcSection(fake, 8446, "4.4", depth: 1, expand: true, cancellationToken: CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         JsonElement root = doc.RootElement;
@@ -524,7 +537,8 @@ public sealed class RfcRagToolsTests
             }
         };
 
-        string json = await RfcRagTools.GetRfcSection(fake, 8446, "4.4.3", expand: true, cancellationToken: CancellationToken.None);
+        CallToolResult result = await RfcRagTools.GetRfcSection(fake, 8446, "4.4.3", expand: true, cancellationToken: CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         JsonElement root = doc.RootElement;
@@ -552,7 +566,8 @@ public sealed class RfcRagToolsTests
             ExpandedTypes = new Dictionary<string, RfcSection>()
         };
 
-        string json = await RfcRagTools.GetRfcSection(fake, 8446, "6.1", expand: true, cancellationToken: CancellationToken.None);
+        CallToolResult result = await RfcRagTools.GetRfcSection(fake, 8446, "6.1", expand: true, cancellationToken: CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         Assert.False(doc.RootElement.TryGetProperty("expandedTypes", out _));
@@ -606,7 +621,8 @@ public sealed class RfcRagToolsTests
             }
         };
 
-        string json = await RfcRagTools.GetRfcSection(fake, 8446, "4.4.4", depth: 1, cancellationToken: CancellationToken.None);
+        CallToolResult result = await RfcRagTools.GetRfcSection(fake, 8446, "4.4.4", depth: 1, cancellationToken: CancellationToken.None);
+        string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
         Assert.Equal("4.4.4", doc.RootElement.GetProperty("section").GetProperty("section").GetString());
@@ -624,7 +640,8 @@ public sealed class RfcRagToolsTests
                 "https://www.rfc-editor.org/rfc/rfc8827", 0.95)]
         };
 
-        string json = await RfcRagTools.SearchRfc(fake, "unencrypted", 10, "MUST NOT", CancellationToken.None);
+        CallToolResult result = await RfcRagTools.SearchRfc(fake, "unencrypted", 10, "MUST NOT", CancellationToken.None);
+        string json = JsonFrom(result);
 
         Assert.Equal("MUST NOT", fake.LastNormativeKeyword);
         using var doc = JsonDocument.Parse(json);
@@ -642,11 +659,20 @@ public sealed class RfcRagToolsTests
                 "https://www.rfc-editor.org/rfc/rfc2119", 0.95)]
         };
 
-        string json = await RfcRagTools.SearchRfc(fake, "test", 10, cancellationToken: CancellationToken.None);
+        CallToolResult result = await RfcRagTools.SearchRfc(fake, "test", 10, cancellationToken: CancellationToken.None);
+        string json = JsonFrom(result);
 
         Assert.Null(fake.LastNormativeKeyword);
         using var doc = JsonDocument.Parse(json);
         Assert.Single(doc.RootElement.EnumerateArray());
+    }
+
+    private static string JsonFrom(CallToolResult result)
+    {
+        Assert.NotNull(result);
+        Assert.False(result.IsError == true);
+        var textBlock = Assert.IsType<TextContentBlock>(Assert.Single(result.Content));
+        return textBlock.Text;
     }
 
     private static async Task<SearchService> CreateSearchServiceWithDisposedDataSourceAsync()
