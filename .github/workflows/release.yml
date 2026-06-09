@@ -33,6 +33,7 @@ env:
 jobs:
   publish-nuget:
     name: Pack & Publish NuGet
+    environment: production
     runs-on: ubuntu-latest
     permissions:
       contents: read
