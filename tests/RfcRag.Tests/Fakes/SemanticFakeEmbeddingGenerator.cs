@@ -31,6 +31,12 @@ internal sealed class SemanticFakeEmbeddingGenerator : IEmbeddingGenerator<strin
 
         // Normative-language domain — dims 200–204
         ("MUST",      200), ("SHOULD",     201), ("REQUIRE",    202), ("NORMATIVE", 203), ("RFC",      204),
+
+        // TCP / Congestion control domain — dims 250–254
+        ("TCP",       250), ("CONGESTION", 251), ("WINDOW",     252), ("RETRANSMISSION", 253), ("SLOW", 254),
+
+        // DNS domain — dims 300–304
+        ("DNS",       300), ("DOMAIN",     301), ("NAME",       302), ("RESOLVER",       303), ("ZONE", 304),
     ];
 
 #pragma warning disable MA0041

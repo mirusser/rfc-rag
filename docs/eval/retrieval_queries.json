@@ -55,7 +55,7 @@
     "expectedSectionAny": []
   },
   {
-    "query": "MUST SHOULD REQUIRE normative behavior RFC",
+    "query": "MUST SHOULD normative requirement levels specification",
     "expectedRfcAny": [2119],
     "expectedSectionAny": []
   }

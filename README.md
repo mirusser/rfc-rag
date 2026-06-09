@@ -216,7 +216,7 @@ dotnet test tests/RfcRag.Tests/ --filter "Category=RetrievalQuality"
 
 > [!IMPORTANT]
 > - Indexes a local RFC mirror — does not fetch RFCs from the internet at query time.  
-> - Embeddings are generated via OpenRouter API (requires internet during indexing).  
+> - Embeddings are generated via OpenRouter by default (requires internet during indexing); set `RfcRag__EmbeddingProvider=Local` to use a local server (Ollama, llama.cpp) with no internet required.  
 > - MCP transport is stdio-only — no HTTP endpoint exposed.  
 > - The RAG pipeline answers from indexed RFC content; it does not perform live web search or access external knowledge bases.  
 > - This is a local development and research tool, not a production-certified service.  
