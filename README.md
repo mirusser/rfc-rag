@@ -6,6 +6,7 @@
 >
 > Semantic search finds relevant RFCs.  
 > Full-text search catches exact keywords.  
+> Normative search targets binding requirements (MUST, SHOULD, MAY…), not just mentions.  
 > Section-level retrieval returns the precise paragraph, not the whole document.  
 > AI agents cite RFCs without copying 200 pages of spec.  
 
