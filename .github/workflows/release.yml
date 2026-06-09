@@ -88,7 +88,9 @@ jobs:
         id: nuget-login
         uses: NuGet/login@v1
         with:
-          owner: ${{ github.repository_owner }}
+          user: ${{ github.repository_owner }}
+          token-service-url: https://www.nuget.org/api/v2/token
+          audience: https://www.nuget.org
 
       - name: Publish to nuget.org
         run: |
