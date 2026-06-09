@@ -15,7 +15,7 @@
     "expectedSectionAny": []
   },
   {
-    "query": "TCP congestion control slow start window retransmission cwnd",
+    "query": "tcp congestion retransmission window",
     "expectedRfcAny": [5681],
     "expectedSectionAny": []
   },
@@ -25,7 +25,7 @@
     "expectedSectionAny": []
   },
   {
-    "query": "DNS domain name system SOA nameserver resolution",
+    "query": "dns domain resolution server",
     "expectedRfcAny": [1035],
     "expectedSectionAny": []
   },
