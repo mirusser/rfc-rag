@@ -5,7 +5,7 @@
 #
 # Sequence: restore → format → build → test + coverage → pack (on tag)
 #           → docker-smoke (health + tool count)
-#           → NuGet vulnerability scan
+#           → NuGet vulnerability scan (also runs standalone in dependency-scan.yml)
 
 name: CI
 

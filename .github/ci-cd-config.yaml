@@ -43,8 +43,12 @@ use_container_scan: true
 use_dependabot: true
 package_ecosystems: ["github-actions", "nuget"]
 
-# Sonar/SonarCloud (not configured)
-use_sonar: false
+# Sonar/SonarCloud
+# Requires: secrets.SONAR_TOKEN, vars.SONAR_PROJECT_KEY, vars.SONAR_ORGANIZATION
+use_sonar: true
+
+# CodeQL (GitHub native SAST)
+use_codeql: true
 
 # Documentation validation (not configured)
 use_docs_validation: false

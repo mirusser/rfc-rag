@@ -1,0 +1,197 @@
+# SonarCloud Analysis — RFC RAG
+#
+# Generated for ci-cd-architect standard v1.2.0.
+# Ported from k8s-toolkit sonar.yml, adapted for RfcRag.slnx.
+#
+# Required GitHub secrets/vars:
+#   secrets.SONAR_TOKEN         — SonarCloud user token
+#   vars.SONAR_PROJECT_KEY      — e.g. mirusser_rfc-rag
+#   vars.SONAR_ORGANIZATION     — e.g. mirusser
+#
+# Exports a sonarcloud-report.json artifact (agent-ingestible: quality gate,
+# measures, issues, hotspots).
+
+name: SonarCloud Analysis
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_NOLOGO: true
+
+jobs:
+  sonar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7  # v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install SonarScanner for .NET
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: Cache NuGet packages
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684  # v5
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
+          restore-keys: nuget-
+
+      - name: Begin Sonar scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          dotnet sonarscanner begin \
+            /k:"${{ vars.SONAR_PROJECT_KEY }}" \
+            /o:"${{ vars.SONAR_ORGANIZATION }}" \
+            /d:sonar.token="$SONAR_TOKEN" \
+            /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.cs.opencover.reportsPaths="TestResults/coverage/**/coverage.opencover.xml"
+
+      - name: Restore NuGet packages
+        run: dotnet restore RfcRag.slnx
+
+      - name: Build
+        run: dotnet build RfcRag.slnx --configuration Release --no-restore
+
+      - name: Test with coverage
+        run: |
+          dotnet test RfcRag.slnx \
+            --configuration Release \
+            --no-build \
+            --filter "Category!=Integration" \
+            --collect:"XPlat Code Coverage" \
+            --settings coverlet.runsettings \
+            --results-directory TestResults/coverage \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+
+      - name: Verify coverage report
+        run: find TestResults/coverage -name coverage.opencover.xml | grep .
+
+      - name: End Sonar scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+
+      - name: Wait for SonarCloud CE task
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+        run: |
+          AUTH="$SONAR_TOKEN:"
+          BASE="https://sonarcloud.io/api"
+          deadline=$((SECONDS + 120))
+          while true; do
+            status=$(curl -sf -u "$AUTH" \
+              "$BASE/ce/component?component=$SONAR_PROJECT_KEY" | jq -r '.current.status // "MISSING"')
+            case "$status" in
+              SUCCESS) break;;
+              FAILED|CANCELED) echo "::error::SonarCloud CE task $status" >&2; exit 1;;
+              MISSING)  echo "::warning::CE task not found, proceeding" >&2; break;;
+              *)        echo "CE task status: $status (waiting...)";;
+            esac
+            if [ $SECONDS -ge $deadline ]; then
+              echo "::warning::CE task still $status after 120s, proceeding anyway" >&2
+              break
+            fi
+            sleep 5
+          done
+
+      - name: Export SonarCloud report
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+        run: |
+          AUTH="$SONAR_TOKEN:"
+          BASE="https://sonarcloud.io/api"
+          METRICS="bugs,vulnerabilities,code_smells,coverage,duplicated_lines_density,sqale_rating,reliability_rating,security_rating,security_review_rating,maintainability_rating,ncloc,complexity,cognitive_complexity"
+
+          rm -f /tmp/sonar_issues_*.json
+          page=1
+          while true; do
+            resp=$(curl -sf -u "$AUTH" \
+              "$BASE/issues/search?componentKeys=$SONAR_PROJECT_KEY&ps=500&p=$page&statuses=OPEN,CONFIRMED&additionalFields=rules") || {
+              echo "::warning::SonarCloud issues fetch failed (page $page)" >&2
+              break
+            }
+            echo "$resp" | jq '.issues // []' > "/tmp/sonar_issues_${page}.json"
+            total=$(echo "$resp" | jq '.paging.total // 0')
+            [ $((page * 500)) -ge "$total" ] && break
+            page=$((page + 1))
+          done
+          jq -s 'add' /tmp/sonar_issues_*.json > /tmp/sonar_all_issues.json 2>/dev/null || echo '[]' > /tmp/sonar_all_issues.json
+
+          curl -sf -u "$AUTH" \
+            "$BASE/qualitygates/project_status?projectKey=$SONAR_PROJECT_KEY" > /tmp/sonar_qg.json || {
+            echo "::warning::SonarCloud quality gate fetch failed" >&2; echo '{}' > /tmp/sonar_qg.json
+          }
+
+          curl -sf -u "$AUTH" \
+            "$BASE/measures/component?component=$SONAR_PROJECT_KEY&metricKeys=$METRICS" > /tmp/sonar_measures.json || {
+            echo "::warning::SonarCloud measures fetch failed" >&2; echo '{}' > /tmp/sonar_measures.json
+          }
+
+          rm -f /tmp/sonar_hotspots_*.json
+          page=1
+          while true; do
+            resp=$(curl -sf -u "$AUTH" \
+              "$BASE/hotspots/search?projectKey=$SONAR_PROJECT_KEY&ps=500&p=$page") || {
+              echo "::warning::SonarCloud hotspots fetch failed (page $page)" >&2
+              break
+            }
+            echo "$resp" | jq '.hotspots // []' > "/tmp/sonar_hotspots_${page}.json"
+            total=$(echo "$resp" | jq '.paging.total // 0')
+            [ $((page * 500)) -ge "$total" ] && break
+            page=$((page + 1))
+          done
+          jq -s 'add' /tmp/sonar_hotspots_*.json > /tmp/sonar_all_hotspots.json 2>/dev/null || echo '[]' > /tmp/sonar_all_hotspots.json
+
+          jq -n \
+            --arg project "$SONAR_PROJECT_KEY" \
+            --arg generatedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg branch "${GITHUB_REF_NAME}" \
+            --slurpfile qualityGate /tmp/sonar_qg.json \
+            --slurpfile measures /tmp/sonar_measures.json \
+            --slurpfile issues /tmp/sonar_all_issues.json \
+            --slurpfile hotspots /tmp/sonar_all_hotspots.json \
+            '{
+              metadata: {
+                generatedAt: $generatedAt,
+                projectKey: $project,
+                sonarcloudUrl: ("https://sonarcloud.io/project/overview?id=" + $project),
+                branch: $branch
+              },
+              qualityGate: $qualityGate[0],
+              measures: $measures[0],
+              issues: $issues[0],
+              hotspots: $hotspots[0]
+            }' > sonarcloud-report.json
+
+      - name: Upload SonarCloud report artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
+        with:
+          name: sonarcloud-report
+          path: sonarcloud-report.json
+          retention-days: 7
