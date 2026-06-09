@@ -39,7 +39,7 @@ public sealed class RetrievalQualityFixture : IAsyncLifetime
         var metadataRepository = new MetadataRepository(dataSource);
         var embeddingService = new EmbeddingService(
             new SemanticFakeEmbeddingGenerator(), 5, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
-        SearchService = new SearchService(repository, metadataRepository, embeddingService, NullLogger<SearchService>.Instance);
+        SearchService = new SearchService(repository, metadataRepository, embeddingService);
     }
 
     public async ValueTask DisposeAsync()

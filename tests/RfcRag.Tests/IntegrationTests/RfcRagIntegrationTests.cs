@@ -255,7 +255,7 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
         await using var dataSource = await CreateMigratedDataSourceAsync();
         var repository = new SearchRepository(dataSource);
         var metadataRepository = new MetadataRepository(dataSource);
-        var service = new SearchService(repository, metadataRepository, CreateEmbeddingService(), NullLogger<SearchService>.Instance);
+        var service = new SearchService(repository, metadataRepository, CreateEmbeddingService());
 
         var sectionId1 = Guid.NewGuid();
         var sectionId2 = Guid.NewGuid();
@@ -319,7 +319,7 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
     }
 
     private static SearchService CreateSearchService(NpgsqlDataSource dataSource) =>
-        new(new SearchRepository(dataSource), new MetadataRepository(dataSource), CreateEmbeddingService(), NullLogger<SearchService>.Instance);
+        new(new SearchRepository(dataSource), new MetadataRepository(dataSource), CreateEmbeddingService());
 
     private static EmbeddingService CreateEmbeddingService() =>
         new(new FakeEmbeddingGenerator(), 5, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);

@@ -571,42 +571,6 @@ public sealed class RfcRagToolsTests
     }
 
     [Fact]
-    public async Task SearchService_SearchAsync_LogsErrorBeforeThrow()
-    {
-        var logger = new RecordingLogger<SearchService>();
-        SearchService search = await CreateSearchServiceWithDisposedDataSourceAsync(logger);
-
-        await Assert.ThrowsAsync<ObjectDisposedException>(
-            () => search.SearchAsync("test", 10, null, CancellationToken.None));
-
-        Assert.Contains(logger.Calls, call => call.Level == LogLevel.Error && call.Message.Contains("search_rfc", StringComparison.Ordinal));
-    }
-
-    [Fact]
-    public async Task SearchService_SearchNormativeAsync_LogsErrorBeforeThrow()
-    {
-        var logger = new RecordingLogger<SearchService>();
-        SearchService search = await CreateSearchServiceWithDisposedDataSourceAsync(logger);
-
-        await Assert.ThrowsAsync<ObjectDisposedException>(
-            () => search.SearchNormativeAsync("MUST", null, 10, CancellationToken.None));
-
-        Assert.Contains(logger.Calls, call => call.Level == LogLevel.Error && call.Message.Contains("search_normative", StringComparison.Ordinal));
-    }
-
-    [Fact]
-    public async Task SearchService_SearchAbnfAsync_LogsErrorBeforeThrow()
-    {
-        var logger = new RecordingLogger<SearchService>();
-        SearchService search = await CreateSearchServiceWithDisposedDataSourceAsync(logger);
-
-        await Assert.ThrowsAsync<ObjectDisposedException>(
-            () => search.SearchAbnfAsync("ALPHA", null, 10, CancellationToken.None));
-
-        Assert.Contains(logger.Calls, call => call.Level == LogLevel.Error && call.Message.Contains("search_abnf", StringComparison.Ordinal));
-    }
-
-    [Fact]
     public async Task SearchNormative_WhenSearchThrows_PropagatesException()
     {
         var expected = new InvalidOperationException("DB down");
@@ -685,7 +649,7 @@ public sealed class RfcRagToolsTests
         Assert.Single(doc.RootElement.EnumerateArray());
     }
 
-    private static async Task<SearchService> CreateSearchServiceWithDisposedDataSourceAsync(ILogger<SearchService> logger)
+    private static async Task<SearchService> CreateSearchServiceWithDisposedDataSourceAsync()
     {
         var dataSource = NpgsqlDataSource.Create("Host=localhost;Username=postgres;Password=postgres;Database=postgres");
         await dataSource.DisposeAsync();
@@ -693,8 +657,7 @@ public sealed class RfcRagToolsTests
         return new SearchService(
             new SearchRepository(dataSource),
             new MetadataRepository(dataSource),
-            CreateEmbeddingService(),
-            logger);
+            CreateEmbeddingService());
     }
 
     private static EmbeddingService CreateEmbeddingService() =>

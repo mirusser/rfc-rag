@@ -124,8 +124,7 @@ public sealed class EmbeddingDimensionMigrationTests : IAsyncLifetime
         var searchService = new SearchService(
             new SearchRepository(dataSource!),
             new MetadataRepository(dataSource!),
-            embeddingService,
-            NullLogger<SearchService>.Instance);
+            embeddingService);
 
         return new RfcRagStartupService(
             options,
