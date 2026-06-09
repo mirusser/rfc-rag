@@ -12,7 +12,7 @@ internal sealed class MissingApiKeyEmbeddingGenerator : IEmbeddingGenerator<stri
 {
     public void Dispose() { }
 
-    public object? GetService(Type? serviceType, object? key = null) => null;
+    public object? GetService(Type? serviceType, object? serviceKey = null) => null;
 
     public Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
         IEnumerable<string> values,

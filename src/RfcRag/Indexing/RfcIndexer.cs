@@ -168,13 +168,13 @@ public sealed class RfcIndexer(
                         sections,
                         cancellationToken).ConfigureAwait(false);
 
-                    await repository.InsertAbnfBlocksAsync(
+                    await IndexingRepository.InsertAbnfBlocksAsync(
                         connection,
                         transaction,
                         document.AbnfBlocks,
                         cancellationToken).ConfigureAwait(false);
 
-                    await repository.InsertNormativeOccurrencesAsync(
+                    await IndexingRepository.InsertNormativeOccurrencesAsync(
                         connection,
                         transaction,
                         document.NormativeOccurrences,
@@ -183,18 +183,19 @@ public sealed class RfcIndexer(
                     await repository.UpsertIndexedRfcAsync(
                         connection,
                         transaction,
-                        document.Metadata.Number,
-                        sourcePath,
-                        sourceSha256,
-                        document.Metadata.Title,
-                        sections.Count,
-                        document.Metadata.Updates,
-                        document.Metadata.Obsoletes,
-                        document.Metadata.Date,
-                        document.Metadata.Category,
-                        document.Metadata.Authors,
-                        document.Metadata.Issn,
-                        document.Metadata.GrammarStyle,
+                        new IndexedRfcData(
+                            document.Metadata.Number,
+                            sourcePath,
+                            sourceSha256,
+                            document.Metadata.Title,
+                            sections.Count,
+                            document.Metadata.Updates,
+                            document.Metadata.Obsoletes,
+                            document.Metadata.Date,
+                            document.Metadata.Category,
+                            document.Metadata.Authors,
+                            document.Metadata.Issn,
+                            document.Metadata.GrammarStyle),
                         cancellationToken).ConfigureAwait(false);
 
                     await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);

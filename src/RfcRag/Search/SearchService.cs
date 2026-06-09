@@ -3,8 +3,7 @@ namespace RfcRag.Search;
 public sealed class SearchService(
     SearchRepository searchRepository,
     MetadataRepository metadataRepository,
-    EmbeddingService embeddingService,
-    ILogger<SearchService> logger) : ISearchService
+    EmbeddingService embeddingService) : ISearchService
 {
 
     public async Task<IReadOnlyList<SearchResult>> SearchAsync(
@@ -15,36 +14,28 @@ public sealed class SearchService(
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(query);
 
-        try
+        int fetchLimit = normativeKeyword is not null ? limit * 3 : limit;
+
+        IReadOnlyList<float[]> embeddings = await embeddingService.GenerateEmbeddingsAsync(
+            [query],
+            cancellationToken).ConfigureAwait(false);
+
+        IReadOnlyList<SearchResult> results = await searchRepository.SearchHybridAsync(
+            query,
+            embeddings[0],
+            fetchLimit,
+            cancellationToken).ConfigureAwait(false);
+
+        if (!string.IsNullOrWhiteSpace(normativeKeyword))
         {
-            int fetchLimit = normativeKeyword is not null ? limit * 3 : limit;
+            var sectionIds = results.Select(r => r.Id).ToList();
+            HashSet<Guid> matchingIds = await searchRepository.FilterSectionsByNormativeKeywordAsync(
+                sectionIds, normativeKeyword, cancellationToken).ConfigureAwait(false);
 
-            IReadOnlyList<float[]> embeddings = await embeddingService.GenerateEmbeddingsAsync(
-                [query],
-                cancellationToken).ConfigureAwait(false);
-
-            IReadOnlyList<SearchResult> results = await searchRepository.SearchHybridAsync(
-                query,
-                embeddings[0],
-                fetchLimit,
-                cancellationToken).ConfigureAwait(false);
-
-            if (!string.IsNullOrWhiteSpace(normativeKeyword))
-            {
-                var sectionIds = results.Select(r => r.Id).ToList();
-                HashSet<Guid> matchingIds = await searchRepository.FilterSectionsByNormativeKeywordAsync(
-                    sectionIds, normativeKeyword, cancellationToken).ConfigureAwait(false);
-
-                results = results.Where(r => matchingIds.Contains(r.Id)).Take(limit).ToArray();
-            }
-
-            return results;
+            results = results.Where(r => matchingIds.Contains(r.Id)).Take(limit).ToArray();
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "search_rfc failed for query={Query}", query);
-            throw;
-        }
+
+        return results;
     }
 
     public Task<RfcSection?> GetSectionAsync(int rfcNumber, string section, CancellationToken cancellationToken) =>
@@ -53,41 +44,19 @@ public sealed class SearchService(
     public Task<IReadOnlyList<RfcSection>> GetRfcAsync(int rfcNumber, CancellationToken cancellationToken) =>
         searchRepository.GetRfcAsync(rfcNumber, cancellationToken);
 
-    public async Task<IReadOnlyList<SearchResult>> SearchNormativeAsync(
+    public Task<IReadOnlyList<SearchResult>> SearchNormativeAsync(
         string keyword,
         int[]? rfcNumbers,
         int limit,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            return await searchRepository.SearchNormativeAsync(keyword, rfcNumbers, limit, cancellationToken)
-                .ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "search_normative failed for keyword={Keyword}", keyword);
-            throw;
-        }
-    }
+        CancellationToken cancellationToken) =>
+        searchRepository.SearchNormativeAsync(keyword, rfcNumbers, limit, cancellationToken);
 
-    public async Task<IReadOnlyList<SearchResult>> SearchAbnfAsync(
+    public Task<IReadOnlyList<SearchResult>> SearchAbnfAsync(
         string query,
         int[]? rfcNumbers,
         int limit,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            return await searchRepository.SearchAbnfAsync(query, rfcNumbers, limit, cancellationToken)
-                .ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "search_abnf failed for query={Query}", query);
-            throw;
-        }
-    }
+        CancellationToken cancellationToken) =>
+        searchRepository.SearchAbnfAsync(query, rfcNumbers, limit, cancellationToken);
 
     public Task<RfcMetadata?> GetRfcMetadataAsync(int rfcNumber, CancellationToken cancellationToken) =>
         metadataRepository.GetIndexedRfcMetadataAsync(rfcNumber, cancellationToken);

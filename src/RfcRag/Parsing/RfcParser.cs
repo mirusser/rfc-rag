@@ -4,6 +4,7 @@ namespace RfcRag.Parsing;
 
 public sealed partial class RfcParser
 {
+    private const string StatusOfThisMemo = "Status of This Memo";
     public async Task<RfcDocument> ParseAsync(string filePath, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
@@ -122,7 +123,7 @@ public sealed partial class RfcParser
 
         // Fallback: walk backwards from "Status of This Memo" to find indented title.
         // Needed for RFCs without an Abstract heading (e.g. RFC 3986).
-        int statusPos = rawText.IndexOf("Status of This Memo", StringComparison.OrdinalIgnoreCase);
+        int statusPos = rawText.IndexOf(StatusOfThisMemo, StringComparison.OrdinalIgnoreCase);
         if (statusPos > 0)
         {
             string beforeStatus = rawText[..statusPos];
@@ -140,7 +141,7 @@ public sealed partial class RfcParser
                 }
 
                 bool startsWithFiveSpaces = lines[i].Length > 5 && lines[i].AsSpan(0, 5).IndexOfAnyExcept(' ') < 0;
-                if (startsWithFiveSpaces && !trimmed.StartsWith("Status of This Memo", StringComparison.OrdinalIgnoreCase))
+                if (startsWithFiveSpaces && !trimmed.StartsWith(StatusOfThisMemo, StringComparison.OrdinalIgnoreCase))
                 {
                     foundIndented = true;
                     titleLines.Insert(0, trimmed);
@@ -224,14 +225,14 @@ public sealed partial class RfcParser
     {
         // Find "Status of This Memo" and strip everything up to and including
         // the indented status paragraph that follows it.
-        int statusIndex = text.IndexOf("Status of This Memo", StringComparison.OrdinalIgnoreCase);
+        int statusIndex = text.IndexOf(StatusOfThisMemo, StringComparison.OrdinalIgnoreCase);
         if (statusIndex < 0)
             return text;
 
         // Walk forward from Status heading, skipping blank lines and the indented
         // status paragraph. Stop at the first non-indented, non-blank line
         // (typically "Abstract", "Copyright Notice", or a section heading like "1.  ").
-        int pos = statusIndex + "Status of This Memo".Length;
+        int pos = statusIndex + StatusOfThisMemo.Length;
 
         while (pos < text.Length)
         {

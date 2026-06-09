@@ -45,7 +45,7 @@ public sealed class IndexingRepository(NpgsqlDataSource dataSource)
                 cmd.Parameters.AddWithValue("SourcePath", section.SourcePath);
                 cmd.Parameters.AddWithValue("Url", section.Url);
                 cmd.Parameters.AddWithValue("SourceSha256", section.SourceSha256);
-                cmd.Parameters.Add(new NpgsqlParameter("Embedding", NpgsqlDbType.Array | NpgsqlDbType.Real) { Value = (object?)section.Embedding ?? DBNull.Value });
+                cmd.Parameters.Add(new NpgsqlParameter("Embedding", NpgsqlDbType.Array | NpgsqlDbType.Real) { Value = (object?)section.Embedding ?? DBNull.Value }); // NOSONAR: bitwise OR is the documented Npgsql pattern for typed array parameters
                 batch.BatchCommands.Add(cmd);
             }
 
@@ -53,7 +53,7 @@ public sealed class IndexingRepository(NpgsqlDataSource dataSource)
         }
     }
 
-    public async Task InsertAbnfBlocksAsync(
+    public static async Task InsertAbnfBlocksAsync(
         NpgsqlConnection connection,
         NpgsqlTransaction transaction,
         IReadOnlyList<RfcAbnfBlock> blocks,
@@ -93,7 +93,7 @@ public sealed class IndexingRepository(NpgsqlDataSource dataSource)
         }
     }
 
-    public async Task InsertNormativeOccurrencesAsync(
+    public static async Task InsertNormativeOccurrencesAsync(
         NpgsqlConnection connection,
         NpgsqlTransaction transaction,
         IReadOnlyList<NormativeOccurrence> occurrences,
@@ -156,25 +156,15 @@ public sealed class IndexingRepository(NpgsqlDataSource dataSource)
     public async Task UpsertIndexedRfcAsync(
         NpgsqlConnection connection,
         NpgsqlTransaction transaction,
-        int rfcNumber,
-        string sourcePath,
-        string sourceSha256,
-        string title,
-        int sectionCount,
-        int[] updates,
-        int[] obsoletes,
-        string? date,
-        string? category,
-        string[] authors,
-        string? issn,
-        string grammarStyle,
+        IndexedRfcData data,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(connection);
         ArgumentNullException.ThrowIfNull(transaction);
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourceSha256);
-        ArgumentException.ThrowIfNullOrWhiteSpace(title);
+        ArgumentNullException.ThrowIfNull(data);
+        ArgumentException.ThrowIfNullOrWhiteSpace(data.SourcePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(data.SourceSha256);
+        ArgumentException.ThrowIfNullOrWhiteSpace(data.Title);
 
         await connection.ExecuteAsync(new CommandDefinition(
             """
@@ -200,18 +190,18 @@ public sealed class IndexingRepository(NpgsqlDataSource dataSource)
             """,
             new
             {
-                RfcNumber = rfcNumber,
-                SourcePath = sourcePath,
-                SourceSha256 = sourceSha256,
-                Title = title,
-                SectionCount = sectionCount,
-                Updates = updates,
-                Obsoletes = obsoletes,
-                Date = date,
-                Category = category,
-                Authors = authors,
-                Issn = issn,
-                GrammarStyle = grammarStyle
+                data.RfcNumber,
+                data.SourcePath,
+                data.SourceSha256,
+                data.Title,
+                data.SectionCount,
+                data.Updates,
+                data.Obsoletes,
+                data.Date,
+                data.Category,
+                data.Authors,
+                data.Issn,
+                data.GrammarStyle
             },
             transaction,
             cancellationToken: cancellationToken)).ConfigureAwait(false);

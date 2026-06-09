@@ -121,7 +121,8 @@ internal sealed class RfcRagStartupService(
                 .ConfigureAwait(false);
             await using var _ = transaction.ConfigureAwait(false);
 
-            await connection.ExecuteAsync(
+            // targetDimensions is a positive integer from application configuration — SQL injection is not possible.
+            await connection.ExecuteAsync( // NOSONAR
                 $"""
                 alter table rfc_rag.rfc_sections drop column if exists embedding;
                 alter table rfc_rag.rfc_sections add column embedding vector({targetDimensions});
@@ -130,13 +131,11 @@ internal sealed class RfcRagStartupService(
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        logger.LogInformation(
-            "Embedding column reset to {Dimensions} dimensions. Starting full reindex.",
-            targetDimensions);
-
         await indexer.IndexAllAsync(cancellationToken).ConfigureAwait(false);
 
-        logger.LogInformation("Reindex complete after embedding column reset.");
+        logger.LogInformation(
+            "Embedding column reset to {Dimensions} dimensions. Reindex complete.",
+            targetDimensions);
         return false;
     }
 
