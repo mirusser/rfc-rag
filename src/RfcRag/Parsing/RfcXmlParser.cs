@@ -108,6 +108,7 @@ public sealed partial class RfcXmlParser
         {
             result.Add(new RfcSection
             {
+                Id = Guid.NewGuid(),
                 RfcNumber = rfcNumber,
                 Title = title,
                 Section = sectionNumber,

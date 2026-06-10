@@ -110,7 +110,8 @@ public sealed class EmbeddingDimensionMigrationTests : IAsyncLifetime
         });
 
         var embeddingService = new EmbeddingService(
-            new FakeEmbeddingGenerator(targetDimensions), 5, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
+            new FakeEmbeddingGenerator(targetDimensions), new EmbeddingRetryPolicy(TimeProvider.System),
+            5, targetDimensions, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
 
         var indexer = new RfcIndexer(
             dataSource!,

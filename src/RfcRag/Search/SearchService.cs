@@ -1,6 +1,6 @@
 namespace RfcRag.Search;
 
-public sealed class SearchService(
+internal sealed class SearchService(
     SearchRepository searchRepository,
     MetadataRepository metadataRepository,
     EmbeddingService embeddingService) : ISearchService
@@ -14,28 +14,19 @@ public sealed class SearchService(
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(query);
 
-        int fetchLimit = normativeKeyword is not null ? limit * 3 : limit;
+        // Normalize whitespace-only keyword to null so the SQL predicate is not applied
+        string? keyword = string.IsNullOrWhiteSpace(normativeKeyword) ? null : normativeKeyword;
 
         IReadOnlyList<float[]> embeddings = await embeddingService.GenerateEmbeddingsAsync(
             [query],
             cancellationToken).ConfigureAwait(false);
 
-        IReadOnlyList<SearchResult> results = await searchRepository.SearchHybridAsync(
+        return await searchRepository.SearchHybridAsync(
             query,
             embeddings[0],
-            fetchLimit,
+            limit,
+            keyword,
             cancellationToken).ConfigureAwait(false);
-
-        if (!string.IsNullOrWhiteSpace(normativeKeyword))
-        {
-            var sectionIds = results.Select(r => r.Id).ToList();
-            HashSet<Guid> matchingIds = await searchRepository.FilterSectionsByNormativeKeywordAsync(
-                sectionIds, normativeKeyword, cancellationToken).ConfigureAwait(false);
-
-            results = results.Where(r => matchingIds.Contains(r.Id)).Take(limit).ToArray();
-        }
-
-        return results;
     }
 
     public Task<RfcSection?> GetSectionAsync(int rfcNumber, string section, CancellationToken cancellationToken) =>

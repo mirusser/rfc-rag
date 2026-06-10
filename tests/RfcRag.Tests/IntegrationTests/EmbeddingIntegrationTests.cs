@@ -164,5 +164,6 @@ public sealed class EmbeddingIntegrationTests : IAsyncLifetime
     }
 
     private static EmbeddingService CreateSemanticEmbeddingService() =>
-        new(new SemanticFakeEmbeddingGenerator(), batchSize: 20, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
+        new(new SemanticFakeEmbeddingGenerator(), new EmbeddingRetryPolicy(TimeProvider.System),
+            batchSize: 20, embeddingDimensions: 1536, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
 }

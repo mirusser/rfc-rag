@@ -168,7 +168,7 @@ public sealed partial class RfcParser
         var match = FieldRegex().Match(text, 0);
         while (match.Success)
         {
-            if (match.Groups[1].Value.Equals(fieldName, StringComparison.Ordinal))
+            if (match.Groups[1].Value.Trim().Equals(fieldName, StringComparison.Ordinal))
                 return match.Groups[2].Value.Trim();
             match = match.NextMatch();
         }
@@ -187,15 +187,26 @@ public sealed partial class RfcParser
         var match = FieldRegex().Match(text, 0);
         while (match.Success)
         {
-            if (match.Groups[1].Value.Equals(fieldName, StringComparison.Ordinal))
+            if (match.Groups[1].Value.Trim().Equals(fieldName, StringComparison.Ordinal))
             {
                 string value = match.Groups[2].Value.Trim();
                 return string.IsNullOrWhiteSpace(value)
                     ? []
                     : value.Split(',').Select(s =>
                     {
-                        var m = RfcRefRegex().Match(s.Trim());
-                        return m.Success ? int.Parse(m.Groups[1].Value) : 0;
+                        string token = s.Trim();
+                        // Plain number ("793")
+                        if (int.TryParse(token, out int direct) && direct > 0)
+                            return direct;
+                        // "RFC 793" / "rfc793" forms
+                        var m = RfcRefRegex().Match(token);
+                        if (m.Success) return int.Parse(m.Groups[1].Value);
+                        // Leading-digits form: "4234   Author Name" seen in pre-2000 RFC headers
+                        int digitEnd = 0;
+                        while (digitEnd < token.Length && char.IsAsciiDigit(token[digitEnd])) digitEnd++;
+                        if (digitEnd > 0 && int.TryParse(token[..digitEnd], out int leading) && leading > 0)
+                            return leading;
+                        return 0;
                     }).Where(n => n > 0).ToArray();
             }
             match = match.NextMatch();
@@ -360,7 +371,7 @@ public sealed partial class RfcParser
 
         FlushSection();
 
-        return sections.AsReadOnly();
+        return sections;
     }
 
     private static IReadOnlyList<RfcAbnfBlock> ExtractAbnfBlocks(
@@ -431,7 +442,7 @@ public sealed partial class RfcParser
             }
         }
 
-        return blocks.AsReadOnly();
+        return blocks;
     }
 
     private static string[] ExtractRuleNames(string abnfText)
@@ -483,7 +494,7 @@ public sealed partial class RfcParser
             }
         }
 
-        return occurrences.AsReadOnly();
+        return occurrences;
     }
 
     private static string DetectGrammarStyle(IReadOnlyList<RfcSection> sections)
@@ -545,8 +556,9 @@ public sealed partial class RfcParser
 
     // Longest-first alternation ensures "MUST NOT" is matched before "MUST" at the same position,
     // preventing "MUST NOT" from being counted as both "MUST NOT" and "MUST".
+    // No IgnoreCase: only UPPERCASE keywords have normative meaning per RFC 8174.
     [GeneratedRegex(@"\b(MUST NOT|MUST|REQUIRED|SHALL NOT|SHALL|SHOULD NOT|SHOULD|NOT RECOMMENDED|RECOMMENDED|MAY|OPTIONAL)\b",
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 1000)]
+        RegexOptions.CultureInvariant, 1000)]
     private static partial Regex NormativeKeywordsRegex();
 
     [GeneratedRegex(@"rfc(\d+)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 1000)]

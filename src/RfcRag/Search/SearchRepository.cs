@@ -100,11 +100,14 @@ public sealed class SearchRepository(NpgsqlDataSource dataSource)
     /// <summary>
     /// Hybrid search combining vector similarity and full-text lexical search
     /// with reciprocal rank fusion (RRF).
+    /// When <paramref name="normativeKeyword"/> is provided, only sections containing that
+    /// uppercase normative keyword are eligible candidates (filtered inside both CTEs).
     /// </summary>
     public async Task<IReadOnlyList<SearchResult>> SearchHybridAsync(
         string query,
         float[] embedding,
         int limit,
+        string? normativeKeyword,
         CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(query);
@@ -121,12 +124,16 @@ public sealed class SearchRepository(NpgsqlDataSource dataSource)
                     select id, row_number() over (order by ts_rank(search_vector, plainto_tsquery('english', @Query)) desc) as rank
                     from rfc_rag.rfc_sections
                     where plainto_tsquery('english', @Query) @@ search_vector
+                      {{(normativeKeyword is not null ? "and exists (select 1 from rfc_rag.normative_occurrences o where o.section_id = rfc_sections.id and o.keyword = upper(@NormativeKeyword))" : "")}}
+                    order by ts_rank(search_vector, plainto_tsquery('english', @Query)) desc
                     limit @CandidateLimit
                 ),
                 vector as (
                     select id, row_number() over (order by embedding <=> cast(@Embedding as vector)) as rank
                     from rfc_rag.rfc_sections
                     where embedding is not null
+                      {{(normativeKeyword is not null ? "and exists (select 1 from rfc_rag.normative_occurrences o where o.section_id = rfc_sections.id and o.keyword = upper(@NormativeKeyword))" : "")}}
+                    order by embedding <=> cast(@Embedding as vector)
                     limit @CandidateLimit
                 ),
                 fused as (
@@ -148,6 +155,7 @@ public sealed class SearchRepository(NpgsqlDataSource dataSource)
                 {
                     Query = query,
                     Embedding = embedding,
+                    NormativeKeyword = normativeKeyword ?? string.Empty,
                     CandidateLimit = candidateLimit,
                     Limit = normalizedLimit
                 },
@@ -242,36 +250,6 @@ public sealed class SearchRepository(NpgsqlDataSource dataSource)
                 cancellationToken: cancellationToken)).ConfigureAwait(false);
 
             return results.AsList();
-        }
-    }
-
-    /// <summary>
-    /// Filter a set of section IDs to only those that contain a specific normative keyword.
-    /// Returns the subset of candidate section IDs that have a matching entry in normative_occurrences.
-    /// </summary>
-    public async Task<HashSet<Guid>> FilterSectionsByNormativeKeywordAsync(
-        IReadOnlyList<Guid> sectionIds,
-        string keyword,
-        CancellationToken cancellationToken)
-    {
-        if (sectionIds.Count == 0)
-            return [];
-
-        ArgumentException.ThrowIfNullOrWhiteSpace(keyword);
-
-        var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        await using (connection.ConfigureAwait(false))
-        {
-            var ids = await connection.QueryAsync<Guid>(new CommandDefinition(
-                """
-                select distinct section_id
-                from rfc_rag.normative_occurrences
-                where section_id = any(@SectionIds) and keyword = upper(@Keyword)
-                """,
-                new { SectionIds = sectionIds.ToArray(), Keyword = keyword },
-                cancellationToken: cancellationToken)).ConfigureAwait(false);
-
-            return ids.ToHashSet();
         }
     }
 

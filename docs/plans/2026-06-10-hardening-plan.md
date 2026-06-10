@@ -381,4 +381,11 @@ Follow-ups section below — no silent skips, no scope creep.
 
 ## Follow-ups (populated during Task 7)
 
-- (none yet)
+- **rfc822 appendix sections**: `SectionHeadingRegex` does not match bare-letter appendix style
+  (`A. EXAMPLES`), so RFC 822 appendices A–D and sub-sections like `A.1.1` are not split into
+  separate sections. The regex currently requires either a digit-prefix heading (`1.`, `1.1.`)
+  or the explicit word `Appendix` (`Appendix A.`). A fix would extend the regex to also match
+  bare-letter appendix headings — but any such change must avoid false positives (e.g. `B.
+  Sockets` in a non-appendix section). The characterization test is skipped with
+  `known-issue: SectionHeadingRegex does not match bare-letter appendix style`.
+  (`tests/RfcRag.Tests/UnitTests/RfcParserTests.cs`)

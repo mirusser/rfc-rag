@@ -38,7 +38,8 @@ public sealed class RetrievalQualityFixture : IAsyncLifetime
         var repository = new SearchRepository(dataSource);
         var metadataRepository = new MetadataRepository(dataSource);
         var embeddingService = new EmbeddingService(
-            new SemanticFakeEmbeddingGenerator(), 5, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
+            new SemanticFakeEmbeddingGenerator(), new EmbeddingRetryPolicy(TimeProvider.System),
+            5, embeddingDimensions: 1536, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
         SearchService = new SearchService(repository, metadataRepository, embeddingService);
     }
 
@@ -70,7 +71,8 @@ public sealed class RetrievalQualityFixture : IAsyncLifetime
     private static async Task IndexRfcsAsync(NpgsqlDataSource dataSource, string rfcDir)
     {
         var embeddingService = new EmbeddingService(
-            new SemanticFakeEmbeddingGenerator(), 5, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
+            new SemanticFakeEmbeddingGenerator(), new EmbeddingRetryPolicy(TimeProvider.System),
+            5, embeddingDimensions: 1536, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
 
         var options = Options.Create(new RfcRagOptions
         {

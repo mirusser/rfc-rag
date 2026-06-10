@@ -91,7 +91,7 @@ public sealed class LiveApiFixture : IAsyncLifetime
     public bool HasApiKey => !string.IsNullOrEmpty(ApiKey);
 
     public NpgsqlDataSource? DataSource { get; private set; }
-    public EmbeddingService? EmbeddingService { get; private set; }
+    internal EmbeddingService? EmbeddingService { get; private set; }
     public int IndexedCount { get; private set; }
 
     public async ValueTask InitializeAsync()
@@ -114,7 +114,9 @@ public sealed class LiveApiFixture : IAsyncLifetime
 
         EmbeddingService = new EmbeddingService(
             OpenAiEmbeddingGeneratorAdapter.Create(ApiKey!, rfcOptions.OpenRouterEmbeddingEndpoint, rfcOptions.EmbeddingModel),
+            new EmbeddingRetryPolicy(TimeProvider.System),
             rfcOptions.EmbeddingBatchSize,
+            rfcOptions.EmbeddingDimensions,
             rfcOptions.MaxEmbeddingConcurrency,
             NullLogger<EmbeddingService>.Instance);
 

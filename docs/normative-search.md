@@ -49,10 +49,12 @@ search_rfc(query="encryption transport security", normative_keyword="MUST NOT", 
 The pipeline:
 
 1. **Semantic search** — generates embedding for the query, searches pgvector,
-   fetches top N×3 candidate sections (wider net to avoid missing matches after filtering)
-2. **Normative filter** — cross-references candidate section IDs against
-   `normative_occurrences WHERE keyword = 'MUST NOT'`, keeps only matching IDs
-3. **Trim** — returns top N results, preserving semantic relevance ranking
+   fetches top N×4 candidate sections from each CTE (lexical and vector arms)
+2. **Normative filter (SQL-side)** — both CTEs include an `EXISTS` predicate against
+   `normative_occurrences WHERE keyword = @NormativeKeyword`, so the candidate pool
+   is filtered *before* ranking. No in-memory post-filter, no overscan trick.
+3. **RRF fusion** — reciprocal rank fusion combines the filtered lexical and vector
+   candidate pools, then the outer query trims to the requested limit.
 
 The normative table is just an indexed lookup — it's not the primary search. Semantic
 search finds the *topic*, the normative filter adds the *requirement level*. This is

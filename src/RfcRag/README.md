@@ -10,10 +10,10 @@ ABNF grammar extraction, normative keyword indexing, MCP tool exposure
 ## MCP Tools
 
 ### `search_rfc`
-Hybrid search combining vector similarity and full-text lexical search with reciprocal rank fusion.
+Hybrid search combining vector similarity and full-text lexical search with reciprocal rank fusion. Supports normative keyword filtering via the `normative_keyword` parameter (applied inside the SQL, no in-memory post-filter).
 
 ```
-Parameters: query (string), limit (int, default=10)
+Parameters: query (string), limit (int, default=10), normative_keyword (string?, optional, e.g. "MUST NOT", "SHOULD")
 Returns: JSON array of { rfcNumber, title, section, heading, excerpt, sourcePath, url, score }
 ```
 
@@ -123,6 +123,9 @@ Returns: JSON object with { total, rfcs: [{ rfcNumber, title, ... }] }
 - `Settings/RfcRagOptions.cs` — configuration options
 - `Infrastructure/RfcRagConventions.cs` — database schema and table name conventions
 - `Indexing/EmbeddingService.cs` — batch text embedding generation
+- `Indexing/EmbeddingRetryPolicy.cs` — retry/backoff/classification for embedding API calls
+- `Indexing/RfcSourceResolver.cs` — deterministic RFC source file discovery (TXT primary, XML fallback)
+- `Settings/RfcRagOptionsValidator.cs` — startup config validation with aggregated error reporting
 - `Search/ISearchService.cs` — search and retrieval interface
 - `Indexing/IIndexerService.cs` — indexing service interface
 - `SearchResult.cs` — ranked search result model

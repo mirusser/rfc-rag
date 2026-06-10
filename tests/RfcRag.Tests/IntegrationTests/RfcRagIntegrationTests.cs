@@ -180,76 +180,6 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task FilterSectionsByNormativeKeyword_ExistingKeyword_ReturnsMatches()
-    {
-        await using var dataSource = await CreateMigratedDataSourceAsync();
-        var repository = new SearchRepository(dataSource);
-
-        var sectionId1 = Guid.NewGuid();
-        var sectionId2 = Guid.NewGuid();
-        var sectionId3 = Guid.NewGuid();
-
-        await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
-        await connection.ExecuteAsync(
-            """
-            insert into rfc_rag.rfc_sections (id, rfc_number, title, section, heading, text, source_path, url, source_sha256)
-            values
-              (@Id1, 2119, 'Key words', '1', 'Intro', 'test', '/mirror/rfc2119.txt', 'https://example.com', 'abc'),
-              (@Id2, 2119, 'Key words', '2', 'Definitions', 'test', '/mirror/rfc2119.txt', 'https://example.com', 'abc'),
-              (@Id3, 2119, 'Key words', '3', 'Other', 'test', '/mirror/rfc2119.txt', 'https://example.com', 'abc')
-            """,
-            new { Id1 = sectionId1, Id2 = sectionId2, Id3 = sectionId3 });
-        await connection.ExecuteAsync(
-            """
-            insert into rfc_rag.normative_occurrences (id, section_id, rfc_number, keyword, line_offset)
-            values
-              (@OccId1, @Id1, 2119, 'MUST NOT', 20),
-              (@OccId2, @Id1, 2119, 'SHOULD', 30),
-              (@OccId3, @Id3, 2119, 'MUST NOT', 15)
-            """,
-            new { OccId1 = Guid.NewGuid(), OccId2 = Guid.NewGuid(), OccId3 = Guid.NewGuid(), Id1 = sectionId1, Id3 = sectionId3 });
-
-        var candidates = new List<Guid> { sectionId1, sectionId2, sectionId3 };
-        HashSet<Guid> filtered = await repository.FilterSectionsByNormativeKeywordAsync(
-            candidates, "MUST NOT", CancellationToken.None);
-
-        Assert.Contains(sectionId1, filtered);
-        Assert.Contains(sectionId3, filtered);
-        Assert.DoesNotContain(sectionId2, filtered);
-        Assert.Equal(2, filtered.Count);
-    }
-
-    [Fact]
-    public async Task FilterSectionsByNormativeKeyword_NoMatches_ReturnsEmpty()
-    {
-        await using var dataSource = await CreateMigratedDataSourceAsync();
-        var repository = new SearchRepository(dataSource);
-
-        var sectionId = Guid.NewGuid();
-        await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
-        await connection.ExecuteAsync(
-            "insert into rfc_rag.rfc_sections (id, rfc_number, title, section, heading, text, source_path, url, source_sha256) values (@Id, 2119, 'Key words', '1', 'Intro', 'test', '/mirror/rfc2119.txt', 'https://example.com', 'abc')",
-            new { Id = sectionId });
-
-        HashSet<Guid> filtered = await repository.FilterSectionsByNormativeKeywordAsync(
-            [sectionId], "SHALL NOT", CancellationToken.None);
-
-        Assert.Empty(filtered);
-    }
-
-    [Fact]
-    public async Task FilterSectionsByNormativeKeyword_EmptyCandidates_ReturnsEmpty()
-    {
-        await using var dataSource = await CreateMigratedDataSourceAsync();
-        var repository = new SearchRepository(dataSource);
-
-        HashSet<Guid> filtered = await repository.FilterSectionsByNormativeKeywordAsync(
-            [], "MUST", CancellationToken.None);
-
-        Assert.Empty(filtered);
-    }
-
-    [Fact]
     public async Task SearchAsync_WithNormativeKeyword_FiltersResults()
     {
         await using var dataSource = await CreateMigratedDataSourceAsync();
@@ -289,6 +219,229 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
         Assert.All(filteredResults, r => Assert.NotEqual(sectionId2, r.Id));
     }
 
+    [Fact]
+    public async Task SearchAsync_KeywordWithNoMatches_ReturnsEmpty()
+    {
+        await using var dataSource = await CreateMigratedDataSourceAsync();
+        var repository = new SearchRepository(dataSource);
+        var metadataRepository = new MetadataRepository(dataSource);
+        var service = new SearchService(repository, metadataRepository, CreateEmbeddingService());
+
+        var sectionId1 = Guid.NewGuid();
+        var sectionId2 = Guid.NewGuid();
+
+        await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
+        await connection.ExecuteAsync(
+            """
+            insert into rfc_rag.rfc_sections (id, rfc_number, title, section, heading, text, source_path, url, source_sha256)
+            values
+              (@Id1, 2119, 'Key words', '1', 'Introduction', 'The key words MUST use encryption', '/rfc2119.txt', 'https://example.com/rfc2119', 'abc'),
+              (@Id2, 2119, 'Key words', '2', 'Definitions', 'Definitions of MUST and SHOULD levels', '/rfc2119.txt', 'https://example.com/rfc2119', 'def')
+            """,
+            new { Id1 = sectionId1, Id2 = sectionId2 });
+        await connection.ExecuteAsync(
+            """
+            insert into rfc_rag.normative_occurrences (id, section_id, rfc_number, keyword, line_offset)
+            values
+              (@OccId1, @Id1, 2119, 'MUST', 5),
+              (@OccId2, @Id2, 2119, 'MUST', 10)
+            """,
+            new { OccId1 = Guid.NewGuid(), OccId2 = Guid.NewGuid(), Id1 = sectionId1, Id2 = sectionId2 });
+
+        IReadOnlyList<SearchResult> results = await service.SearchAsync("encryption", 10, "MUST NOT", CancellationToken.None);
+
+        Assert.Empty(results);
+    }
+
+    [Fact]
+    public async Task SearchAsync_WhitespaceKeyword_TreatedAsNoFilter()
+    {
+        await using var dataSource = await CreateMigratedDataSourceAsync();
+        var repository = new SearchRepository(dataSource);
+        var metadataRepository = new MetadataRepository(dataSource);
+        var service = new SearchService(repository, metadataRepository, CreateEmbeddingService());
+
+        var sectionId1 = Guid.NewGuid();
+        var sectionId2 = Guid.NewGuid();
+
+        await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
+        await connection.ExecuteAsync(
+            """
+            insert into rfc_rag.rfc_sections (id, rfc_number, title, section, heading, text, source_path, url, source_sha256)
+            values
+              (@Id1, 2119, 'Key words', '1', 'Introduction', 'The key words MUST use encryption', '/rfc2119.txt', 'https://example.com/rfc2119', 'abc'),
+              (@Id2, 2119, 'Key words', '2', 'Definitions', 'Definitions of MUST and SHOULD levels', '/rfc2119.txt', 'https://example.com/rfc2119', 'def')
+            """,
+            new { Id1 = sectionId1, Id2 = sectionId2 });
+        await connection.ExecuteAsync(
+            """
+            insert into rfc_rag.normative_occurrences (id, section_id, rfc_number, keyword, line_offset)
+            values
+              (@OccId1, @Id1, 2119, 'MUST', 5),
+              (@OccId2, @Id2, 2119, 'MUST', 10)
+            """,
+            new { OccId1 = Guid.NewGuid(), OccId2 = Guid.NewGuid(), Id1 = sectionId1, Id2 = sectionId2 });
+
+        IReadOnlyList<SearchResult> whitespaceResults = await service.SearchAsync("encryption", 10, "   ", CancellationToken.None);
+        IReadOnlyList<SearchResult> nullResults = await service.SearchAsync("encryption", 10, null, CancellationToken.None);
+
+        Assert.NotEmpty(whitespaceResults);
+        Assert.Equal(whitespaceResults.Count, nullResults.Count);
+    }
+
+    [Fact]
+    public async Task SearchRepository_SearchHybridAsync_WithNormativeKeyword_FiltersCorrectly()
+    {
+        await using var dataSource = await CreateMigratedDataSourceAsync();
+        var repository = new SearchRepository(dataSource);
+        var embeddingService = CreateEmbeddingService();
+
+        var sectionId1 = Guid.NewGuid();
+        var sectionId2 = Guid.NewGuid();
+        var sectionId3 = Guid.NewGuid();
+
+        await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
+        await connection.ExecuteAsync(
+            """
+            insert into rfc_rag.rfc_sections (id, rfc_number, title, section, heading, text, source_path, url, source_sha256, embedding)
+            values
+              (@Id1, 2119, 'Key words', '1', 'Introduction', 'The key words MUST use encryption', '/rfc2119.txt', 'https://example.com/rfc2119', 'abc', null),
+              (@Id2, 2119, 'Key words', '2', 'Definitions', 'Definitions of MUST and SHOULD levels', '/rfc2119.txt', 'https://example.com/rfc2119', 'def', null),
+              (@Id3, 8827, 'WebRTC Security', '6.5', 'Communications Security', 'MUST NOT send plain RTP communication', '/rfc8827.txt', 'https://example.com/rfc8827', 'ghi', null)
+            """,
+            new { Id1 = sectionId1, Id2 = sectionId2, Id3 = sectionId3 });
+        await connection.ExecuteAsync(
+            """
+            insert into rfc_rag.normative_occurrences (id, section_id, rfc_number, keyword, line_offset)
+            values
+              (@OccId1, @Id1, 2119, 'MUST', 5),
+              (@OccId2, @Id2, 2119, 'SHOULD', 10),
+              (@OccId3, @Id3, 8827, 'MUST NOT', 3)
+            """,
+            new { OccId1 = Guid.NewGuid(), OccId2 = Guid.NewGuid(), OccId3 = Guid.NewGuid(), Id1 = sectionId1, Id2 = sectionId2, Id3 = sectionId3 });
+
+        var embeddings = await embeddingService.GenerateEmbeddingsAsync(["encryption"], CancellationToken.None);
+        var results = await repository.SearchHybridAsync("encryption", embeddings[0], 10, "MUST", CancellationToken.None);
+
+        Assert.NotEmpty(results);
+        Assert.All(results, r => Assert.NotEqual(sectionId2, r.Id));
+        Assert.All(results, r => Assert.NotEqual(sectionId3, r.Id));
+    }
+
+    [Fact]
+    public async Task SearchAsync_KeywordFilter_BeyondCandidateWindow_FillsLimit()
+    {
+        await using var dataSource = await CreateMigratedDataSourceAsync();
+        var repository = new SearchRepository(dataSource);
+        var metadataRepository = new MetadataRepository(dataSource);
+        var service = new SearchService(repository, metadataRepository, CreateEmbeddingService());
+
+        await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
+
+        var sectionIds = new List<Guid>();
+        // Sections 0-19: match query but NO normative keywords — survive lexical rank
+        // but fail keyword filter, forcing the SQL engine to scan past the candidate window.
+        // Sections 20-24: match query AND have 'MUST' — these fill the limit.
+        for (int i = 0; i < 25; i++)
+        {
+            var sectionId = Guid.NewGuid();
+            sectionIds.Add(sectionId);
+            string text = i < 20
+                ? $"encryption relevance section {i} with test content for hybrid search purposes"
+                : $"encryption MUST be used for secure communication in section {i}";
+            int rfcNumber = 2000 + i;
+            await connection.ExecuteAsync(
+                """
+                insert into rfc_rag.rfc_sections (id, rfc_number, title, section, heading, text, source_path, url, source_sha256)
+                values (@Id, @RfcNumber, 'Test RFC', @Section, 'Test Heading', @Text, '/test.txt', 'https://example.com/test', 'sha')
+                """,
+                new { Id = sectionId, RfcNumber = rfcNumber, Section = $"{i + 1}", Text = text });
+        }
+
+        // Only the last 5 sections (20-24) get the keyword — the first 20 must fail the filter
+        for (int i = 20; i < sectionIds.Count; i++)
+        {
+            await connection.ExecuteAsync(
+                """
+                insert into rfc_rag.normative_occurrences (id, section_id, rfc_number, keyword, line_offset)
+                values (@Id, @SectionId, 2000, 'MUST', 1)
+                """,
+                new { Id = Guid.NewGuid(), SectionId = sectionIds[i] });
+        }
+
+        IReadOnlyList<SearchResult> results = await service.SearchAsync("encryption", 5, "MUST", CancellationToken.None);
+
+        Assert.Equal(5, results.Count);
+    }
+
+    [Fact]
+    public async Task IndexAllAsync_TxtAndXmlSameNumber_XmlMode_IndexesOnlyTxt()
+    {
+        await using var dataSource = await CreateMigratedDataSourceAsync();
+
+        string tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            await File.WriteAllTextAsync(Path.Combine(tempDir, "rfc9999.txt"), """
+                Network Working Group
+                Request for Comments: 9999
+
+                                                   Test RFC
+
+                1.  Introduction
+
+                   Test content for the txt-over-xml precedence integration test.
+                """, TestContext.Current.CancellationToken);
+
+            await File.WriteAllTextAsync(Path.Combine(tempDir, "rfc9999.xml"), """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <rfc xmlns="urn:ietf:params:xml:ns:rfcxml" number="9999">
+                  <front><title>Test RFC</title></front>
+                  <middle>
+                    <section>
+                      <name>Introduction</name>
+                      <t>Test content from XML source.</t>
+                    </section>
+                  </middle>
+                </rfc>
+                """, TestContext.Current.CancellationToken);
+
+            var indexingRepository = new IndexingRepository(dataSource);
+            var embeddingService = CreateEmbeddingService();
+            var options = Options.Create(new RfcRagOptions
+            {
+                RfcMirrorPath = tempDir,
+                PostgresConnectionString = container!.GetConnectionString(),
+                RfcParserType = RfcParserType.Xml,
+                EmbeddingBatchSize = 5
+            });
+
+            IIndexerService indexer = new RfcIndexer(
+                dataSource, indexingRepository,
+                new RfcParser(), new RfcXmlParser(),
+                embeddingService, options, NullLogger<RfcIndexer>.Instance);
+
+            await indexer.IndexAllAsync(CancellationToken.None);
+
+            await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
+            var indexedRows = (await connection.QueryAsync<dynamic>(
+                "select rfc_number, source_path from rfc_rag.indexed_rfcs where rfc_number = 9999"))
+                .ToList();
+
+            var row = Assert.Single(indexedRows);
+            int rfcNumber = (int)row.rfc_number;
+            string sourcePath = (string)row.source_path;
+
+            Assert.Equal(9999, rfcNumber);
+            Assert.EndsWith(".txt", sourcePath, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
     private async Task<NpgsqlDataSource> CreateMigratedDataSourceAsync()
     {
         var dataSource = NpgsqlDataSource.Create(container!.GetConnectionString());
@@ -322,5 +475,6 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
         new(new SearchRepository(dataSource), new MetadataRepository(dataSource), CreateEmbeddingService());
 
     private static EmbeddingService CreateEmbeddingService() =>
-        new(new FakeEmbeddingGenerator(), 5, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
+        new(new FakeEmbeddingGenerator(), new EmbeddingRetryPolicy(TimeProvider.System),
+            5, embeddingDimensions: 1536, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
 }

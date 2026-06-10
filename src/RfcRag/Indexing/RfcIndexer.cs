@@ -3,7 +3,7 @@ using System.Text;
 
 namespace RfcRag.Indexing;
 
-public sealed class RfcIndexer(
+internal sealed class RfcIndexer(
     NpgsqlDataSource dataSource,
     IndexingRepository repository,
     RfcParser parser,
@@ -16,25 +16,14 @@ public sealed class RfcIndexer(
 
     public async Task IndexAllAsync(CancellationToken cancellationToken)
     {
-        string mirrorPath = ResolveMirrorPath(options.RfcMirrorPath);
+        string mirrorPath = RfcSourceResolver.ExpandPath(options.RfcMirrorPath);
         if (!Directory.Exists(mirrorPath))
         {
             throw new DirectoryNotFoundException($"RFC mirror path '{mirrorPath}' does not exist.");
         }
 
-        IEnumerable<RfcSourceFile> sourceFiles = Directory
-            .EnumerateFiles(mirrorPath, "rfc*.txt", SearchOption.AllDirectories)
-            .Select(TryCreateSourceFile)
-            .OfType<RfcSourceFile>();
-
-        if (options.RfcParserType == Settings.RfcParserType.Xml)
-        {
-            sourceFiles = sourceFiles.Concat(
-                Directory
-                    .EnumerateFiles(mirrorPath, "rfc*.xml", SearchOption.AllDirectories)
-                    .Select(TryCreateSourceFile)
-                    .OfType<RfcSourceFile>());
-        }
+        IReadOnlyList<RfcSourceResolver.RfcSourceFile> sourceFiles =
+            RfcSourceResolver.Resolve(mirrorPath, options.RfcParserType);
 
         // Single query to load all existing hashes, avoiding N individual SELECTs during the parallel loop
         Dictionary<int, string> indexedHashes = await repository
@@ -63,27 +52,29 @@ public sealed class RfcIndexer(
 
     public async Task IndexSingleAsync(int rfcNumber, bool force, CancellationToken cancellationToken)
     {
-        string mirrorPath = ResolveMirrorPath(options.RfcMirrorPath);
+        string mirrorPath = RfcSourceResolver.ExpandPath(options.RfcMirrorPath);
         if (!Directory.Exists(mirrorPath))
         {
             throw new DirectoryNotFoundException($"RFC mirror path '{mirrorPath}' does not exist.");
         }
 
-        string filePath = Path.Combine(mirrorPath, $"rfc{rfcNumber}.txt");
-        if (!File.Exists(filePath))
+        IReadOnlyList<RfcSourceResolver.RfcSourceFile> all =
+            RfcSourceResolver.Resolve(mirrorPath, options.RfcParserType);
+
+        RfcSourceResolver.RfcSourceFile? sourceFile = all.FirstOrDefault(f => f.RfcNumber == rfcNumber);
+        if (sourceFile is null)
         {
-            throw new FileNotFoundException($"RFC file not found at '{filePath}'.", filePath);
+            throw new FileNotFoundException($"RFC {rfcNumber} not found in mirror '{mirrorPath}'.");
         }
 
-        var sourceFile = new RfcSourceFile(filePath, rfcNumber);
-        await IndexFileAsync(sourceFile, mirrorPath, force, cachedHashes: null, cancellationToken).ConfigureAwait(false);
+        await IndexFileAsync(sourceFile.Value, mirrorPath, force, cachedHashes: null, cancellationToken).ConfigureAwait(false);
     }
 
     public Task<int> GetIndexedCountAsync(CancellationToken cancellationToken) =>
         repository.GetIndexedCountAsync(cancellationToken);
 
     private async Task IndexFileAsync(
-        RfcSourceFile sourceFile,
+        RfcSourceResolver.RfcSourceFile sourceFile,
         string mirrorPath,
         bool force,
         IReadOnlyDictionary<int, string>? cachedHashes,
@@ -208,38 +199,4 @@ public sealed class RfcIndexer(
             }
         }
     }
-
-    private static string ResolveMirrorPath(string mirrorPath)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(mirrorPath);
-
-        if (string.Equals(mirrorPath, "~", StringComparison.Ordinal))
-        {
-            return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        }
-
-        if (mirrorPath.StartsWith("~/", StringComparison.Ordinal))
-        {
-            return Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                mirrorPath[2..]);
-        }
-
-        return mirrorPath;
-    }
-
-    private static RfcSourceFile? TryCreateSourceFile(string path)
-    {
-        string fileName = Path.GetFileNameWithoutExtension(path);
-        if (fileName.Length <= 3 || !fileName.StartsWith("rfc", StringComparison.OrdinalIgnoreCase))
-        {
-            return null;
-        }
-
-        return int.TryParse(fileName[3..], out int rfcNumber)
-            ? new RfcSourceFile(path, rfcNumber)
-            : null;
-    }
-
-    private sealed record class RfcSourceFile(string Path, int RfcNumber);
 }

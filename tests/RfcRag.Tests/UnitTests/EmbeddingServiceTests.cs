@@ -1,16 +1,25 @@
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging.Abstractions;
 using RfcRag.Indexing;
 using RfcRag.Tests.Fakes;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace RfcRag.Tests.UnitTests;
 
 public sealed class EmbeddingServiceTests
 {
+    private static EmbeddingService MakeService(
+        IEmbeddingGenerator<string, Embedding<float>> generator,
+        int batchSize = 2,
+        int embeddingDimensions = 1536,
+        int maxConcurrency = 1) =>
+        new(generator, new EmbeddingRetryPolicy(TimeProvider.System),
+            batchSize, embeddingDimensions, maxConcurrency,
+            NullLogger<EmbeddingService>.Instance);
+
     [Fact]
     public async Task GenerateEmbeddingsAsync_MultipleTexts_ReturnsCorrectCount()
     {
-        var generator = new FakeEmbeddingGenerator();
-        var service = new EmbeddingService(generator, 2, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
+        var service = MakeService(new FakeEmbeddingGenerator());
 
         var texts = new[] { "text1", "text2", "text3", "text4", "text5" };
         var embeddings = await service.GenerateEmbeddingsAsync(texts, CancellationToken.None);
@@ -21,8 +30,7 @@ public sealed class EmbeddingServiceTests
     [Fact]
     public async Task GenerateEmbeddingsAsync_EmptyList_ReturnsEmpty()
     {
-        var generator = new FakeEmbeddingGenerator();
-        var service = new EmbeddingService(generator, 2, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
+        var service = MakeService(new FakeEmbeddingGenerator());
 
         var texts = Array.Empty<string>();
         var embeddings = await service.GenerateEmbeddingsAsync(texts, CancellationToken.None);
@@ -33,8 +41,7 @@ public sealed class EmbeddingServiceTests
     [Fact]
     public async Task GenerateEmbeddingsAsync_PredictableValues_MapsCorrectly()
     {
-        var generator = new FakeEmbeddingGenerator();
-        var service = new EmbeddingService(generator, 2, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
+        var service = MakeService(new FakeEmbeddingGenerator());
 
         var texts = new[] { "test" };
         var embeddings = await service.GenerateEmbeddingsAsync(texts, CancellationToken.None);
@@ -49,7 +56,7 @@ public sealed class EmbeddingServiceTests
     public async Task Batching_11Texts_BatchSize5_Makes3GeneratorCalls()
     {
         var generator = new TrackingEmbeddingGenerator();
-        var service = new EmbeddingService(generator, batchSize: 5, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
+        var service = MakeService(generator, batchSize: 5);
 
         var texts = Enumerable.Range(0, 11).Select(i => $"text{i}").ToArray();
         await service.GenerateEmbeddingsAsync(texts, CancellationToken.None);
@@ -62,7 +69,7 @@ public sealed class EmbeddingServiceTests
     public async Task Batching_11Texts_BatchSize5_LastBatchHasRemainder()
     {
         var generator = new TrackingEmbeddingGenerator();
-        var service = new EmbeddingService(generator, batchSize: 5, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
+        var service = MakeService(generator, batchSize: 5);
 
         var texts = Enumerable.Range(0, 11).Select(i => $"text{i}").ToArray();
         await service.GenerateEmbeddingsAsync(texts, CancellationToken.None);
@@ -77,12 +84,8 @@ public sealed class EmbeddingServiceTests
         // 12 texts, batch=3, maxConcurrency=4 — four batches can run in parallel.
         // Task.WhenAll preserves task-index order in its result array, so the stitching
         // in EmbeddingService must also iterate in task order (not completion order).
-        var service = new EmbeddingService(
-            new FakeEmbeddingGenerator(), batchSize: 3, maxConcurrency: 4,
-            NullLogger<EmbeddingService>.Instance);
-        var refService = new EmbeddingService(
-            new FakeEmbeddingGenerator(), batchSize: 1, maxConcurrency: 1,
-            NullLogger<EmbeddingService>.Instance);
+        var service = MakeService(new FakeEmbeddingGenerator(), batchSize: 3, maxConcurrency: 4);
+        var refService = MakeService(new FakeEmbeddingGenerator(), batchSize: 1);
 
         var texts = Enumerable.Range(0, 12).Select(i => $"ordering-sentinel-{i:00}").ToArray();
         IReadOnlyList<float[]> batched = await service.GenerateEmbeddingsAsync(texts, CancellationToken.None);
@@ -97,9 +100,7 @@ public sealed class EmbeddingServiceTests
     [Fact]
     public async Task GenerateEmbeddingsAsync_Deterministic_SameInputProducesSameOutput()
     {
-        var service = new EmbeddingService(
-            new FakeEmbeddingGenerator(), batchSize: 5, maxConcurrency: 1,
-            NullLogger<EmbeddingService>.Instance);
+        var service = MakeService(new FakeEmbeddingGenerator(), batchSize: 5);
         string[] texts = ["the quick brown fox", "TLS certificate handshake", "HTTP semantics"];
 
         IReadOnlyList<float[]> first = await service.GenerateEmbeddingsAsync(texts, CancellationToken.None);
@@ -107,5 +108,27 @@ public sealed class EmbeddingServiceTests
 
         for (int i = 0; i < texts.Length; i++)
             Assert.Equal(first[i], second[i]);
+    }
+
+    // --- Validation tests ---
+
+    [Fact]
+    public async Task GenerateEmbeddingsAsync_WrongCount_ThrowsInvalidOperationException()
+    {
+        // Generator returns 0 embeddings for any batch — wrong count.
+        var service = MakeService(new MisbehavingEmbeddingGenerator(wrongCount: 0));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.GenerateEmbeddingsAsync(["text"], CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task GenerateEmbeddingsAsync_WrongDimensions_ThrowsInvalidOperationException()
+    {
+        // Generator returns 4-dimension vectors but service expects 1536.
+        var service = MakeService(new MisbehavingEmbeddingGenerator(wrongDimensions: 4), embeddingDimensions: 1536);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.GenerateEmbeddingsAsync(["text"], CancellationToken.None));
     }
 }

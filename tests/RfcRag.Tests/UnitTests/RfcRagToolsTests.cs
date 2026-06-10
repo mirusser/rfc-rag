@@ -687,7 +687,8 @@ public sealed class RfcRagToolsTests
     }
 
     private static EmbeddingService CreateEmbeddingService() =>
-        new(new FakeEmbeddingGenerator(), 5, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
+        new(new FakeEmbeddingGenerator(), new EmbeddingRetryPolicy(TimeProvider.System),
+            5, embeddingDimensions: 1536, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
 
     private sealed class RecordingLogger<T> : ILogger<T>
     {

@@ -6,7 +6,7 @@
 >
 > Semantic search finds relevant RFCs.  
 > Full-text search catches exact keywords.  
-> Normative search targets binding requirements (MUST, SHOULD, MAY…), not just mentions.  
+> Normative search finds RFC 2119/8174 keyword occurrences (MUST, SHOULD, MAY…) — lexical signal, not formal compliance claim — not just mentions.  
 > Section-level retrieval returns the precise paragraph, not the whole document.  
 > AI agents cite RFCs without copying 200 pages of spec.  
 
@@ -34,9 +34,9 @@ The real gap is in compliance auditing. Say you're a security engineer who needs
 
 1. **Read all ~9,800 RFCs** — impossible.
 2. **CTRL+F for "MUST NOT"** — 682,664 results, most about unrelated topics.
-3. **Semantic search for "encryption prohibition"** — finds relevant sections, but many don't actually contain a formal prohibition. You're still guessing which are binding requirements vs. casual discussion.
+3. **Semantic search for "encryption prohibition"** — finds relevant sections, but many don't actually contain a formal prohibition. You're still guessing which carry requirement-level language vs. casual discussion.
 
-This repo combines both: semantic search finds the *topic*, normative keyword filtering keeps only sections with RFC 2119/8174 requirement-level keywords (MUST, SHOULD, MUST NOT, etc.). The result is precise, citeable sections — you know exactly which RFC, which section, and which keyword makes it a binding requirement.
+This repo combines both: semantic search finds the *topic*, normative keyword filtering keeps only sections with RFC 2119/8174 requirement-level keywords (MUST, SHOULD, MUST NOT, etc.). A normative occurrence is a *lexical* uppercase-keyword match — not a claim of formal BCP 14 adoption — but for the vast majority of modern RFCs it is a strong signal of requirement-level language. The result is precise, citeable sections — you know exactly which RFC, which section, and which keyword appears.
 
 ## 🗺️ Architecture
 

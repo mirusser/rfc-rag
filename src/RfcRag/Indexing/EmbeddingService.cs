@@ -1,16 +1,40 @@
+using System.Diagnostics.Metrics;
+
 namespace RfcRag.Indexing;
 
 /// <summary>
 /// Generates vector embeddings for RFC section text using the configured embedding provider.
 /// Handles batching, concurrent dispatch, rate limiting, and error recovery.
 /// </summary>
-public sealed class EmbeddingService(
+internal sealed partial class EmbeddingService(
     IEmbeddingGenerator<string, Embedding<float>> generator,
+    EmbeddingRetryPolicy retryPolicy,
     int batchSize,
+    int embeddingDimensions,
     int maxConcurrency,
-    ILogger<EmbeddingService> logger)
+    ILogger<EmbeddingService> logger) : IDisposable
 {
+    internal const string EmbeddingsMeterName = "RfcRag.Embeddings";
+
+    private const string MetricBatchName = "embedding.batches";
+    private const string MetricRetryName = "embedding.retries";
+    private const string TagReason = "reason";
+    private const string TagOutcome = "outcome";
+    private const string OutcomeOk = "ok";
+    private const string OutcomeFailed = "failed";
+    private const string ReasonRateLimited = "rate_limited";
+    private const string ReasonServerError = "server_error";
+    private const string ReasonTransport = "transport";
+
+    private static readonly Meter embeddingsMeter = new(EmbeddingsMeterName);
+    private static readonly Counter<long> batchCounter =
+        embeddingsMeter.CreateCounter<long>(MetricBatchName, description: "Number of embedding batches processed");
+    private static readonly Counter<long> retryCounter =
+        embeddingsMeter.CreateCounter<long>(MetricRetryName, description: "Number of embedding retry attempts");
+
     private readonly SemaphoreSlim throttle = new(maxConcurrency, maxConcurrency);
+
+    public void Dispose() => throttle.Dispose();
 
     /// <summary>
     /// Generates embeddings for a collection of text inputs.
@@ -40,7 +64,7 @@ public sealed class EmbeddingService(
                 batch[i] = texts[offset + i];
             }
 
-            batchTasks[b] = SendBatchAsync(batch, cancellationToken);
+            batchTasks[b] = SendBatchAsync(b, batchCount, batch, cancellationToken);
         }
 
         GeneratedEmbeddings<Embedding<float>>[] batchResults = await Task.WhenAll(batchTasks).ConfigureAwait(false);
@@ -59,17 +83,30 @@ public sealed class EmbeddingService(
     }
 
     private async Task<GeneratedEmbeddings<Embedding<float>>> SendBatchAsync(
+        int batchIndex,
+        int batchCount,
         string[] batch,
         CancellationToken cancellationToken)
     {
         await throttle.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            logger.LogDebug("Generating embeddings for batch of {BatchCount}", batch.Length);
-            return await RetryAsync(
-                ct => generator.GenerateAsync(batch, null, ct),
-                batch.Length,
+            LogBatchStart(logger, batchIndex, batchCount, batch.Length);
+            return await retryPolicy.ExecuteAsync(
+                ct => GenerateAndValidateAsync(batch, ct),
+                (attempt, ex, delay) =>
+                {
+                    LogBatchRetry(logger, batchIndex, attempt, EmbeddingRetryPolicy.MaxAttempts, delay.TotalSeconds, ex);
+                    string reason = GetRetryReason(ex);
+                    retryCounter.Add(1, new KeyValuePair<string, object?>(TagReason, reason));
+                },
                 cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            batchCounter.Add(1, new KeyValuePair<string, object?>(TagOutcome, OutcomeFailed));
+            LogBatchFailed(logger, batchIndex, ex);
+            throw;
         }
         finally
         {
@@ -77,34 +114,48 @@ public sealed class EmbeddingService(
         }
     }
 
-    private async Task<T> RetryAsync<T>(
-        Func<CancellationToken, Task<T>> operation,
-        int batchCount,
+    private async Task<GeneratedEmbeddings<Embedding<float>>> GenerateAndValidateAsync(
+        string[] batch,
         CancellationToken cancellationToken)
     {
-        int maxRetries = 3;
-        for (int attempt = 0; attempt < maxRetries; attempt++)
-        {
-            try
-            {
-                return await operation(cancellationToken).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                throw;
-            }
-            catch (Exception ex) when (attempt < maxRetries - 1)
-            {
-                int delayMs = (int)Math.Pow(2, attempt) * 1000;
-                logger.LogWarning(
-                    ex,
-                    "Embedding request failed (attempt {Attempt}/{MaxRetries}) for batch of {BatchCount}. Retrying in {DelayMs}ms.",
-                    attempt + 1, maxRetries, batchCount, delayMs);
+        var result = await generator.GenerateAsync(batch, null, cancellationToken).ConfigureAwait(false);
 
-                await Task.Delay(delayMs, cancellationToken).ConfigureAwait(false);
+        if (result.Count != batch.Length)
+        {
+            throw new InvalidOperationException(
+                $"Embedding provider returned {result.Count} embeddings for a batch of {batch.Length} inputs.");
+        }
+
+        foreach (var embedding in result)
+        {
+            if (embedding.Vector.Length != embeddingDimensions)
+            {
+                throw new InvalidOperationException(
+                    $"Embedding provider returned dimension {embedding.Vector.Length}, expected {embeddingDimensions}.");
             }
         }
 
-        return await operation(cancellationToken).ConfigureAwait(false);
+        batchCounter.Add(1, new KeyValuePair<string, object?>(TagOutcome, OutcomeOk));
+        return result;
     }
+
+    private static string GetRetryReason(Exception ex) => ex switch
+    {
+        System.ClientModel.ClientResultException { Status: 429 } => ReasonRateLimited,
+        System.ClientModel.ClientResultException => ReasonServerError,
+        _ => ReasonTransport
+    };
+
+    [LoggerMessage(Level = LogLevel.Debug,
+        Message = "Generating embeddings batch {BatchIndex}/{BatchCount} ({BatchSize} texts)")]
+    private static partial void LogBatchStart(ILogger logger, int batchIndex, int batchCount, int batchSize);
+
+    [LoggerMessage(Level = LogLevel.Warning,
+        Message = "Embedding batch {BatchIndex} failed on attempt {Attempt}/{MaxAttempts}, retrying in {DelaySeconds:F1}s")]
+    private static partial void LogBatchRetry(
+        ILogger logger, int batchIndex, int attempt, int maxAttempts, double delaySeconds, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Error,
+        Message = "Embedding batch {BatchIndex} failed after all retry attempts")]
+    private static partial void LogBatchFailed(ILogger logger, int batchIndex, Exception exception);
 }

@@ -18,6 +18,11 @@ tests/RfcRag.Tests/TestData/*
 !tests/RfcRag.Tests/TestData/rfc9052.txt
 !tests/RfcRag.Tests/TestData/rfc9110.txt
 !tests/RfcRag.Tests/TestData/rfc9999.txt
+!tests/RfcRag.Tests/TestData/rfc793.txt
+!tests/RfcRag.Tests/TestData/rfc822.txt
+!tests/RfcRag.Tests/TestData/rfc5234.txt
+!tests/RfcRag.Tests/TestData/rfc8174.txt
+!tests/RfcRag.Tests/TestData/rfc9293.txt
 
 # ── Generated files ──────────────────────────────────────────────────────────
 /deploy/generated

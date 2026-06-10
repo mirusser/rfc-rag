@@ -1,6 +1,4 @@
-using RfcRag.Indexing;
-using RfcRag.Parsing;
-using RfcRag.Search;
+using System.ClientModel.Primitives;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenAI;
@@ -56,12 +54,22 @@ public static class ServiceCollectionExtensions
             return CreateOpenRouterEmbeddingGenerator(opts);
         });
 
+        services.TryAddSingleton<TimeProvider>(TimeProvider.System);
+        services.TryAddSingleton<EmbeddingRetryPolicy>();
+
         services.TryAddSingleton<EmbeddingService>(sp =>
         {
             var generator = sp.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
             var options = sp.GetRequiredService<IOptions<RfcRagOptions>>().Value;
             var logger = sp.GetRequiredService<ILogger<EmbeddingService>>();
-            return new EmbeddingService(generator, options.EmbeddingBatchSize, options.MaxEmbeddingConcurrency, logger);
+            var retryPolicy = sp.GetRequiredService<EmbeddingRetryPolicy>();
+            return new EmbeddingService(
+                generator,
+                retryPolicy,
+                options.EmbeddingBatchSize,
+                options.EmbeddingDimensions,
+                options.MaxEmbeddingConcurrency,
+                logger);
         });
 
         return services;
@@ -75,14 +83,22 @@ public static class ServiceCollectionExtensions
             return new MissingApiKeyEmbeddingGenerator();
         }
 
-        var openAiOptions = new OpenAIClientOptions { Endpoint = new Uri(opts.OpenRouterEmbeddingEndpoint) };
+        var openAiOptions = new OpenAIClientOptions
+        {
+            Endpoint = new Uri(opts.OpenRouterEmbeddingEndpoint),
+            RetryPolicy = new ClientRetryPolicy(maxRetries: 0)
+        };
         var client = new OpenAIClient(new System.ClientModel.ApiKeyCredential(openRouterKey), openAiOptions);
         return client.GetEmbeddingClient(opts.EmbeddingModel).AsIEmbeddingGenerator();
     }
 
     private static IEmbeddingGenerator<string, Embedding<float>> CreateLocalEmbeddingGenerator(RfcRagOptions opts)
     {
-        var openAiOptions = new OpenAIClientOptions { Endpoint = new Uri(opts.LocalEmbeddingEndpoint) };
+        var openAiOptions = new OpenAIClientOptions
+        {
+            Endpoint = new Uri(opts.LocalEmbeddingEndpoint),
+            RetryPolicy = new ClientRetryPolicy(maxRetries: 0)
+        };
         var client = new OpenAIClient(new System.ClientModel.ApiKeyCredential("local"), openAiOptions);
         return client.GetEmbeddingClient(opts.EmbeddingModel).AsIEmbeddingGenerator();
     }

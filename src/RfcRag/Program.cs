@@ -2,28 +2,31 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ModelContextProtocol.Protocol;
+using OpenTelemetry.Metrics;
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole(o => o.LogToStandardErrorThreshold = LogLevel.Trace);
 AddRfcRagConfiguration(builder.Configuration, args);
 
-builder.Services.Configure<RfcRagOptions>(
-    builder.Configuration.GetSection(RfcRagOptions.SectionName));
-builder.Services.AddOptions();
-
-builder.Services.AddSingleton(sp =>
-{
-    var options = sp.GetRequiredService<IOptions<RfcRagOptions>>().Value;
-    ArgumentException.ThrowIfNullOrWhiteSpace(options.PostgresConnectionString);
-
-    var dataSourceBuilder = new NpgsqlDataSourceBuilder(options.PostgresConnectionString);
-    dataSourceBuilder.UseVector();
-    return dataSourceBuilder.Build();
-});
+builder.Services
+    .AddOptions<RfcRagOptions>()
+    .Bind(builder.Configuration.GetSection(RfcRagOptions.SectionName))
+    .ValidateOnStart();
+builder.Services.AddSingleton<IValidateOptions<RfcRagOptions>, RfcRagOptionsValidator>();
 
 builder.Services.AddRfcRagServices();
 builder.Services.AddSingleton<RfcRagStartupService>();
+
+const string OtlpEndpointEnvVar = "OTEL_EXPORTER_OTLP_ENDPOINT";
+string? otlpEndpoint = Environment.GetEnvironmentVariable(OtlpEndpointEnvVar);
+if (!string.IsNullOrWhiteSpace(otlpEndpoint))
+{
+    builder.Services.AddOpenTelemetry()
+        .WithMetrics(metrics => metrics
+            .AddMeter(EmbeddingService.EmbeddingsMeterName)
+            .AddOtlpExporter());
+}
 
 builder.Services
     .AddMcpServer()

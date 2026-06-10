@@ -54,19 +54,34 @@ docker run --rm -i --network host \
 
 ## 🔧 Configuration
 
-| Environment Variable | Default | Description |
+| Environment Variable | Default | Valid Range / Values | Description |
 |---|---|---|
 | `RfcRag__RfcMirrorPath` | `~/OtherRepos/rfc-mirror/` | Path to local RFC mirror |
 | `RfcRag__PostgresConnectionString` | *(required)* | PostgreSQL connection string |
 | `RfcRag__EmbeddingModel` | `openai/text-embedding-3-small` | OpenRouter embedding model |
-| `RfcRag__EmbeddingBatchSize` | `20` | Batch size for embedding API calls |
-| `RfcRag__EmbeddingDimensions` | `1536` | Embedding vector dimensions |
-| `RfcRag__OpenRouterEmbeddingEndpoint` | `https://openrouter.ai/api/v1` | OpenRouter API base URL |
-| `RfcRag__RunMigrationsOnStartup` | `true` | Auto-apply SQL schema migrations |
-| `RfcRag__EmbeddingProvider` | `OpenRouter` | Embedding provider: `OpenRouter` (default) or `Local` |
-| `RfcRag__LocalEmbeddingEndpoint` | `http://localhost:11434/v1` | Base URL of local embedding server — used when `EmbeddingProvider=Local` |
-| `RfcRag__RfcParserType` | `Text` | Parser mode: `Text` (plain-text `.txt` files, default) or `Xml` (also indexes RFC XML 2 `.xml` files) |
+| `RfcRag__EmbeddingBatchSize` | `20` | 1–2048 | Batch size for embedding API calls |
+| `RfcRag__EmbeddingDimensions` | `1536` | 1–16000 | Embedding vector dimensions |
+| `RfcRag__OpenRouterEmbeddingEndpoint` | `https://openrouter.ai/api/v1` | Absolute `http`/`https` URI | OpenRouter API base URL |
+| `RfcRag__RunMigrationsOnStartup` | `true` | `true` / `false` | Auto-apply SQL schema migrations |
+| `RfcRag__EmbeddingProvider` | `OpenRouter` | `OpenRouter` or `Local` | Embedding provider: `OpenRouter` (default) or `Local` |
+| `RfcRag__LocalEmbeddingEndpoint` | `http://localhost:11434/v1` | Absolute `http`/`https` URI | Base URL of local embedding server — used when `EmbeddingProvider=Local` |
+| `RfcRag__RfcParserType` | `Text` | `Text` or `Xml` | Parser mode: `Text` (plain-text `.txt` files, default) or `Xml` (prefers `.txt`, uses `.xml` only for RFC numbers that have no `.txt` counterpart) |
+| `RfcRag__MaxIndexingParallelism` | `16` | ≥ 1 | Maximum number of RFC files indexed concurrently |
+| `RfcRag__MaxEmbeddingConcurrency` | `8` | ≥ 1 | Maximum number of concurrent embedding API requests across all in-flight files |
 | `OpenRouter__ApiKey` | *(required for OpenRouter)* | OpenRouter API key — not needed when `EmbeddingProvider=Local` |
+
+### OpenTelemetry Metrics
+
+Setting `OTEL_EXPORTER_OTLP_ENDPOINT` registers an OTLP metrics exporter that sends the
+`RfcRag.Embeddings` meter counters (`embedding.batches`, `embedding.retries`) to your
+collector. All exporter settings come from standard `OTEL_*` environment variables — no
+custom config keys. When unset, no exporter is registered and no connection attempts occur.
+
+```bash
+export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4318"
+export OTEL_SERVICE_NAME="rfc-rag"
+dotnet run --project src/RfcRag/
+```
 
 ### Switching to a Local Embedding Provider
 
