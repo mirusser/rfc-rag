@@ -1,29 +1,18 @@
 ---
 name: writing-tests
-description: Apply when adding or modifying tests in k8s-toolkit. Covers test project structure, naming, InternalsVisibleTo setup for internal types, and what to verify before and after.
+description: Apply when adding or modifying tests in rfc-rag. Covers test project structure, naming, InternalsVisibleTo for internal types, the no-mocks rule, and what to verify before and after.
 ---
 
 # Writing Tests
 
 ## Test Project Structure
 
-Each runtime project has a matching test project under `tests/`:
+All tests live in a single project, `tests/RfcRag.Tests`, split by scope:
 
-| Source project | Test project |
-|---|---|
-| `InfraGate.McpServer` | `InfraGate.McpServer.Tests` |
-| `InfraGate.McpGateway` | `InfraGate.McpGateway.Tests` |
-| `InfraGate.RuntimeSafety` | `InfraGate.RuntimeSafety.Tests` |
-| `InfraGate.Observability` | `InfraGate.Observability.Tests` |
-| `InfraGate.RunProfiles` | `InfraGate.RunProfiles.Tests` |
-| (gateway + auth OIDC integration) | `InfraGate.McpGateway.KeycloakTests` |
-| (full approval-flow safety E2E) | `InfraGate.Safety.E2E.Tests` |
-
-Tests are split by scope:
-
-- `UnitTests/` — no network, no Kubernetes, no filesystem (or temp-path only).
-- `IntegrationTests/` — may require TestHost, a fake downstream server, or opt-in external dependencies.
-- Safety E2E and Keycloak tests are opt-in categories; do not make the default test run depend on Docker, Keycloak, or a live Kubernetes cluster.
+- `UnitTests/` — no network, no containers, no filesystem (or temp-path only).
+- `IntegrationTests/` — may use Testcontainers (PostgreSQL; requires Docker) or in-process hosts.
+- `Fakes/` — shared fakes and test doubles.
+- `TestData/` — RFC fixtures and other static inputs.
 
 Add new test files to the appropriate subdirectory.
 
@@ -31,7 +20,7 @@ Add new test files to the appropriate subdirectory.
 
 Prefer assertions on behavior contracts, not presentation text. When code returns a typed result, assert the stable fields first.
 
-Do not assert user-facing prose such as approval/refusal sentences etc. unless the test is specifically about rendering, CLI/external protocol output, redaction text, or a documented wire contract. If parsing is unavoidable, parse by format (URL path, plan-id pattern, JSON field, form token) rather than by label text like `Approval URL:`.
+Do not assert user-facing prose unless the test is specifically about rendering, CLI/protocol output, or a documented wire contract. If parsing is unavoidable, parse by format (URL path, JSON field) rather than by label text.
 
 Use convention constants for contract strings.
 
@@ -40,28 +29,28 @@ Use convention constants for contract strings.
 Follow `Method_State_ExpectedResult`:
 
 ```csharp
-Validate_PrivilegedContainer_IsDenied()
-RequestApplyManifestAsync_RejectsDisallowedNamespace()
-ExecuteApprovedPlanAsync_RefusesPendingPlanWithoutApproval()
+Validate_MissingEndpoint_Fails()
+SearchAsync_EmptyQuery_ReturnsNoResults()
+GetDelay_RetryAfterHeader_HonorsServerValue()
 ```
 
 ## InternalsVisibleTo
 
-Most types in this repo are `internal`. Before writing tests that reference internal types, check whether the source project already exposes its internals to the test project:
-
-```bash
-grep "InternalsVisibleTo" src/<Project>/<Project>.csproj
-```
-
-If the entry is missing, add it following the pattern used by other projects (e.g., `src/InfraGate.McpGateway/InfraGate.McpGateway.csproj`):
+Most types in this repo are `internal`. `src/RfcRag/RfcRag.csproj` already exposes internals to the test project:
 
 ```xml
-<ItemGroup>
-  <InternalsVisibleTo Include="InfraGate.<Project>.Tests" />
-</ItemGroup>
+<InternalsVisibleTo Include="RfcRag.Tests" />
 ```
 
-Without this, tests that reference internal types fail at compile time with `CS0122: inaccessible due to its protection level`.
+If a new source project is added, follow the same pattern; without it, tests referencing internal types fail at compile time with `CS0122: inaccessible due to its protection level`.
+
+## Time
+
+Never sleep or read wall-clock time in tests. Production code injects `TimeProvider`; tests use `FakeTimeProvider` (`Microsoft.Extensions.TimeProvider.Testing`) for retries, backoff, and expiry behavior.
+
+## Mocking
+
+Never use mocking libraries (Moq, NSubstitute, or similar). Use the fakes in `Fakes/`, or write integration tests with Testcontainers instead.
 
 ## Standards/Conventions
 
@@ -72,26 +61,16 @@ See skill: [code-standards](../code-standards/SKILL.md)
 After adding or changing tests, run the narrowest useful test command:
 
 ```bash
-dotnet test tests/<Project>.Tests/<Project>.Tests.csproj
-```
-
-```bash
-# Run with coverage
-dotnet test --collect:"XPlat Code Coverage"
+dotnet test tests/RfcRag.Tests/RfcRag.Tests.csproj
 
 # Filter by test name
-dotnet test --filter "FullyQualifiedName~OrderService"
+dotnet test tests/RfcRag.Tests/RfcRag.Tests.csproj --filter "FullyQualifiedName~SearchService"
 
-# Watch mode during development
-dotnet watch test --project tests/MyApp.UnitTests/
+# Run with coverage
+dotnet test --collect:"XPlat Code Coverage"
 ```
 
 All pre-existing tests must continue to pass. New tests must pass too — do not commit failing tests.
-
-## Mocking
-
-Never use mocks (Moq, NSubstitute) or any similar packages. Write integration tests using Testcontainers instead.
-
 
 ## Common Anti-Patterns
 
@@ -99,8 +78,8 @@ Never use mocks (Moq, NSubstitute) or any similar packages. Write integration te
 |---|---|
 | Testing implementation details | Test behavior and outcomes |
 | Shared mutable test state | Fresh instance per test (xUnit does this via constructors) |
-| `Thread.Sleep` in async tests | Use `Task.Delay` with timeout, or polling helpers |
+| `Thread.Sleep` / real delays in async tests | `FakeTimeProvider` and deterministic time control |
 | Asserting on `ToString()` output | Assert on typed properties |
 | One giant assertion per test | One logical assertion per test |
-| Test names describing implementation | Name by behavior: `Method_ExpectedResult_WhenCondition` |
+| Test names describing implementation | Name by behavior: `Method_State_ExpectedResult` |
 | Ignoring `CancellationToken` | Always pass and verify cancellation |

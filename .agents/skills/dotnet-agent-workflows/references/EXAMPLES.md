@@ -47,7 +47,7 @@ public sealed class DecideExecutor(string id, AIAgent llmAgent) : Executor<TItem
 Terminal executors emit results via `context.YieldOutputAsync`:
 
 ```csharp
-// see InfraGate.Planner/Cycle/Workflow/ProposeExecutor.cs
+// from k8s-toolkit: InfraGate.Planner/Cycle/Workflow/ProposeExecutor.cs
 [YieldsOutput(typeof(RemediationPlan))]
 public sealed class ProposeExecutor(string id, IAgentMcpToolset tools) : Executor<TItem>(id)
 {

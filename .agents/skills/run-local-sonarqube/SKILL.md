@@ -1,6 +1,6 @@
 ---
 name: run-local-sonarqube
-description: Run the repository-local SonarQube Community Build scan for k8s-toolkit and save an agent-ingestible JSON report on disk. Use when Codex needs local SonarQube/Sonar scanner setup, pre-push Sonar analysis, Sonar findings export, local quality gate/coverage/issue reporting, or validation that `.sonarqube-local/reports/sonarqube-local-report.json` exists after analysis.
+description: Run the repository-local SonarQube Community Build scan for rfc-rag and save an agent-ingestible JSON report on disk. Use when Codex needs local SonarQube/Sonar scanner setup, pre-push Sonar analysis, Sonar findings export, local quality gate/coverage/issue reporting, or validation that `.sonarqube-local/reports/sonarqube-local-report.json` exists after analysis.
 ---
 
 # Run Local SonarQube
@@ -8,6 +8,8 @@ description: Run the repository-local SonarQube Community Build scan for k8s-too
 ## Purpose
 
 Use the repo-owned SonarQube tooling in `tools/sonarqube/` to run the same .NET scanner flow as CI against a local SonarQube server and persist a report for later agents.
+
+> **Not yet ported:** `tools/sonarqube/` does not exist in this repository yet. If the scripts are missing, port them from `k8s-toolkit` first (adapting solution name and test filter), or report that local SonarQube tooling is unavailable — do not improvise a scanner setup.
 
 The durable report path is:
 
@@ -41,7 +43,7 @@ This waits for SonarQube, changes the default admin password on fresh volumes, c
 tools/sonarqube/run-analysis.sh
 ```
 
-This restores local tools, starts `dotnet-sonarscanner`, restores/builds `InfraGate.slnx`, runs default non-Keycloak tests with OpenCover output, ends the scan, waits for the SonarQube Compute Engine task, and exports the JSON report.
+This restores local tools, starts `dotnet-sonarscanner`, restores/builds `RfcRag.slnx`, runs the default non-Integration tests with OpenCover output, ends the scan, waits for the SonarQube Compute Engine task, and exports the JSON report.
 
 6. Prove the report exists and is useful before claiming success:
 
@@ -72,7 +74,7 @@ The report has this top-level shape, matching the local SonarQube export contrac
 }
 ```
 
-The default local project key is `mirusser_Kubernetes-MCP-Guard`. Override with `SONAR_PROJECT_KEY` only when the user explicitly asks for a different local project.
+The default local project key is whatever `prepare-local.sh` creates for this repository. Override with `SONAR_PROJECT_KEY` only when the user explicitly asks for a different local project.
 
 ## Failure Handling
 

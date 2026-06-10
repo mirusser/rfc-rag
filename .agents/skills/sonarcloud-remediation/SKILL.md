@@ -1,6 +1,6 @@
 ---
 name: sonarcloud-remediation
-description: Consume a downloaded sonarcloud-report.json artifact and produce a structured remediation plan for findings in k8s-toolkit. Use after downloading the artifact from a GitHub Actions run. Chains to code-standards, writing-tests, planning-and-task-breakdown, repo-onboarding, and verify-readme-docs.
+description: Consume a downloaded sonarcloud-report.json artifact and produce a structured remediation plan for findings in rfc-rag. Use after downloading the artifact from a GitHub Actions run. Chains to code-standards, writing-tests, planning-and-task-breakdown, repo-onboarding, and verify-readme-docs.
 ---
 
 # SonarCloud Remediation
@@ -56,7 +56,7 @@ For each priority group, read the affected source files. Understand the surround
 
 ### Step 5 — Build the remediation plan
 
-Load `.agents/skills/planning-and-task-breakdown/SKILL.md` and use its task format. Group related findings into one task (e.g., "Fix nullability warnings in McpGateway", "Add ConfigureAwait to all async I/O in InfraGate.McpServer"). Do not create one task per issue — group by logical cluster.
+Load `.agents/skills/planning-and-task-breakdown/SKILL.md` and use its task format. Group related findings into one task (e.g., "Fix nullability warnings in `Parsing`", "Add ConfigureAwait to all async I/O in `Indexing`"). Do not create one task per issue — group by logical cluster.
 
 Each task must include:
 - A clear title and description
@@ -109,5 +109,5 @@ sonarcloud-report.json
 - Do not introduce broad analyzer suppressions or `#pragma warning disable` as a fix — resolve the actual issue.
 - Do not change unrelated code while fixing findings. Keep edits surgical.
 - Do not introduce new public API without confirming it is needed by the fix.
-- Do not rename `K8s` symbols to `K8S` for Sonar S101. `K8s` is the repository convention; keep or add a local `// Justification:` comment.
+- Do not rename established repository-convention identifiers (e.g., `Rfc`, `Abnf` casing) to satisfy Sonar S101. Keep the convention and add a local `// Justification:` comment.
 - If a finding is a false positive (SonarCloud rule does not apply to this context), document it in a `// Justification:` comment rather than suppressing silently, and flag it in the plan for human review.

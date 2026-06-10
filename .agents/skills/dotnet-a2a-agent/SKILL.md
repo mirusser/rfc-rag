@@ -112,9 +112,11 @@ See [`references/SERVER_HOSTING.md`](references/SERVER_HOSTING.md) for `AgentRun
 - Use `RequireAuthorization(policy)` with `azp` claim checks to restrict callers.
 - Constructor signatures and interface details: [`references/API_REFERENCE.md`](references/API_REFERENCE.md).
 
-## In this repo
+## Reference implementations (external)
 
-| Pattern | Reference implementation |
+These patterns were extracted from the `k8s-toolkit` (InfraGate) repository — the paths below refer to that repo, not this one:
+
+| Pattern | Reference implementation (in `k8s-toolkit`) |
 |---|---|
 | Task-based listener (idempotent create + durable lifecycle) | `InfraGate.Planner/Handoff/PlannerHandoffAgentHandler.cs`, `InfraGate.Planner/Tasks/PlannerTaskLifecycle.cs` |
 | Message-only listener | `InfraGate.Executor/Handoff/ExecutorAgentHandler.cs`, `InfraGate.Observer/Handoff/ObserverInboundAgentHandler.cs` |
@@ -123,4 +125,4 @@ See [`references/SERVER_HOSTING.md`](references/SERVER_HOSTING.md) for `AgentRun
 | Keyed `A2AServer` + `MapA2AJsonRpc` + JWT/`azp` wiring | `InfraGate.{Observer,Planner,Executor}/Program.cs` |
 | Idempotent task-store interface | `InfraGate.Planner/Tasks/IPlannerTaskStore.cs` |
 
-Test handlers against `InMemoryTaskStore` and assert persisted state via `ITaskStore.GetTaskAsync` — see the `writing-tests` skill.
+Test handlers against `InMemoryTaskStore` and assert persisted state via `ITaskStore.GetTaskAsync`.

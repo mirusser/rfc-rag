@@ -8,7 +8,7 @@ Use named clients when the name is itself part of a convention. Keep names in co
 
 Use `ConfigureHttpClientDefaults` for shared client defaults when the behavior should apply broadly.
 
-Use resilience pipelines for transient-fault handling instead of hand-written retry loops.
+Handle transient faults with a deliberate, tested policy — in this repo the hand-rolled `EmbeddingRetryPolicy` pattern (bounded backoff, jitter, `Retry-After`, injected `TimeProvider`) — never with ad-hoc retry loops at call sites.
 
 Standard resilience concerns include:
 

@@ -2,8 +2,8 @@
 
 ## Task-driven listener with `TaskUpdater`
 
-> Mirrors the repo's `InfraGate.Planner/Handoff/PlannerHandoffAgentHandler.cs` (handler) and
-> `InfraGate.Planner/Tasks/PlannerTaskLifecycle.cs` (durable state transitions).
+> Mirrors `k8s-toolkit`'s `InfraGate.Planner/Handoff/PlannerHandoffAgentHandler.cs` (handler) and
+> `InfraGate.Planner/Tasks/PlannerTaskLifecycle.cs` (durable state transitions) — external reference, not in this repo.
 
 A task-based handler has **two halves**:
 

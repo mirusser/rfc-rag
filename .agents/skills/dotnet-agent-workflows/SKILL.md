@@ -93,13 +93,15 @@ await using (run.ConfigureAwait(false))
 
 See [`references/EXAMPLES.md`](references/EXAMPLES.md) for filter, output, batch-intake, and fan-out patterns.
 
-## In this repo
+## Reference implementations (external)
 
-| Pattern | Reference implementation |
+These patterns were extracted from the `k8s-toolkit` (InfraGate) repository — the paths below refer to that repo, not this one:
+
+| Pattern | Reference implementation (in `k8s-toolkit`) |
 |---|---|
 | LLM agent (function invocation, iteration cap, tool-call guardrail) | `InfraGate.AgentLlm/ToolCallingAgentFactory.cs` |
 | Filter / dedupe / decide / validate / propose executors (with audit + backoff on every rejection path) | `InfraGate.Planner/Cycle/Workflow/*.cs` |
 | Batch-intake fan-out + workflow build & run | `InfraGate.Planner/Cycle/BatchProcessor.cs` |
 | Snapshot fetch → LLM agent → anomaly parse → fan-in aggregate (Observer DAG) | `InfraGate.Observer/Cycle/Workflow/*.cs`, `InfraGate.Observer/Cycle/ObservationCycleRunner.cs` |
 
-Executors are unit-testable by calling `HandleAsync` with a captured `IWorkflowContext` and asserting the messages/outputs they send — see the `writing-tests` skill.
+Executors are unit-testable by calling `HandleAsync` with a captured `IWorkflowContext` and asserting the messages/outputs they send.
