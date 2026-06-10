@@ -226,7 +226,12 @@ Add `Microsoft.Extensions.TimeProvider.Testing` to the test project only.
 `RetryAsync`. Add per-batch structured logging via `[LoggerMessage]` (batch index, size,
 attempt, delay, final failure) and a `System.Diagnostics.Metrics.Meter` named
 `RfcRag.Embeddings` with: `embedding.batches` counter (tag `outcome` = ok|failed),
-`embedding.retries` counter (tag `reason` = rate_limited|server_error|transport). Validate
+`embedding.retries` counter (tag `reason` = rate_limited|server_error|transport). Wire an
+OTLP metrics exporter (`OpenTelemetry.Extensions.Hosting` +
+`OpenTelemetry.Exporter.OpenTelemetryProtocol`) registered **only when
+`OTEL_EXPORTER_OTLP_ENDPOINT` is set**; all exporter settings come from standard `OTEL_*`
+env vars — no custom config keys, no Task 2 validator growth (grilling decision 2026-06-10).
+Metrics only: logs stay on stderr, no tracing. Validate
 provider responses: returned embedding count must equal batch input count, and vector length
 must equal the configured `EmbeddingDimensions` — throw a clear `InvalidOperationException`
 naming the batch and counts instead of failing later with an opaque pgvector dimension error
@@ -239,6 +244,8 @@ against the SDK version at implementation time) so retry ownership is singular.
       naming expected vs actual (unit-tested with a misbehaving fake).
 - [ ] Retried-then-successful batch emits retry log + counter; existing
       `EmbeddingServiceTests` still pass (updated for constructor signature).
+- [ ] With `OTEL_EXPORTER_OTLP_ENDPOINT` unset, no exporter is registered and no
+      connection attempts occur; when set, counters reach the collector (manual check).
 
 **Verification:**
 - [ ] `dotnet test tests/RfcRag.Tests/ --filter "FullyQualifiedName~EmbeddingService"`
@@ -249,8 +256,11 @@ against the SDK version at implementation time) so retry ownership is singular.
 **Files likely touched:**
 - `src/RfcRag/Indexing/EmbeddingService.cs`
 - `src/RfcRag/Infrastructure/ServiceCollectionExtensions.cs`
+- `src/RfcRag/Program.cs` (conditional OTel registration)
+- `src/RfcRag/RfcRag.csproj` (OTel packages)
 - `tests/RfcRag.Tests/UnitTests/EmbeddingServiceTests.cs`
 - `tests/RfcRag.Tests/Fakes/` (misbehaving fake generator)
+- `docs/configuration.md` (document `OTEL_EXPORTER_OTLP_ENDPOINT` opt-in)
 
 **Estimated scope:** M
 
@@ -327,8 +337,10 @@ Follow-ups section below — no silent skips, no scope creep.
 
 ### Checkpoint: Complete
 - [ ] `make test` fully green (unit + integration + RetrievalQuality).
-- [ ] Docs updated: `docs/configuration.md` (parser-mode semantics, validation ranges),
-      `docs/normative-search.md` (filtering now retrieval-time in SQL), `CHANGELOG.md`.
+- [ ] Docs updated: `docs/configuration.md` (parser-mode semantics, validation ranges,
+      `OTEL_EXPORTER_OTLP_ENDPOINT`), `docs/normative-search.md` (filtering now
+      retrieval-time in SQL), `CHANGELOG.md`. README: soften "binding requirements" to match
+      the lexical-signal definition of Normative Occurrence (see `CONTEXT.md`).
 - [ ] Behavior-change note in CHANGELOG: `Xml` mode no longer double-indexes; users who ran
       `Xml` mode before should force a re-index once to settle source attribution.
 
@@ -352,16 +364,20 @@ Follow-ups section below — no silent skips, no scope creep.
 - **Coordine point:** none across phases — no shared API contract changes between tasks
   except `SearchHybridAsync`'s signature (Task 3 only).
 
-## Open Questions
+## Open Questions — all resolved (grilling session, 2026-06-10)
 
-1. **XML enrichment (future):** beyond fallback, should XML metadata (structured authors/date)
-   *enrich* TXT-parsed documents when both exist? Out of scope here (fallback-only per
-   "secondary/auxiliary" decision); flag if wanted later.
-2. **Retry tunables:** max attempts / base delay / cap as internal constants (planned) or
-   exposed in `RfcRagOptions` (would extend Task 2's validator)? Plan assumes constants —
-   simplicity first.
-3. **Metrics surface:** plan adds a Meter only (no OTel exporter wiring) — consumers can
-   attach a listener/exporter themselves. Confirm that's the desired depth.
+1. **XML enrichment:** resolved — strict fallback, no enrichment; one Source per RFC number,
+   `.txt` always wins. Recorded in `docs/adr/0001-txt-canonical-xml-fallback.md` and
+   `CONTEXT.md` (term: **Source**).
+2. **Retry tunables:** resolved — internal constants in `EmbeddingRetryPolicy` (3 attempts,
+   1s base, 30s cap). Promote to config later only on demonstrated operational need.
+3. **Metrics surface:** resolved — Meter **plus** OTLP exporter, registered only when
+   `OTEL_EXPORTER_OTLP_ENDPOINT` is set; standard `OTEL_*` env vars, no custom keys,
+   metrics only. Task 5 updated accordingly.
+4. **Normative semantics (raised during grilling):** a Normative Occurrence is a *lexical*
+   uppercase-keyword match, not a claim of formal BCP 14 adoption — pins Task 6's rfc793
+   expectations. Recorded in `CONTEXT.md` (terms: **Normative Keyword**,
+   **Normative Occurrence**).
 
 ## Follow-ups (populated during Task 7)
 

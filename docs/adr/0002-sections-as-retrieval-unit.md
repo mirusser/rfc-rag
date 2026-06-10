@@ -1,0 +1,3 @@
+# Sections, not token chunks, are the unit of retrieval
+
+The standard RAG recipe splits documents into fixed-size token windows; we instead split RFCs at heading boundaries and index whole Sections (one embedding + one tsvector per Section). RFC sections are the unit people cite ("RFC 9293 §3.7.1"), so results are directly citeable, section numbers become stable addresses for the MCP tools (`get_rfc_section`, ToC navigation), and ABNF blocks and normative occurrences attach to a meaningful owner. The accepted cost is uneven embedding inputs — long sections dilute semantic signal, one-line sections carry little — because precision of citation matters more here than uniform chunk recall.
