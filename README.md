@@ -6,7 +6,7 @@
 >
 > Semantic search finds relevant RFCs.  
 > Full-text search catches exact keywords.  
-> Normative search finds RFC 2119/8174 keyword occurrences (MUST, SHOULD, MAY…) — lexical signal, not formal compliance claim — not just mentions.  
+> Normative search finds RFC 2119/8174 keyword occurrences (MUST, SHOULD, MAY…)  
 > Section-level retrieval returns the precise paragraph, not the whole document.  
 > AI agents cite RFCs without copying 200 pages of spec.  
 
