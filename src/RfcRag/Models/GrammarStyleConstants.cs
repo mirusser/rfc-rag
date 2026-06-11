@@ -3,7 +3,7 @@ namespace RfcRag.Models;
 /// <summary>
 /// Well-known grammar style values detected during RFC parsing.
 /// </summary>
-public static class GrammarStyleConstants
+internal static class GrammarStyleConstants
 {
     public const string None = "none";
     public const string Abnf = "abnf";

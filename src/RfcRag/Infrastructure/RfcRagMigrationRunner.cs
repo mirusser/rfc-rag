@@ -1,10 +1,9 @@
 using System.Security.Cryptography;
-using Dapper;
-using Npgsql;
+using System.Text;
 
 namespace RfcRag.Infrastructure;
 
-public static class RfcRagMigrationRunner
+internal static class RfcRagMigrationRunner
 {
     public static string DefaultMigrationsDirectory =>
         Path.Combine(AppContext.BaseDirectory, RfcRagConventions.MigrationsDirectoryName);
@@ -148,14 +147,85 @@ public static class RfcRagMigrationRunner
             cancellationToken: cancellationToken)).ConfigureAwait(false);
     }
 
+    public static async Task ValidateEmbeddingDimensionsAsync(
+        NpgsqlDataSource dataSource,
+        int expectedDimensions,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+            await using (connection.ConfigureAwait(false))
+            {
+                int? actualDimensions = await connection.QuerySingleOrDefaultAsync<int?>(new CommandDefinition(
+                    """
+                    select a.atttypmod
+                    from pg_attribute a
+                    join pg_class c on c.oid = a.attrelid
+                    join pg_namespace n on n.oid = c.relnamespace
+                    where n.nspname = 'rfc_rag'
+                      and c.relname = 'rfc_sections'
+                      and a.attname = 'embedding'
+                      and a.attnum > 0
+                    """,
+                    cancellationToken: cancellationToken)).ConfigureAwait(false);
+
+                if (actualDimensions is not null && actualDimensions.Value != expectedDimensions)
+                {
+                    throw new InvalidOperationException(
+                        $"RFC RAG embedding dimension mismatch: the 'rfc_sections.embedding' column expects " +
+                        $"{actualDimensions} dimensions, but RfcRagOptions.EmbeddingDimensions is configured to " +
+                        $"{expectedDimensions}. Update EmbeddingDimensions in your configuration to match, or " +
+                        $"change the embedding model to produce {actualDimensions}-dimensional vectors.");
+                }
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex,
+                "Could not validate RFC RAG embedding dimensions. " +
+                "Skipping dimension check. Expected={ExpectedDimensions}",
+                expectedDimensions);
+        }
+    }
+
+    public static async Task ResetEmbeddingColumnAsync(
+        NpgsqlDataSource dataSource,
+        int dimensions,
+        CancellationToken cancellationToken)
+    {
+        var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using (connection.ConfigureAwait(false))
+        {
+            var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+            await using var _ = transaction.ConfigureAwait(false);
+
+            // dimensions is a positive integer from application configuration — SQL injection is not possible.
+            await connection.ExecuteAsync(new CommandDefinition( // NOSONAR
+                $"""
+                alter table rfc_rag.rfc_sections drop column if exists embedding;
+                alter table rfc_rag.rfc_sections add column embedding vector({dimensions});
+                """,
+                transaction: transaction,
+                cancellationToken: cancellationToken)).ConfigureAwait(false);
+
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
+
     private sealed record class MigrationFile(string FileName, string Sql, string ChecksumSha256)
     {
         public static MigrationFile Read(string path)
         {
-            var bytes = File.ReadAllBytes(path);
+            byte[] bytes = File.ReadAllBytes(path);
             string checksum = Convert.ToHexString(SHA256.HashData(bytes)).ToUpperInvariant();
-
-            return new MigrationFile(Path.GetFileName(path), File.ReadAllText(path), checksum);
+            string sql = Encoding.UTF8.GetString(bytes);
+            return new MigrationFile(Path.GetFileName(path), sql, checksum);
         }
     }
 }

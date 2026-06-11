@@ -1,13 +1,11 @@
 namespace RfcRag.Infrastructure;
 
-using Dapper;
-
 internal sealed class RfcRagStartupService(
     IOptions<RfcRagOptions> options,
     NpgsqlDataSource dataSource,
     IIndexerService indexer,
-    ISearchService searchService,
-    ILoggerFactory loggerFactory)
+    ILoggerFactory loggerFactory,
+    CliCommandRouter cliCommandRouter)
 {
     private readonly ILogger logger = loggerFactory.CreateLogger("RfcRag");
 
@@ -38,24 +36,12 @@ internal sealed class RfcRagStartupService(
                 .ConfigureAwait(false);
         }
 
-        await ValidateEmbeddingDimensionsAsync(dataSource, opts.EmbeddingDimensions, logger)
-            .ConfigureAwait(false);
+        await RfcRagMigrationRunner.ValidateEmbeddingDimensionsAsync(
+            dataSource, opts.EmbeddingDimensions, logger, cancellationToken).ConfigureAwait(false);
 
-        int cliArgIndex = Array.FindIndex(args,
-            a => string.Equals(a, "--cli", StringComparison.OrdinalIgnoreCase));
-
-        if (cliArgIndex >= 0)
+        if (await cliCommandRouter.TryHandleAsync(args, cancellationToken).ConfigureAwait(false))
         {
-            return await HandleCliAsync(args, cliArgIndex, cancellationToken).ConfigureAwait(false);
-        }
-
-        int benchmarkArgIndex = Array.FindIndex(args,
-            a => string.Equals(a, "--benchmark", StringComparison.OrdinalIgnoreCase));
-
-        if (benchmarkArgIndex >= 0)
-        {
-            return await HandleBenchmarkAsync(args, benchmarkArgIndex, cancellationToken)
-                .ConfigureAwait(false);
+            return false;
         }
 
         string? reindexArg = args.FirstOrDefault(a =>
@@ -110,66 +96,13 @@ internal sealed class RfcRagStartupService(
             return false;
         }
 
-        logger.LogInformation(
-            "Resetting embedding column to {Dimensions} dimensions.",
-            targetDimensions);
-
-        var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        await using (connection.ConfigureAwait(false))
-        {
-            var transaction = await connection.BeginTransactionAsync(cancellationToken)
-                .ConfigureAwait(false);
-            await using var _ = transaction.ConfigureAwait(false);
-
-            // targetDimensions is a positive integer from application configuration — SQL injection is not possible.
-            await connection.ExecuteAsync( // NOSONAR
-                $"""
-                alter table rfc_rag.rfc_sections drop column if exists embedding;
-                alter table rfc_rag.rfc_sections add column embedding vector({targetDimensions});
-                """).ConfigureAwait(false);
-
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        }
-
+        logger.LogInformation("Resetting embedding column to {Dimensions} dimensions.", targetDimensions);
+        await RfcRagMigrationRunner.ResetEmbeddingColumnAsync(dataSource, targetDimensions, cancellationToken)
+            .ConfigureAwait(false);
         await indexer.IndexAllAsync(cancellationToken).ConfigureAwait(false);
-
         logger.LogInformation(
             "Embedding column reset to {Dimensions} dimensions. Reindex complete.",
             targetDimensions);
-        return false;
-    }
-
-    private async Task<bool> HandleCliAsync(
-        string[] args,
-        int cliArgIndex,
-        CancellationToken cancellationToken)
-    {
-        string[] cliArgs = args[(cliArgIndex + 1)..];
-        var cliCommand = new CliCommand(searchService, loggerFactory.CreateLogger<CliCommand>());
-        await cliCommand.RunAsync(cliArgs, cancellationToken).ConfigureAwait(false);
-        return false;
-    }
-
-    private async Task<bool> HandleBenchmarkAsync(
-        string[] args,
-        int benchmarkArgIndex,
-        CancellationToken cancellationToken)
-    {
-        string? queriesFilePath = benchmarkArgIndex + 1 < args.Length
-            ? args[benchmarkArgIndex + 1]
-            : null;
-
-        if (string.IsNullOrWhiteSpace(queriesFilePath) || queriesFilePath.StartsWith("--", StringComparison.Ordinal))
-        {
-            logger.LogError("Usage: --benchmark <queries-file-path>");
-            return false;
-        }
-
-        var benchmarkCommand = new BenchmarkCommand(
-            searchService,
-            loggerFactory.CreateLogger<BenchmarkCommand>());
-
-        await benchmarkCommand.RunAsync(queriesFilePath, topK: 10, cancellationToken).ConfigureAwait(false);
         return false;
     }
 
@@ -196,50 +129,5 @@ internal sealed class RfcRagStartupService(
             .ConfigureAwait(false);
         logger.LogInformation("Reindex complete for RFC {RfcNumber}.", reindexRfcNumber);
         return false;
-    }
-
-    private static async Task ValidateEmbeddingDimensionsAsync(
-        NpgsqlDataSource dataSource,
-        int expectedDimensions,
-        ILogger logger)
-    {
-        try
-        {
-            var connection = await dataSource.OpenConnectionAsync().ConfigureAwait(false);
-            await using (connection.ConfigureAwait(false))
-            {
-                int? actualDimensions = await connection.QuerySingleOrDefaultAsync<int?>(
-                    """
-                    select a.atttypmod
-                    from pg_attribute a
-                    join pg_class c on c.oid = a.attrelid
-                    join pg_namespace n on n.oid = c.relnamespace
-                    where n.nspname = 'rfc_rag'
-                      and c.relname = 'rfc_sections'
-                      and a.attname = 'embedding'
-                      and a.attnum > 0
-                    """).ConfigureAwait(false);
-
-                if (actualDimensions is not null && actualDimensions.Value != expectedDimensions)
-                {
-                    throw new InvalidOperationException(
-                        $"RFC RAG embedding dimension mismatch: the 'rfc_sections.embedding' column expects " +
-                        $"{actualDimensions} dimensions, but RfcRagOptions.EmbeddingDimensions is configured to " +
-                        $"{expectedDimensions}. Update EmbeddingDimensions in your configuration to match, or " +
-                        $"change the embedding model to produce {actualDimensions}-dimensional vectors.");
-                }
-            }
-        }
-        catch (InvalidOperationException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex,
-                "Could not validate RFC RAG embedding dimensions. " +
-                "Skipping dimension check. Expected={ExpectedDimensions}",
-                expectedDimensions);
-        }
     }
 }

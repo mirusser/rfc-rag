@@ -1,5 +1,5 @@
 using System.Text.Json;
-using RfcRag.Infrastructure;
+using RfcRag.Cli;
 using RfcRag.Search;
 using RfcRag.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;

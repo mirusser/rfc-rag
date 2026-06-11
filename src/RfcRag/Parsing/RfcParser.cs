@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 
 namespace RfcRag.Parsing;
 
-public sealed partial class RfcParser
+internal sealed partial class RfcParser
 {
     private const string StatusOfThisMemo = "Status of This Memo";
     public async Task<RfcDocument> ParseAsync(string filePath, CancellationToken cancellationToken)

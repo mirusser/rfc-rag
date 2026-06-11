@@ -1,12 +1,12 @@
 using System.Diagnostics;
 using System.Text.Json;
 
-namespace RfcRag.Infrastructure;
+namespace RfcRag.Cli;
 
 internal sealed class BenchmarkCommand(ISearchService searchService, ILogger<BenchmarkCommand> logger)
 {
-    private static readonly JsonSerializerOptions JsonWriteOptions = new() { WriteIndented = false };
-    private static readonly JsonSerializerOptions JsonReadOptions = new() { PropertyNameCaseInsensitive = true };
+    private static readonly JsonSerializerOptions jsonWriteOptions = new() { WriteIndented = false };
+    private static readonly JsonSerializerOptions jsonReadOptions = new() { PropertyNameCaseInsensitive = true };
 
     public Task RunAsync(string queriesFilePath, int topK, CancellationToken cancellationToken) =>
         RunAsync(queriesFilePath, topK, Console.Out, cancellationToken);
@@ -23,7 +23,7 @@ internal sealed class BenchmarkCommand(ISearchService searchService, ILogger<Ben
         }
 
         string json = await File.ReadAllTextAsync(queriesFilePath, cancellationToken).ConfigureAwait(false);
-        var queries = JsonSerializer.Deserialize<BenchmarkQuery[]>(json, JsonReadOptions) ?? [];
+        var queries = JsonSerializer.Deserialize<BenchmarkQuery[]>(json, jsonReadOptions) ?? [];
 
         logger.LogInformation("Running benchmark with {Count} queries, top-{TopK}", queries.Length, topK);
 
@@ -50,7 +50,7 @@ internal sealed class BenchmarkCommand(ISearchService searchService, ILogger<Ben
             TotalElapsedMs: totalTimer.ElapsedMilliseconds,
             Results: queryResults);
 
-        await output.WriteLineAsync(JsonSerializer.Serialize(report, JsonWriteOptions)).ConfigureAwait(false);
+        await output.WriteLineAsync(JsonSerializer.Serialize(report, jsonWriteOptions)).ConfigureAwait(false);
     }
 
     private async Task<BenchmarkQueryResult> RunQueryAsync(

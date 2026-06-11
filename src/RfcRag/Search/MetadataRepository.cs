@@ -1,13 +1,10 @@
-using Dapper;
-using RfcRag.Models;
-
 namespace RfcRag.Search;
 
 /// <summary>
 /// Read-side data access for RFC metadata operations.
 /// Handles metadata retrieval, listing, back-reference lookup, and statistics.
 /// </summary>
-public sealed class MetadataRepository(NpgsqlDataSource dataSource)
+internal sealed class MetadataRepository(NpgsqlDataSource dataSource)
 {
 
     /// <summary>

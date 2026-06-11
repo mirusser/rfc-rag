@@ -16,10 +16,11 @@ builder.Services
 builder.Services.AddSingleton<IValidateOptions<RfcRagOptions>, RfcRagOptionsValidator>();
 
 builder.Services.AddRfcRagServices();
+builder.Services.AddSingleton<CliCommandRouter>();
 builder.Services.AddSingleton<RfcRagStartupService>();
 
 const string OtlpEndpointEnvVar = "OTEL_EXPORTER_OTLP_ENDPOINT";
-string? otlpEndpoint = Environment.GetEnvironmentVariable(OtlpEndpointEnvVar);
+string? otlpEndpoint = builder.Configuration[OtlpEndpointEnvVar];
 if (!string.IsNullOrWhiteSpace(otlpEndpoint))
 {
     builder.Services.AddOpenTelemetry()

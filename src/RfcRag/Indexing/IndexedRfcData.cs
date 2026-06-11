@@ -5,7 +5,7 @@ namespace RfcRag.Indexing;
 /// Introduced to reduce the parameter count of
 /// <see cref="IndexingRepository.UpsertIndexedRfcAsync"/>.
 /// </summary>
-public sealed record class IndexedRfcData(
+internal sealed record class IndexedRfcData(
     int RfcNumber,
     string SourcePath,
     string SourceSha256,

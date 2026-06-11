@@ -1,4 +1,5 @@
 using Dapper;
+using RfcRag.Cli;
 using RfcRag.Indexing;
 using RfcRag.Infrastructure;
 using RfcRag.Parsing;
@@ -127,11 +128,12 @@ public sealed class EmbeddingDimensionMigrationTests : IAsyncLifetime
             new MetadataRepository(dataSource!),
             embeddingService);
 
+        var cliRouter = new CliCommandRouter(searchService, NullLoggerFactory.Instance);
         return new RfcRagStartupService(
             options,
             dataSource!,
             indexer,
-            searchService,
-            NullLoggerFactory.Instance);
+            NullLoggerFactory.Instance,
+            cliRouter);
     }
 }

@@ -1,12 +1,10 @@
-using RfcRag.Models;
-
 namespace RfcRag.Parsing;
 
 /// <summary>
 /// Represents a fully parsed RFC document with metadata, sections, ABNF blocks,
 /// and normative keyword occurrences.
 /// </summary>
-public sealed record class RfcDocument
+internal sealed record class RfcDocument
 {
     /// <summary>Metadata extracted from the RFC front matter.</summary>
     public RfcMetadata Metadata { get; init; } = new();

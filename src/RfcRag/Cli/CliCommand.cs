@@ -1,10 +1,10 @@
 using System.Text.Json;
 
-namespace RfcRag.Infrastructure;
+namespace RfcRag.Cli;
 
 internal sealed class CliCommand(ISearchService searchService, ILogger<CliCommand> logger)
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+    private static readonly JsonSerializerOptions jsonOptions = new() { WriteIndented = true };
 
     /// <summary>Returns 0 on success, non-zero on error.</summary>
     public Task<int> RunAsync(string[] cliArgs, CancellationToken cancellationToken) =>
@@ -21,11 +21,11 @@ internal sealed class CliCommand(ISearchService searchService, ILogger<CliComman
 
         return cliArgs[0].ToUpperInvariant() switch
         {
-            "SEARCH" => await RunSearchAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
-            "SECTION" => await RunSectionAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
+            "SEARCH"    => await RunSearchAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
+            "SECTION"   => await RunSectionAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
             "NORMATIVE" => await RunNormativeAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
-            "STATS" => await RunStatsAsync(output, cancellationToken).ConfigureAwait(false),
-            _ => PrintUnknownVerb(cliArgs[0])
+            "STATS"     => await RunStatsAsync(output, cancellationToken).ConfigureAwait(false),
+            _           => PrintUnknownVerb(cliArgs[0])
         };
     }
 
@@ -43,7 +43,7 @@ internal sealed class CliCommand(ISearchService searchService, ILogger<CliComman
         var results = await searchService.SearchAsync(query, limit, normativeKeyword: null, cancellationToken)
             .ConfigureAwait(false);
 
-        await output.WriteLineAsync(JsonSerializer.Serialize(results, JsonOptions)).ConfigureAwait(false);
+        await output.WriteLineAsync(JsonSerializer.Serialize(results, jsonOptions)).ConfigureAwait(false);
         return 0;
     }
 
@@ -59,7 +59,7 @@ internal sealed class CliCommand(ISearchService searchService, ILogger<CliComman
         var section = await searchService.GetSectionAsync(rfcNumber, sectionId, cancellationToken)
             .ConfigureAwait(false);
 
-        await output.WriteLineAsync(JsonSerializer.Serialize(section, JsonOptions)).ConfigureAwait(false);
+        await output.WriteLineAsync(JsonSerializer.Serialize(section, jsonOptions)).ConfigureAwait(false);
         return 0;
     }
 
@@ -72,19 +72,13 @@ internal sealed class CliCommand(ISearchService searchService, ILogger<CliComman
         }
 
         string keyword = args[1];
-        int? rfcNumber = null;
         int rfcFlag = ParseIntFlag(args, "--rfc", defaultValue: -1);
-        if (rfcFlag > 0)
-            rfcNumber = rfcFlag;
+        int[]? rfcFilter = rfcFlag > 0 ? [rfcFlag] : null;
 
-        int[]? rfcFilter = rfcNumber is { } n ? [n] : null;
         var results = await searchService.SearchNormativeAsync(
-            keyword,
-            rfcFilter,
-            limit: 20,
-            cancellationToken).ConfigureAwait(false);
+            keyword, rfcFilter, limit: 20, cancellationToken).ConfigureAwait(false);
 
-        await output.WriteLineAsync(JsonSerializer.Serialize(results, JsonOptions)).ConfigureAwait(false);
+        await output.WriteLineAsync(JsonSerializer.Serialize(results, jsonOptions)).ConfigureAwait(false);
         return 0;
     }
 

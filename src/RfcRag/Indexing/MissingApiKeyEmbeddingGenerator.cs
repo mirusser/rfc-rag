@@ -1,6 +1,4 @@
-using Microsoft.Extensions.AI;
-
-namespace RfcRag.Infrastructure;
+namespace RfcRag.Indexing;
 
 /// <summary>
 /// Placeholder <see cref="IEmbeddingGenerator{TIn, TOut}"/> registered when

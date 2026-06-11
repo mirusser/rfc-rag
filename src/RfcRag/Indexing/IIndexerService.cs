@@ -1,6 +1,6 @@
 namespace RfcRag.Indexing;
 
-public interface IIndexerService
+internal interface IIndexerService
 {
     Task IndexAllAsync(CancellationToken cancellationToken);
 

@@ -1,5 +1,3 @@
-using RfcRag.Models;
-
 namespace RfcRag.Search;
 
 public interface ISearchService

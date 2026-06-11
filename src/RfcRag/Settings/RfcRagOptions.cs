@@ -1,29 +1,5 @@
 namespace RfcRag.Settings;
 
-/// <summary>Selects the RFC source format parser.</summary>
-public enum RfcParserType
-{
-    /// <summary>Parse plain-text RFC files (.txt). Default.</summary>
-    Text,
-
-    /// <summary>
-    /// Parse RFC XML 2 format files (.xml) in addition to plain-text files.
-    /// TXT is always preferred; .xml is used only for RFC numbers that have
-    /// no .txt counterpart. Requires RFC XML 2 (RFC 7991) source files.
-    /// </summary>
-    Xml
-}
-
-/// <summary>Selects the embedding provider used for indexing and search.</summary>
-public enum EmbeddingProvider
-{
-    /// <summary>Use OpenRouter's OpenAI-compatible embedding API (default).</summary>
-    OpenRouter,
-
-    /// <summary>Use a local OpenAI-compatible embedding server (e.g. Ollama, llama.cpp).</summary>
-    Local
-}
-
 /// <summary>
 /// Configuration options for the RFC RAG pipeline.
 /// Bound from the <c>RfcRag</c> configuration section.

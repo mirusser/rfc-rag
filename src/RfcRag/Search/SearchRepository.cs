@@ -4,7 +4,7 @@ namespace RfcRag.Search;
 /// Read-side data access for RFC search operations.
 /// Handles hybrid, lexical, vector, normative, and ABNF searches.
 /// </summary>
-public sealed class SearchRepository(NpgsqlDataSource dataSource)
+internal sealed class SearchRepository(NpgsqlDataSource dataSource)
 {
 
     private const string SectionProjection =
