@@ -94,6 +94,72 @@ internal sealed class MetadataRepository(NpgsqlDataSource dataSource)
     }
 
     /// <summary>
+    /// Batch lookup of forward and back references for a set of RFC numbers.
+    /// Returns relation data for every RFC that has any relationship edge.
+    /// One round trip for N RFCs, not N round trips.
+    /// </summary>
+    public async Task<IReadOnlyDictionary<int, RfcRelationsBatch>> GetRelationsBatchAsync(
+        IReadOnlyList<int> rfcNumbers,
+        CancellationToken cancellationToken)
+    {
+        if (rfcNumbers.Count == 0)
+            return new Dictionary<int, RfcRelationsBatch>();
+
+        var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using (connection.ConfigureAwait(false))
+        {
+            // Forward + back references in a single round trip
+            var multi = await connection.QueryMultipleAsync(new CommandDefinition(
+                """
+                select
+                    rfc_number as "RfcNumber",
+                    updates as "Updates",
+                    obsoletes as "Obsoletes"
+                from rfc_rag.indexed_rfcs
+                where rfc_number = any(@RfcNumbers);
+
+                select distinct on (br_val, i.rfc_number)
+                    br_val as "RfcNumber",
+                    i.rfc_number as "Reference",
+                    case
+                        when br_val = any(i.updates) then 'updated_by'
+                        when br_val = any(i.obsoletes) then 'obsoleted_by'
+                    end as "Kind"
+                from rfc_rag.indexed_rfcs i
+                join lateral unnest(@RfcNumbers) as br_val on true
+                where br_val = any(i.updates) or br_val = any(i.obsoletes)
+                """,
+                new { RfcNumbers = rfcNumbers.ToArray() },
+                cancellationToken: cancellationToken)).ConfigureAwait(false);
+
+            var forward = await multi.ReadAsync<RfcRelationsBatch>().ConfigureAwait(false);
+            var backRefs = await multi.ReadAsync<(int RfcNumber, int Reference, string Kind)>().ConfigureAwait(false);
+
+            // Build the result dictionary, merging forward and back references
+            var result = new Dictionary<int, RfcRelationsBatch>();
+            foreach (var f in forward)
+                result[f.RfcNumber] = f;
+
+            foreach (var br in backRefs)
+            {
+                if (!result.TryGetValue(br.RfcNumber, out var rel))
+                {
+                    rel = new RfcRelationsBatch { RfcNumber = br.RfcNumber };
+                    result[br.RfcNumber] = rel;
+                }
+
+                if (string.Equals(br.Kind, "updated_by", StringComparison.Ordinal))
+                    rel = rel with { UpdatedBy = [.. rel.UpdatedBy, br.Reference] };
+                else if (string.Equals(br.Kind, "obsoleted_by", StringComparison.Ordinal))
+                    rel = rel with { ObsoletedBy = [.. rel.ObsoletedBy, br.Reference] };
+                result[br.RfcNumber] = rel;
+            }
+
+            return result;
+        }
+    }
+
+    /// <summary>
     /// Get statistics about the indexed RFC corpus.
     /// </summary>
     public async Task<string> GetStatsAsync(CancellationToken cancellationToken = default)

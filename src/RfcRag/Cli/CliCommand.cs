@@ -2,14 +2,23 @@ using System.Text.Json;
 
 namespace RfcRag.Cli;
 
-internal sealed class CliCommand(ISearchService searchService, ILogger<CliCommand> logger)
+internal sealed class CliCommand(ISearchService searchService, ContextAssembler contextAssembler, ILogger<CliCommand> logger)
 {
-    private static readonly JsonSerializerOptions jsonOptions = new() { WriteIndented = true };
+    private static readonly JsonSerializerOptions jsonOptions = new()
+    {
+        WriteIndented = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
 
     /// <summary>Returns 0 on success, non-zero on error.</summary>
     public Task<int> RunAsync(string[] cliArgs, CancellationToken cancellationToken) =>
         RunAsync(cliArgs, Console.Out, cancellationToken);
 
+    /// <summary>Runs a CLI command with the given arguments, writing output to the specified writer.</summary>
+    /// <param name="cliArgs">Command-line arguments (verb + arguments).</param>
+    /// <param name="output">Text writer for command output.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>0 on success, non-zero on error.</returns>
     public async Task<int> RunAsync(string[] cliArgs, TextWriter output, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(output);
@@ -25,6 +34,7 @@ internal sealed class CliCommand(ISearchService searchService, ILogger<CliComman
             "SECTION"   => await RunSectionAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
             "NORMATIVE" => await RunNormativeAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
             "STATS"     => await RunStatsAsync(output, cancellationToken).ConfigureAwait(false),
+            "EVIDENCE"  => await RunEvidenceAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
             _           => PrintUnknownVerb(cliArgs[0])
         };
     }
@@ -89,20 +99,43 @@ internal sealed class CliCommand(ISearchService searchService, ILogger<CliComman
         return 0;
     }
 
-    private static int PrintUnknownVerb(string verb)
+    private int PrintUnknownVerb(string verb)
     {
-        Console.Error.WriteLine($"Unknown verb: '{verb}'");
+        logger.LogError("Unknown verb: '{Verb}'", verb);
         PrintUsage();
         return 1;
     }
 
-    private static void PrintUsage()
+    private void PrintUsage()
     {
-        Console.Error.WriteLine("Usage: --cli <verb> [args]");
-        Console.Error.WriteLine("  search <query> [--limit N]");
-        Console.Error.WriteLine("  section <rfcNumber> <sectionId>");
-        Console.Error.WriteLine("  normative <keyword> [--rfc N]");
-        Console.Error.WriteLine("  stats");
+        logger.LogInformation("Usage: --cli <verb> [args]");
+        logger.LogInformation("  search <query> [--limit N]");
+        logger.LogInformation("  section <rfcNumber> <sectionId>");
+        logger.LogInformation("  normative <keyword> [--rfc N]");
+        logger.LogInformation("  evidence <query> [--limit N] [--budget N]");
+        logger.LogInformation("  stats");
+    }
+
+    private async Task<int> RunEvidenceAsync(string[] args, TextWriter output, CancellationToken cancellationToken)
+    {
+        if (args.Length < 2)
+        {
+            logger.LogError("Usage: --cli evidence <query> [--limit N] [--budget N]");
+            return 1;
+        }
+
+        string query = args[1];
+        int limit = ParseIntFlag(args, "--limit", defaultValue: 10);
+        int budget = ParseIntFlag(args, "--budget", defaultValue: 10000);
+
+        var results = await searchService.SearchAsync(
+            query, limit, normativeKeyword: null, cancellationToken).ConfigureAwait(false);
+
+        var pack = await contextAssembler.AssembleAsync(
+            query, results, budget, cancellationToken).ConfigureAwait(false);
+
+        await output.WriteLineAsync(JsonSerializer.Serialize(pack, jsonOptions)).ConfigureAwait(false);
+        return 0;
     }
 
     private static int ParseIntFlag(string[] args, string flag, int defaultValue)

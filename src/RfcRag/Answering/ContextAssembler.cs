@@ -1,0 +1,352 @@
+namespace RfcRag.Answering;
+
+/// <summary>
+/// Assembles ranked SearchResults into a deduplicated, budget-enforced Evidence Pack.
+/// This is the deep module of the evidence assembly pipeline — callers get a ready-to-use pack
+/// and know nothing about deduplication, overlap collapse, heading-chain construction, or budget enforcement.
+/// </summary>
+internal sealed class ContextAssembler(ISearchService searchService)
+{
+    /// <summary>Approximate token estimate: 1 token ≈ 4 characters (AD10).</summary>
+    private const int CharsPerToken = 4;
+    private const int MaxSectionsPerRfc = 5;
+
+    // Warning type constants — stable values consumed by callers inspecting EvidenceWarning.Type.
+    private const string WarningTypeBudgetExceeded = "budget_exceeded";
+    private const string WarningTypeOverlapCollapsed = "overlap_collapsed";
+    private const string WarningTypeOmittedSection = "omitted_section";
+    private const string WarningTypeObsoletedRfc = "obsoleted_rfc";
+
+    /// <summary>Assembles an Evidence Pack from ranked search results.</summary>
+    /// <param name="query">The original search query.</param>
+    /// <param name="results">Ranked search results (highest score first).</param>
+    /// <param name="budgetChars">Maximum total characters for included Section texts.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An assembled Evidence Pack with deduplicated, ordered Sections and warnings.</returns>
+    public async Task<EvidencePack> AssembleAsync(
+        string query,
+        IReadOnlyList<SearchResult> results,
+        int budgetChars,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (results.Count == 0)
+        {
+            return new EvidencePack
+            {
+                Query = query,
+                BudgetChars = budgetChars,
+            };
+        }
+
+        var warnings = new List<EvidenceWarning>();
+
+        // Phase 1: Deduplicate and collapse overlaps
+        var deduplicated = DeduplicateAndCollapse(results, warnings);
+
+        // Phase 2: Enforce per-RFC cap
+        var capped = EnforcePerRfcCap(deduplicated, warnings);
+
+        // Phase 3: Fetch full section text and build evidence sections
+        var evidenceSections = new List<EvidenceSection>();
+        var sectionIds = new List<Guid>();
+        var rfcNumbers = new HashSet<int>();
+        int totalChars = 0;
+        bool budgetExceeded = false;
+        bool hadAtLeastOne = false;
+
+        foreach (var result in capped)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            RfcSection? section = await searchService.GetSectionAsync(
+                result.RfcNumber, result.Section, cancellationToken).ConfigureAwait(false);
+
+            if (section is null)
+                continue;
+
+            // Build parent-heading chain
+            IReadOnlyDictionary<string, string?> toc = await searchService.GetTocAsync(
+                result.RfcNumber, cancellationToken).ConfigureAwait(false);
+            var parentHeadings = BuildParentHeadingChain(result.Section, toc);
+
+            int sectionChars = section.Text.Length;
+
+            // Budget enforcement: always include at least the first section
+            if (!hadAtLeastOne)
+            {
+                // First section always included, even if oversized
+                hadAtLeastOne = true;
+                if (sectionChars > budgetChars)
+                {
+                    budgetExceeded = true;
+                }
+            }
+            else if (totalChars + sectionChars > budgetChars)
+            {
+                budgetExceeded = true;
+                break;
+            }
+
+            totalChars += sectionChars;
+
+            evidenceSections.Add(new EvidenceSection
+            {
+                RfcNumber = result.RfcNumber,
+                Section = result.Section,
+                Heading = section.Heading,
+                ParentHeadings = parentHeadings,
+                Text = section.Text,
+                Score = result.Score,
+                EvidenceId = $"{result.RfcNumber}#{result.Section}",
+            });
+
+            sectionIds.Add(result.Id);
+            rfcNumbers.Add(result.RfcNumber);
+        }
+
+        // Phase 4: Enrichment — batch-fetch relations and normative occurrences
+        IReadOnlyList<string> relationNotes = [];
+        if (evidenceSections.Count > 0)
+        {
+            relationNotes = await EnrichAsync(
+                evidenceSections, sectionIds, rfcNumbers.ToList(), warnings, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        if (budgetExceeded)
+        {
+            warnings.Add(new EvidenceWarning
+            {
+                Type = WarningTypeBudgetExceeded,
+                Message = $"Evidence truncated to fit {budgetChars}-character budget. " +
+                          $"{evidenceSections.Count} sections included.",
+            });
+        }
+
+        int estimatedTokens = totalChars / CharsPerToken;
+
+        return new EvidencePack
+        {
+            Query = query,
+            Sections = evidenceSections,
+            TotalChars = totalChars,
+            EstimatedTokens = estimatedTokens,
+            BudgetChars = budgetChars,
+            BudgetExceeded = budgetExceeded,
+            Warnings = warnings,
+            RelationNotes = relationNotes,
+        };
+    }
+
+    /// <summary>
+    /// Deduplicates by (RfcNumber, Section), keeping the highest score.
+    /// Then collapses ancestor/descendant overlaps — when both a parent section
+    /// and its child subsection appear, keeps the more specific (child) and warns.
+    /// </summary>
+    private static List<SearchResult> DeduplicateAndCollapse(
+        IReadOnlyList<SearchResult> results,
+        List<EvidenceWarning> warnings)
+    {
+        // Pass 1: deduplicate exact matches, keeping highest score
+        var seen = new Dictionary<(int RfcNumber, string Section), SearchResult>();
+        foreach (var result in results)
+        {
+            var key = (result.RfcNumber, result.Section);
+            if (!seen.TryGetValue(key, out var existing) || result.Score > existing.Score)
+            {
+                seen[key] = result;
+            }
+        }
+
+        // Pass 2: collapse ancestor/descendant overlaps
+        var collapsed = new List<SearchResult>();
+        var ancestorsToSkip = new HashSet<(int, string)>();
+
+        foreach (var result in seen.Values.OrderByDescending(r => r.Score))
+        {
+            var key = (result.RfcNumber, result.Section);
+            if (ancestorsToSkip.Contains(key))
+                continue;
+
+            // Check if this result is an ancestor of any already-included result
+            bool isAncestor = false;
+            string ancestorPrefix = result.Section + ".";
+
+            foreach (var existing in collapsed)
+            {
+                if (existing.RfcNumber == result.RfcNumber &&
+                    existing.Section.StartsWith(ancestorPrefix, StringComparison.Ordinal))
+                {
+                    // This result is an ancestor of an already-included child — skip it
+                    isAncestor = true;
+                    warnings.Add(new EvidenceWarning
+                    {
+                        Type = WarningTypeOverlapCollapsed,
+                        Message = $"Section {result.RfcNumber}#{result.Section} omitted in favor of " +
+                                  $"more specific subsection {existing.RfcNumber}#{existing.Section}.",
+                        EvidenceId = $"{result.RfcNumber}#{result.Section}",
+                    });
+                    break;
+                }
+            }
+
+            if (isAncestor)
+                continue;
+
+            // Check if any already-included result is an ancestor of this one
+            string thisSectionPrefix = result.Section + ".";
+            bool childReplacesParent = false;
+
+            for (int i = collapsed.Count - 1; i >= 0; i--)
+            {
+                var existing = collapsed[i];
+                if (existing.RfcNumber == result.RfcNumber &&
+                    result.Section.StartsWith(existing.Section + ".", StringComparison.Ordinal))
+                {
+                    // This is a child of an already-included parent — replace parent with child
+                    collapsed.RemoveAt(i);
+                    childReplacesParent = true;
+                    warnings.Add(new EvidenceWarning
+                    {
+                        Type = WarningTypeOverlapCollapsed,
+                        Message = $"Section {existing.RfcNumber}#{existing.Section} omitted in favor of " +
+                                  $"more specific subsection {result.RfcNumber}#{result.Section}.",
+                        EvidenceId = $"{existing.RfcNumber}#{existing.Section}",
+                    });
+                    break;
+                }
+            }
+
+            collapsed.Add(result);
+
+            // If we replaced a parent, re-check for other sibling overlaps
+            if (childReplacesParent)
+            {
+                // No additional handling needed — the parent is removed
+            }
+        }
+
+        return collapsed;
+    }
+
+    /// <summary>Enforces the per-RFC section cap by keeping only the best-scoring N sections per RFC.</summary>
+    private static List<SearchResult> EnforcePerRfcCap(
+        List<SearchResult> results,
+        List<EvidenceWarning> warnings)
+    {
+        var perRfc = new Dictionary<int, List<SearchResult>>();
+        foreach (var result in results)
+        {
+            if (!perRfc.ContainsKey(result.RfcNumber))
+                perRfc[result.RfcNumber] = [];
+            perRfc[result.RfcNumber].Add(result);
+        }
+
+        var capped = new List<SearchResult>();
+        foreach (var (rfcNumber, rfcResults) in perRfc)
+        {
+            var topN = rfcResults
+                .OrderByDescending(r => r.Score)
+                .Take(MaxSectionsPerRfc)
+                .ToList();
+
+            if (rfcResults.Count > MaxSectionsPerRfc)
+            {
+                warnings.Add(new EvidenceWarning
+                {
+                    Type = WarningTypeOmittedSection,
+                    Message = $"RFC {rfcNumber}: capped at {MaxSectionsPerRfc} sections " +
+                              $"({rfcResults.Count - MaxSectionsPerRfc} omitted).",
+                    EvidenceId = $"{rfcNumber}#*",
+                });
+            }
+
+            capped.AddRange(topN);
+        }
+
+        // Re-sort by score descending, then by RFC number, then by section for deterministic tie-breaking
+        return capped
+            .OrderByDescending(r => r.Score)
+            .ThenBy(r => r.RfcNumber)
+            .ThenBy(r => r.Section, StringComparer.Ordinal)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Builds the chain of ancestor headings for a section, ordered outermost-first.
+    /// Uses the RFC's table of contents for heading lookup.
+    /// </summary>
+    private static List<string> BuildParentHeadingChain(
+        string section,
+        IReadOnlyDictionary<string, string?> toc)
+    {
+        var chain = new List<string>();
+        var parts = section.Split('.');
+
+        // Walk up from the immediate parent to the outermost ancestor
+        for (int i = parts.Length - 2; i >= 0; i--)
+        {
+            string ancestorId = string.Join(".", parts.Take(i + 1));
+            if (toc.TryGetValue(ancestorId, out var heading) && heading is not null)
+            {
+                chain.Insert(0, heading);
+            }
+        }
+
+        return chain;
+    }
+
+    private async Task<IReadOnlyList<string>> EnrichAsync(
+        List<EvidenceSection> sections,
+        List<Guid> sectionIds,
+        IReadOnlyList<int> rfcNumbers,
+        List<EvidenceWarning> warnings,
+        CancellationToken cancellationToken)
+    {
+        // Batch-fetch relations for all RFCs in the evidence
+        var relations = await searchService.GetRelationsBatchAsync(rfcNumbers, cancellationToken)
+            .ConfigureAwait(false);
+
+        var relationNotes = new List<string>();
+        for (int i = 0; i < sections.Count; i++)
+        {
+            var section = sections[i];
+            if (!relations.TryGetValue(section.RfcNumber, out var rel))
+                continue;
+
+            if (rel.ObsoletedBy.Count > 0)
+            {
+                string obsMessage = $"RFC {section.RfcNumber} is obsoleted by RFC {string.Join(", ", rel.ObsoletedBy)}.";
+
+                if (!relationNotes.Contains(obsMessage))
+                {
+                    relationNotes.Add(obsMessage);
+                    warnings.Add(new EvidenceWarning
+                    {
+                        Type = WarningTypeObsoletedRfc,
+                        Message = obsMessage,
+                        EvidenceId = $"{section.RfcNumber}#*",
+                    });
+                }
+
+                sections[i] = section with { RelationNote = obsMessage };
+            }
+        }
+
+        // Batch-fetch normative occurrences for all sections
+        var normativeOccurrences = await searchService.GetNormativeOccurrencesBatchAsync(
+            sectionIds, cancellationToken).ConfigureAwait(false);
+
+        for (int i = 0; i < sections.Count; i++)
+        {
+            if (i < sectionIds.Count && normativeOccurrences.TryGetValue(sectionIds[i], out var occurrences))
+            {
+                sections[i] = sections[i] with { NormativeOccurrences = occurrences };
+            }
+        }
+
+        return relationNotes;
+    }
+}

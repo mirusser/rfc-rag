@@ -290,6 +290,7 @@ internal sealed class SearchRepository(NpgsqlDataSource dataSource)
         }
     }
 
+    /// <summary>Retrieves a section and its immediate child subsections.</summary>
     public async Task<(RfcSection Parent, IReadOnlyList<RfcSection> Children)> GetSectionWithChildrenAsync(
         int rfcNumber,
         string section,
@@ -335,6 +336,10 @@ internal sealed class SearchRepository(NpgsqlDataSource dataSource)
         }
     }
 
+    /// <summary>
+    /// Finds sections within an RFC whose headings match the given type names.
+    /// Used to locate type-definition sections for type-reference resolution.
+    /// </summary>
     public async Task<IReadOnlyDictionary<string, RfcSection>> FindSectionsByHeadingsAsync(
         int rfcNumber,
         IReadOnlyList<string> typeNames,
@@ -356,13 +361,51 @@ internal sealed class SearchRepository(NpgsqlDataSource dataSource)
                 cancellationToken: cancellationToken)).ConfigureAwait(false);
 
             return matches
-                .GroupBy(r => r.Heading, StringComparer.Ordinal)
-                .ToDictionary(group => group.Key!, group => group.First(), StringComparer.Ordinal);
+                .Where(r => r.Heading is not null)
+                .GroupBy(r => r.Heading!, StringComparer.Ordinal)
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
         }
     }
 
     private static int NormalizeLimit(int limit) => Math.Clamp(limit, 1, MaxLimit);
 
+    /// <summary>
+    /// Batch-fetches normative keyword occurrences for a set of section IDs.
+    /// Returns a dictionary mapping each section ID to its list of occurrences.
+    /// </summary>
+    public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<NormativeOccurrenceData>>> GetNormativeOccurrencesBatchAsync(
+        IReadOnlyList<Guid> sectionIds,
+        CancellationToken cancellationToken)
+    {
+        if (sectionIds.Count == 0)
+            return new Dictionary<Guid, IReadOnlyList<NormativeOccurrenceData>>();
+
+        var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using (connection.ConfigureAwait(false))
+        {
+            var rows = await connection.QueryAsync<(Guid SectionId, string Keyword, int LineOffset)>(new CommandDefinition(
+                """
+                select section_id, keyword, line_offset
+                from rfc_rag.normative_occurrences
+                where section_id = any(@SectionIds)
+                order by section_id, line_offset
+                """,
+                new { SectionIds = sectionIds.ToArray() },
+                cancellationToken: cancellationToken)).ConfigureAwait(false);
+
+            var result = new Dictionary<Guid, IReadOnlyList<NormativeOccurrenceData>>();
+            foreach (var group in rows.GroupBy(r => r.SectionId))
+            {
+                result[group.Key] = group
+                    .Select(r => new NormativeOccurrenceData { Keyword = r.Keyword, LineOffset = r.LineOffset })
+                    .ToList();
+            }
+
+            return result;
+        }
+    }
+
+    /// <summary>Retrieves the table of contents for an RFC as a section→heading map.</summary>
     public async Task<IReadOnlyDictionary<string, string?>> GetTocAsync(
         int rfcNumber,
         CancellationToken cancellationToken)

@@ -129,7 +129,8 @@ Returns: JSON object with { total, rfcs: [{ rfcNumber, title, ... }] }
 - `Search/ISearchService.cs` — search and retrieval interface
 - `Indexing/IIndexerService.cs` — indexing service interface
 - `SearchResult.cs` — ranked search result model
-- `Models/` — database entity models (`RfcSection.cs`, `RfcAbnfBlock.cs`, `NormativeOccurrence.cs`, `RfcMetadata.cs`)
+- `Answering/` — evidence assembly and enrichment (`ContextAssembler.cs`, `EvidencePack.cs`, `EvidenceSection.cs`, `EvidenceWarning.cs`)
+- `Models/` — database entity models (`RfcSection.cs`, `RfcAbnfBlock.cs`, `NormativeOccurrence.cs`, `RfcMetadata.cs`, `RfcRelationsBatch.cs`)
 
 ## Running Tests
 

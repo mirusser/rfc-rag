@@ -42,12 +42,26 @@ _Avoid_: semantic search (that is only one arm of it)
 A row written at the end of every successful indexing run that records provenance: mirror path, parser type and version, embedding provider/model/dimensions, batch parameters, counts, and creation timestamp. Every eval report and trace carries the manifest id so results are comparable across runs.
 _Avoid_: index metadata (too generic), indexing log
 
+**Evidence Pack**:
+The assembled, deduplicated, budget-enforced collection of evidence Sections and metadata for a query. It is the single output of the Context Assembler — callers consume the pack without knowing about deduplication, overlap collapse, or budget enforcement internals.
+_Avoid_: context window, prompt payload, chunk bundle
+
+**Evidence Section**:
+A Section packaged as a unit of evidence, carrying its full text, parent-heading chain, score, and a stable citation id (`{RfcNumber}#{Section}`, e.g. "9110#9.3.1"). Evidence Sections are the building blocks of an Evidence Pack and the targets of citations.
+_Avoid_: evidence chunk, context snippet
+
+**Citation**:
+A reference from a generated answer to an Evidence Section, consisting of the evidence id and a verbatim quote from the section text. Citations are the proof that an answer's claims are grounded in indexed RFC content.
+_Avoid_: reference (ambiguous with RFC bibliographic references), footnote
+
 ## Relationships
 
 - The **Mirror** may contain several candidate files for one **RFC**; resolution always picks exactly one **Source**.
 - An **RFC** is parsed from its **Source** into many **Sections**.
 - A **Section** owns zero or more **ABNF Blocks** and zero or more **Normative Occurrences**.
 - **Hybrid Search** returns **Sections**, never whole **RFCs**.
+- An **Evidence Pack** is composed of **Evidence Sections**; each **Evidence Section** wraps one **Section**.
+- An **Evidence Pack** contains **Citations**; each **Citation** references one **Evidence Section** by its evidence id.
 
 ## Example dialogue
 

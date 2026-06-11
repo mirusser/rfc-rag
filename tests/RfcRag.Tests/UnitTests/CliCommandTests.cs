@@ -1,4 +1,5 @@
 using System.Text.Json;
+using RfcRag.Answering;
 using RfcRag.Cli;
 using RfcRag.Models;
 using RfcRag.Search;
@@ -21,7 +22,7 @@ public sealed class CliCommandTests
                 new SearchResult(Guid.NewGuid(), 9110, "HTTP Semantics", "1", null, "intro", "/rfc9110.txt", "https://example.com", 0.9)
             ]
         };
-        var command = new CliCommand(fakeService, NullLogger<CliCommand>.Instance);
+        var command = new CliCommand(fakeService, new ContextAssembler(fakeService), NullLogger<CliCommand>.Instance);
         using var writer = new StringWriter();
         await command.RunAsync(["search", "HTTP semantics"], writer, CancellationToken.None);
 
@@ -35,7 +36,7 @@ public sealed class CliCommandTests
     public async Task RunAsync_SearchVerb_RespectsLimitFlag()
     {
         var fakeService = new FakeSearchService();
-        var command = new CliCommand(fakeService, NullLogger<CliCommand>.Instance);
+        var command = new CliCommand(fakeService, new ContextAssembler(fakeService), NullLogger<CliCommand>.Instance);
         using var writer = new StringWriter();
         int returnCode = await command.RunAsync(["search", "HTTP semantics", "--limit", "5"], writer, CancellationToken.None);
         Assert.Equal(0, returnCode);
@@ -46,7 +47,7 @@ public sealed class CliCommandTests
     {
         var section = new RfcSection { RfcNumber = 9110, Section = "8.6", Text = "Content negotiation" };
         var fakeService = new FakeSearchService { SingleSection = section };
-        var command = new CliCommand(fakeService, NullLogger<CliCommand>.Instance);
+        var command = new CliCommand(fakeService, new ContextAssembler(fakeService), NullLogger<CliCommand>.Instance);
         using var writer = new StringWriter();
         await command.RunAsync(["section", "9110", "8.6"], writer, CancellationToken.None);
 
@@ -66,7 +67,7 @@ public sealed class CliCommandTests
                 new SearchResult(Guid.NewGuid(), 2119, "Key words", "1", null, "MUST", "/rfc2119.txt", "https://example.com", 1.0)
             ]
         };
-        var command = new CliCommand(fakeService, NullLogger<CliCommand>.Instance);
+        var command = new CliCommand(fakeService, new ContextAssembler(fakeService), NullLogger<CliCommand>.Instance);
         using var writer = new StringWriter();
         int returnCode = await command.RunAsync(["normative", "MUST"], writer, CancellationToken.None);
         Assert.Equal(0, returnCode);
@@ -77,7 +78,7 @@ public sealed class CliCommandTests
     {
         const string expectedStats = """{"indexedRfcs":42,"sections":1000}""";
         var fakeService = new FakeSearchService { StatsJson = expectedStats };
-        var command = new CliCommand(fakeService, NullLogger<CliCommand>.Instance);
+        var command = new CliCommand(fakeService, new ContextAssembler(fakeService), NullLogger<CliCommand>.Instance);
         using var writer = new StringWriter();
         await command.RunAsync(["stats"], writer, CancellationToken.None);
         Assert.Equal(expectedStats, writer.ToString().Trim());
@@ -86,7 +87,8 @@ public sealed class CliCommandTests
     [Fact]
     public async Task RunAsync_UnknownVerb_ReturnsNonZero()
     {
-        var command = new CliCommand(new FakeSearchService(), NullLogger<CliCommand>.Instance);
+        var fakeService = new FakeSearchService();
+        var command = new CliCommand(fakeService, new ContextAssembler(fakeService), NullLogger<CliCommand>.Instance);
         using var writer = new StringWriter();
         int returnCode = await command.RunAsync(["unknown-verb"], writer, CancellationToken.None);
         Assert.NotEqual(0, returnCode);
@@ -95,7 +97,8 @@ public sealed class CliCommandTests
     [Fact]
     public async Task RunAsync_NoArgs_ReturnsNonZero()
     {
-        var command = new CliCommand(new FakeSearchService(), NullLogger<CliCommand>.Instance);
+        var fakeService2 = new FakeSearchService();
+        var command = new CliCommand(fakeService2, new ContextAssembler(fakeService2), NullLogger<CliCommand>.Instance);
         using var writer = new StringWriter();
         int returnCode = await command.RunAsync([], writer, CancellationToken.None);
         Assert.NotEqual(0, returnCode);
@@ -104,7 +107,8 @@ public sealed class CliCommandTests
     [Fact]
     public async Task RunAsync_SearchVerbMissingQuery_ReturnsNonZero()
     {
-        var command = new CliCommand(new FakeSearchService(), NullLogger<CliCommand>.Instance);
+        var fakeService3 = new FakeSearchService();
+        var command = new CliCommand(fakeService3, new ContextAssembler(fakeService3), NullLogger<CliCommand>.Instance);
         using var writer = new StringWriter();
         int returnCode = await command.RunAsync(["search"], writer, CancellationToken.None);
         Assert.NotEqual(0, returnCode);
@@ -113,9 +117,200 @@ public sealed class CliCommandTests
     [Fact]
     public async Task RunAsync_SectionVerbMissingArgs_ReturnsNonZero()
     {
-        var command = new CliCommand(new FakeSearchService(), NullLogger<CliCommand>.Instance);
+        var fakeService4 = new FakeSearchService();
+        var command = new CliCommand(fakeService4, new ContextAssembler(fakeService4), NullLogger<CliCommand>.Instance);
         using var writer = new StringWriter();
         int returnCode = await command.RunAsync(["section", "notanumber", "1"], writer, CancellationToken.None);
         Assert.NotEqual(0, returnCode);
+    }
+
+    [Fact]
+    public async Task RunAsync_EvidenceVerb_WritesEvidencePackJson()
+    {
+        var section = new RfcSection
+        {
+            RfcNumber = 9110,
+            Section = "9.3.1",
+            Heading = "GET",
+            Text = "The GET method requests transfer...",
+            Title = "HTTP Semantics",
+        };
+        var fakeService = new FakeSearchService
+        {
+            SearchResults =
+            [
+                new SearchResult(Guid.NewGuid(), 9110, "HTTP Semantics", "9.3.1",
+                    "GET", "The GET method...", "/rfc9110.txt",
+                    "https://www.rfc-editor.org/rfc/rfc9110", 0.95),
+            ],
+            SectionMap = new Dictionary<(int, string), RfcSection>
+            {
+                [(9110, "9.3.1")] = section,
+            },
+            TocMap = new Dictionary<string, string?>
+            {
+                ["9"] = "Methods",
+                ["9.3"] = "Request Methods",
+                ["9.3.1"] = "GET",
+            },
+        };
+
+        var command = new CliCommand(fakeService, new ContextAssembler(fakeService),
+            NullLogger<CliCommand>.Instance);
+        using var writer = new StringWriter();
+        int returnCode = await command.RunAsync(
+            ["evidence", "GET method"], writer, CancellationToken.None);
+        Assert.Equal(0, returnCode);
+
+        var pack = JsonSerializer.Deserialize<EvidencePack>(writer.ToString(), JsonOptions);
+        Assert.NotNull(pack);
+        Assert.Equal("GET method", pack!.Query);
+        Assert.Single(pack.Sections);
+        Assert.Equal("9110#9.3.1", pack.Sections[0].EvidenceId);
+    }
+
+    [Fact]
+    public async Task RunAsync_EvidenceVerb_IncludesEstimatedTokensAndRelationNotes()
+    {
+        var section = new RfcSection
+        {
+            RfcNumber = 9110,
+            Section = "9.3.1",
+            Heading = "GET",
+            Text = "The GET method requests transfer...",
+            Title = "HTTP Semantics",
+        };
+        var fakeService = new FakeSearchService
+        {
+            SearchResults =
+            [
+                new SearchResult(Guid.NewGuid(), 9110, "HTTP Semantics", "9.3.1",
+                    "GET", "The GET method...", "/rfc9110.txt",
+                    "https://www.rfc-editor.org/rfc/rfc9110", 0.95),
+            ],
+            SectionMap = new Dictionary<(int, string), RfcSection>
+            {
+                [(9110, "9.3.1")] = section,
+            },
+            TocMap = new Dictionary<string, string?>
+            {
+                ["9"] = "Methods",
+                ["9.3"] = "Request Methods",
+                ["9.3.1"] = "GET",
+            },
+            RelationsBatch = new Dictionary<int, RfcRelationsBatch>
+            {
+                [9110] = new RfcRelationsBatch
+                {
+                    RfcNumber = 9110,
+                    ObsoletedBy = [9112],
+                },
+            },
+        };
+
+        var command = new CliCommand(fakeService, new ContextAssembler(fakeService),
+            NullLogger<CliCommand>.Instance);
+        using var writer = new StringWriter();
+        int returnCode = await command.RunAsync(
+            ["evidence", "GET method"], writer, CancellationToken.None);
+        Assert.Equal(0, returnCode);
+
+        var pack = JsonSerializer.Deserialize<EvidencePack>(writer.ToString(), JsonOptions);
+        Assert.NotNull(pack);
+        Assert.True(pack!.EstimatedTokens > 0);
+        Assert.Single(pack.RelationNotes);
+        Assert.Contains("obsoleted by", pack.RelationNotes[0]);
+    }
+
+    [Fact]
+    public async Task RunAsync_EvidenceVerbMissingQuery_ReturnsNonZero()
+    {
+        var fakeService = new FakeSearchService();
+        var command = new CliCommand(fakeService, new ContextAssembler(fakeService),
+            NullLogger<CliCommand>.Instance);
+        using var writer = new StringWriter();
+        int returnCode = await command.RunAsync(["evidence"], writer, CancellationToken.None);
+        Assert.NotEqual(0, returnCode);
+    }
+
+    [Fact]
+    public async Task RunAsync_EvidenceVerb_RespectsLimitFlag()
+    {
+        var results = new List<SearchResult>();
+        for (int i = 1; i <= 5; i++)
+        {
+            results.Add(new SearchResult(
+                Guid.NewGuid(), 9110, "HTTP Semantics", i.ToString(), $"Section {i}",
+                "excerpt", "/rfc9110.txt", "https://example.com", 1.0 - i * 0.01));
+        }
+
+        var sections = results.ToDictionary(
+            r => (r.RfcNumber, r.Section),
+            r => new RfcSection
+            {
+                RfcNumber = r.RfcNumber,
+                Section = r.Section,
+                Heading = r.Heading,
+                Text = $"Section text {r.Section}",
+            });
+
+        var fakeService = new FakeSearchService
+        {
+            SearchResults = results.ToArray(),
+            SectionMap = sections,
+            TocMap = results.ToDictionary(r => r.Section, r => (string?)r.Heading),
+        };
+        var command = new CliCommand(fakeService, new ContextAssembler(fakeService),
+            NullLogger<CliCommand>.Instance);
+        using var writer = new StringWriter();
+        int returnCode = await command.RunAsync(
+            ["evidence", "HTTP", "--limit", "3"], writer, CancellationToken.None);
+        Assert.Equal(0, returnCode);
+
+        var pack = JsonSerializer.Deserialize<EvidencePack>(writer.ToString(), JsonOptions);
+        Assert.NotNull(pack);
+        Assert.Equal(3, pack!.Sections.Count);
+    }
+
+    [Fact]
+    public async Task RunAsync_EvidenceVerb_RespectsBudgetFlag()
+    {
+        var results = new List<SearchResult>();
+        for (int i = 1; i <= 3; i++)
+        {
+            results.Add(new SearchResult(
+                Guid.NewGuid(), 9110, "HTTP Semantics", i.ToString(), $"Section {i}",
+                "excerpt", "/rfc9110.txt", "https://example.com", 1.0 - i * 0.01));
+        }
+
+        var sections = results.ToDictionary(
+            r => (r.RfcNumber, r.Section),
+            r => new RfcSection
+            {
+                RfcNumber = r.RfcNumber,
+                Section = r.Section,
+                Heading = r.Heading,
+                Text = new string('x', 100), // 100 chars each
+            });
+
+        var fakeService = new FakeSearchService
+        {
+            SearchResults = results.ToArray(),
+            SectionMap = sections,
+            TocMap = results.ToDictionary(r => r.Section, r => (string?)r.Heading),
+        };
+        var command = new CliCommand(fakeService, new ContextAssembler(fakeService),
+            NullLogger<CliCommand>.Instance);
+        using var writer = new StringWriter();
+        // Budget 120 chars — allows section 1 but not section 2 or 3
+        int returnCode = await command.RunAsync(
+            ["evidence", "HTTP", "--budget", "120"], writer, CancellationToken.None);
+        Assert.Equal(0, returnCode);
+
+        var pack = JsonSerializer.Deserialize<EvidencePack>(writer.ToString(), JsonOptions);
+        Assert.NotNull(pack);
+        Assert.True(pack!.BudgetExceeded);
+        Assert.Single(pack.Sections);
+        Assert.Equal(120, pack.BudgetChars);
     }
 }

@@ -99,6 +99,14 @@ internal sealed class SearchService(
         return await searchRepository.FindSectionsByHeadingsAsync(rfcNumber, matchingTypeNames, cancellationToken).ConfigureAwait(false);
     }
 
+    public Task<IReadOnlyDictionary<int, RfcRelationsBatch>> GetRelationsBatchAsync(
+        IReadOnlyList<int> rfcNumbers, CancellationToken cancellationToken) =>
+        metadataRepository.GetRelationsBatchAsync(rfcNumbers, cancellationToken);
+
+    public Task<IReadOnlyDictionary<Guid, IReadOnlyList<NormativeOccurrenceData>>> GetNormativeOccurrencesBatchAsync(
+        IReadOnlyList<Guid> sectionIds, CancellationToken cancellationToken) =>
+        searchRepository.GetNormativeOccurrencesBatchAsync(sectionIds, cancellationToken);
+
     internal static List<string> ExtractPascalCaseTypeNames(string sectionText, string? sectionHeading)
     {
         var typeNames = new HashSet<string>(StringComparer.Ordinal);

@@ -19,7 +19,8 @@ internal sealed class CliCommandRouter(
         if (cliArgIndex >= 0)
         {
             string[] cliArgs = args[(cliArgIndex + 1)..];
-            var command = new CliCommand(searchService, loggerFactory.CreateLogger<CliCommand>());
+            var command = new CliCommand(searchService, new ContextAssembler(searchService),
+                loggerFactory.CreateLogger<CliCommand>());
             await command.RunAsync(cliArgs, cancellationToken).ConfigureAwait(false);
             return true;
         }

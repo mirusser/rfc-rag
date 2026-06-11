@@ -35,4 +35,10 @@ public interface ISearchService
 
     Task<IReadOnlyDictionary<string, RfcSection>> GetSectionWithExpandedTypesAsync(
         int rfcNumber, string section, CancellationToken cancellationToken);
+
+    Task<IReadOnlyDictionary<int, RfcRelationsBatch>> GetRelationsBatchAsync(
+        IReadOnlyList<int> rfcNumbers, CancellationToken cancellationToken);
+
+    Task<IReadOnlyDictionary<Guid, IReadOnlyList<NormativeOccurrenceData>>> GetNormativeOccurrencesBatchAsync(
+        IReadOnlyList<Guid> sectionIds, CancellationToken cancellationToken);
 }

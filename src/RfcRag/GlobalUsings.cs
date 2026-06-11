@@ -1,4 +1,5 @@
 global using Dapper;
+global using RfcRag.Answering;
 global using RfcRag.Cli;
 global using RfcRag.Indexing;
 global using RfcRag.Infrastructure;

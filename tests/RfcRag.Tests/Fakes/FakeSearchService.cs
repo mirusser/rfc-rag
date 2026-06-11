@@ -14,6 +14,8 @@ internal sealed class FakeSearchService : ISearchService
     public IReadOnlyList<SearchResult> SearchResults { get; set; } = [];
     public IReadOnlyList<RfcSection> RfcSections { get; set; } = [];
     public RfcSection? SingleSection { get; set; }
+    public IReadOnlyDictionary<(int RfcNumber, string Section), RfcSection> SectionMap { get; set; } =
+        new Dictionary<(int, string), RfcSection>();
     public RfcMetadata? Metadata { get; set; }
     public IReadOnlyList<RfcMetadata> BackReferences { get; set; } = [];
     public string StatsJson { get; set; } = """{"indexedRfcs":0,"sections":0,"abnfBlocks":0,"normativeOccurrences":0,"lastIndexedAtUtc":null}""";
@@ -21,6 +23,10 @@ internal sealed class FakeSearchService : ISearchService
     public IReadOnlyDictionary<string, string?> TocMap { get; set; } = new Dictionary<string, string?>();
     public SectionTree? SectionWithChildren { get; set; }
     public IReadOnlyDictionary<string, RfcSection> ExpandedTypes { get; set; } = new Dictionary<string, RfcSection>();
+    public IReadOnlyDictionary<int, RfcRelationsBatch> RelationsBatch { get; set; } =
+        new Dictionary<int, RfcRelationsBatch>();
+    public IReadOnlyDictionary<Guid, IReadOnlyList<NormativeOccurrenceData>> NormativeOccurrencesBatch { get; set; } =
+        new Dictionary<Guid, IReadOnlyList<NormativeOccurrenceData>>();
     public Exception? SearchException { get; set; }
     public Exception? SearchNormativeException { get; set; }
     public Exception? SearchAbnfException { get; set; }
@@ -32,12 +38,16 @@ internal sealed class FakeSearchService : ISearchService
         LastNormativeKeyword = normativeKeyword;
         if (SearchException is not null)
             throw SearchException;
-        return Task.FromResult(SearchResults);
+        return Task.FromResult((IReadOnlyList<SearchResult>)SearchResults.Take(limit).ToArray());
     }
 
     public Task<RfcSection?> GetSectionAsync(
-        int rfcNumber, string section, CancellationToken cancellationToken) =>
-        Task.FromResult(SingleSection);
+        int rfcNumber, string section, CancellationToken cancellationToken)
+    {
+        if (SectionMap.TryGetValue((rfcNumber, section), out var mapped))
+            return Task.FromResult<RfcSection?>(mapped);
+        return Task.FromResult(SingleSection);
+    }
 
     public Task<IReadOnlyList<RfcSection>> GetRfcAsync(
         int rfcNumber, CancellationToken cancellationToken) =>
@@ -89,4 +99,12 @@ internal sealed class FakeSearchService : ISearchService
     public Task<IReadOnlyDictionary<string, RfcSection>> GetSectionWithExpandedTypesAsync(
         int rfcNumber, string section, CancellationToken cancellationToken) =>
         Task.FromResult(ExpandedTypes);
+
+    public Task<IReadOnlyDictionary<int, RfcRelationsBatch>> GetRelationsBatchAsync(
+        IReadOnlyList<int> rfcNumbers, CancellationToken cancellationToken) =>
+        Task.FromResult(RelationsBatch);
+
+    public Task<IReadOnlyDictionary<Guid, IReadOnlyList<NormativeOccurrenceData>>> GetNormativeOccurrencesBatchAsync(
+        IReadOnlyList<Guid> sectionIds, CancellationToken cancellationToken) =>
+        Task.FromResult(NormativeOccurrencesBatch);
 }
