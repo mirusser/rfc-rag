@@ -153,4 +153,77 @@ public sealed class RfcRagOptionsValidatorTests
         Assert.False(result.Succeeded);
         Assert.True(result.Failures!.Skip(2).Any());
     }
+
+    [Fact]
+    public void Validate_ChatModelNull_GenerationDisabled_Succeeds()
+    {
+        var options = ValidOptions with { ChatModel = null };
+        var result = validator.Validate(null, options);
+        Assert.True(result.Succeeded);
+    }
+
+    [Fact]
+    public void Validate_ChatModelSet_Valid_Succeeds()
+    {
+        var options = ValidOptions with { ChatModel = "openai/gpt-4o-mini" };
+        var result = validator.Validate(null, options);
+        Assert.True(result.Succeeded);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Validate_ChatModelSetButEmpty_Fails(string value)
+    {
+        var options = ValidOptions with { ChatModel = value };
+        var result = validator.Validate(null, options);
+        Assert.False(result.Succeeded);
+        Assert.Contains(result.Failures!, f => f.Contains(nameof(RfcRagOptions.ChatModel)));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Validate_InvalidMaxAnswerTokens_Fails(int value)
+    {
+        var options = ValidOptions with
+        {
+            ChatModel = "openai/gpt-4o-mini",
+            MaxAnswerTokens = value
+        };
+        var result = validator.Validate(null, options);
+        Assert.False(result.Succeeded);
+        Assert.Contains(result.Failures!, f => f.Contains(nameof(RfcRagOptions.MaxAnswerTokens)));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-5)]
+    public void Validate_InvalidEvidenceBudgetChars_Fails(int value)
+    {
+        var options = ValidOptions with
+        {
+            ChatModel = "openai/gpt-4o-mini",
+            EvidenceBudgetChars = value
+        };
+        var result = validator.Validate(null, options);
+        Assert.False(result.Succeeded);
+        Assert.Contains(result.Failures!, f => f.Contains(nameof(RfcRagOptions.EvidenceBudgetChars)));
+    }
+
+    [Fact]
+    public void Validate_MultipleChatViolations_ReportsAll()
+    {
+        var options = ValidOptions with
+        {
+            ChatModel = "",
+            MaxAnswerTokens = 0,
+            EvidenceBudgetChars = 0
+        };
+
+        var result = validator.Validate(null, options);
+
+        Assert.False(result.Succeeded);
+        Assert.True(result.Failures!.Skip(2).Any());
+    }
 }

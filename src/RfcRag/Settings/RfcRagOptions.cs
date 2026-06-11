@@ -66,4 +66,30 @@ public sealed record class RfcRagOptions
     /// processes <c>rfc*.xml</c> files using the RFC XML 2 format.
     /// </summary>
     public RfcParserType RfcParserType { get; init; } = RfcParserType.Text;
+
+    /// <summary>
+    /// Chat model identifier for answer generation (e.g., "openai/gpt-4o-mini").
+    /// When <see langword="null"/> or empty, answer generation is disabled — the server
+    /// remains a retrieval-only MCP server. Set this to enable <c>ask_rfc</c>.
+    /// </summary>
+    public string? ChatModel { get; init; }
+
+    /// <summary>
+    /// Selects the chat provider. Defaults to <see cref="ChatProvider.OpenRouter"/>.
+    /// Only used when <see cref="ChatModel"/> is set.
+    /// </summary>
+    public ChatProvider ChatProvider { get; init; } = ChatProvider.OpenRouter;
+
+    /// <summary>
+    /// Maximum number of tokens allowed in the generated answer.
+    /// Used as <c>MaxTokens</c> in chat completion requests.
+    /// </summary>
+    public int MaxAnswerTokens { get; init; } = 1024;
+
+    /// <summary>
+    /// Maximum total characters of evidence text to include in the
+    /// generation prompt. Truncation warnings are added to the evidence
+    /// pack when this budget is exceeded.
+    /// </summary>
+    public int EvidenceBudgetChars { get; init; } = 16_000;
 }

@@ -33,6 +33,18 @@ internal sealed class RfcRagOptionsValidator : IValidateOptions<RfcRagOptions>
         if (!IsAbsoluteHttpUri(options.LocalEmbeddingEndpoint))
             failures.Add($"{nameof(options.LocalEmbeddingEndpoint)} must be an absolute http(s) URI (got '{options.LocalEmbeddingEndpoint}').");
 
+        if (options.ChatModel is not null)
+        {
+            if (string.IsNullOrWhiteSpace(options.ChatModel))
+                failures.Add($"{nameof(options.ChatModel)} must not be empty when answer generation is enabled.");
+
+            if (options.MaxAnswerTokens < 1)
+                failures.Add($"{nameof(options.MaxAnswerTokens)} must be at least 1 (got {options.MaxAnswerTokens}).");
+
+            if (options.EvidenceBudgetChars < 1)
+                failures.Add($"{nameof(options.EvidenceBudgetChars)} must be at least 1 (got {options.EvidenceBudgetChars}).");
+        }
+
         return failures.Count == 0
             ? ValidateOptionsResult.Success
             : ValidateOptionsResult.Fail(failures);

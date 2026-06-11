@@ -313,4 +313,60 @@ public sealed class CliCommandTests
         Assert.Single(pack.Sections);
         Assert.Equal(120, pack.BudgetChars);
     }
+
+    [Fact]
+    public async Task RunAsync_AskVerb_WritesAnswerJson()
+    {
+        var fakeService = new FakeSearchService();
+        var fakeAsk = new FakeAskService
+        {
+            Result = new GeneratedAnswer
+            {
+                Answer = "RFC 9110 defines HTTP semantics.",
+                Citations =
+                [
+                    new Citation { EvidenceId = "9110#9.3.1", Section = "9.3.1", RfcNumber = 9110 },
+                ],
+            },
+        };
+        var command = new CliCommand(fakeService, new ContextAssembler(fakeService),
+            NullLogger<CliCommand>.Instance, askService: fakeAsk);
+        using var writer = new StringWriter();
+        int returnCode = await command.RunAsync(
+            ["ask", "How does HTTP work?"], writer, CancellationToken.None);
+
+        Assert.Equal(0, returnCode);
+        var answer = JsonSerializer.Deserialize<GeneratedAnswer>(writer.ToString(), JsonOptions);
+        Assert.NotNull(answer);
+        Assert.Equal("RFC 9110 defines HTTP semantics.", answer!.Answer);
+        Assert.Single(answer.Citations);
+        Assert.Equal(1, fakeAsk.CallCount);
+    }
+
+    [Fact]
+    public async Task RunAsync_AskVerbMissingQuestion_ReturnsNonZero()
+    {
+        var fakeAsk = new FakeAskService();
+        var fakeService = new FakeSearchService();
+        var command = new CliCommand(fakeService, new ContextAssembler(fakeService),
+            NullLogger<CliCommand>.Instance, askService: fakeAsk);
+        using var writer = new StringWriter();
+        int returnCode = await command.RunAsync(["ask"], writer, CancellationToken.None);
+
+        Assert.NotEqual(0, returnCode);
+        Assert.Equal(0, fakeAsk.CallCount);
+    }
+
+    [Fact]
+    public async Task RunAsync_AskVerbNoAskService_ReturnsNonZero()
+    {
+        var fakeService = new FakeSearchService();
+        var command = new CliCommand(fakeService, new ContextAssembler(fakeService),
+            NullLogger<CliCommand>.Instance);
+        using var writer = new StringWriter();
+        int returnCode = await command.RunAsync(
+            ["ask", "How does HTTP work?"], writer, CancellationToken.None);
+
+        Assert.NotEqual(0, returnCode);
+    }
 }

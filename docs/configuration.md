@@ -68,6 +68,10 @@ docker run --rm -i --network host \
 | `RfcRag__RfcParserType` | `Text` | `Text` or `Xml` | Parser mode: `Text` (plain-text `.txt` files, default) or `Xml` (prefers `.txt`, uses `.xml` only for RFC numbers that have no `.txt` counterpart) |
 | `RfcRag__MaxIndexingParallelism` | `16` | ≥ 1 | Maximum number of RFC files indexed concurrently |
 | `RfcRag__MaxEmbeddingConcurrency` | `8` | ≥ 1 | Maximum number of concurrent embedding API requests across all in-flight files |
+| `RfcRag__ChatModel` | *(not set)* | OpenAI-compatible model ID (e.g., `openai/gpt-4o-mini`) | Chat model for answer generation. When unset, `ask_rfc` is disabled and the server remains retrieval-only |
+| `RfcRag__ChatProvider` | `OpenRouter` | `OpenRouter` or `Local` | Chat provider for answer generation — used when `ChatModel` is set |
+| `RfcRag__MaxAnswerTokens` | `1024` | ≥ 1 | Maximum tokens in generated answers |
+| `RfcRag__EvidenceBudgetChars` | `16000` | ≥ 1 | Maximum evidence text characters sent to the chat model |
 | `OpenRouter__ApiKey` | *(required for OpenRouter)* | OpenRouter API key — not needed when `EmbeddingProvider=Local` |
 
 ### OpenTelemetry Metrics

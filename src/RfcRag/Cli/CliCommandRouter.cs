@@ -3,7 +3,8 @@ namespace RfcRag.Cli;
 internal sealed class CliCommandRouter(
     ISearchService searchService,
     IndexingRepository indexingRepository,
-    ILoggerFactory loggerFactory)
+    ILoggerFactory loggerFactory,
+    IAskService? askService = null)
 {
     private readonly ILogger logger = loggerFactory.CreateLogger("RfcRag");
 
@@ -20,7 +21,7 @@ internal sealed class CliCommandRouter(
         {
             string[] cliArgs = args[(cliArgIndex + 1)..];
             var command = new CliCommand(searchService, new ContextAssembler(searchService),
-                loggerFactory.CreateLogger<CliCommand>());
+                loggerFactory.CreateLogger<CliCommand>(), askService);
             await command.RunAsync(cliArgs, cancellationToken).ConfigureAwait(false);
             return true;
         }

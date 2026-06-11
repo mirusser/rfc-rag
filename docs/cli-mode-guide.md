@@ -8,6 +8,7 @@ Pass `--cli <verb> [args]` to run a one-shot query against an indexed database i
 | `section` | `<rfcNumber> <sectionId>` | Retrieve a single section by RFC number and section identifier |
 | `normative` | `<keyword> [--rfc N]` | Find sections containing a normative keyword (MUST, SHOULD, …) |
 | `evidence` | `<query> [--limit N] [--budget N]` | Assemble an Evidence Pack from search results (default limit: 10, default budget: 10,000 chars) |
+| `ask` | `<question> [--limit N] [--keyword KW]` | Ask a question and get a cited LLM-generated answer (default limit: 20; optional `--keyword` to filter search by normative keyword) |
 | `stats` | *(none)* | Print indexed corpus statistics as JSON |
 
 Pass `--eval <golden-questions-file> [--corpus testdata|full|all] [--limit N]` (top-level flag, not under `--cli`) to run the retrieval evaluation harness.
@@ -23,6 +24,8 @@ dotnet run --project src/RfcRag/ -- --cli search "TLS handshake" --limit 5
 dotnet run --project src/RfcRag/ -- --cli section 8446 4.1.2
 dotnet run --project src/RfcRag/ -- --cli normative MUST --rfc 2119
 dotnet run --project src/RfcRag/ -- --cli evidence "GET request body" --limit 5 --budget 5000
+dotnet run --project src/RfcRag/ -- --cli ask "What does RFC 9110 say about content negotiation?"
+dotnet run --project src/RfcRag/ -- --cli ask "Encryption requirements" --keyword "MUST" --limit 10
 dotnet run --project src/RfcRag/ -- --cli stats
 ```
 

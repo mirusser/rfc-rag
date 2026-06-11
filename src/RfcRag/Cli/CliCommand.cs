@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace RfcRag.Cli;
 
-internal sealed class CliCommand(ISearchService searchService, ContextAssembler contextAssembler, ILogger<CliCommand> logger)
+internal sealed class CliCommand(ISearchService searchService, ContextAssembler contextAssembler, ILogger<CliCommand> logger, IAskService? askService = null)
 {
     private static readonly JsonSerializerOptions jsonOptions = new()
     {
@@ -21,6 +21,7 @@ internal sealed class CliCommand(ISearchService searchService, ContextAssembler 
     /// <returns>0 on success, non-zero on error.</returns>
     public async Task<int> RunAsync(string[] cliArgs, TextWriter output, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(cliArgs);
         ArgumentNullException.ThrowIfNull(output);
         if (cliArgs.Length == 0)
         {
@@ -35,6 +36,7 @@ internal sealed class CliCommand(ISearchService searchService, ContextAssembler 
             "NORMATIVE" => await RunNormativeAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
             "STATS"     => await RunStatsAsync(output, cancellationToken).ConfigureAwait(false),
             "EVIDENCE"  => await RunEvidenceAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
+            "ASK"       => await RunAskAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
             _           => PrintUnknownVerb(cliArgs[0])
         };
     }
@@ -113,6 +115,7 @@ internal sealed class CliCommand(ISearchService searchService, ContextAssembler 
         logger.LogInformation("  section <rfcNumber> <sectionId>");
         logger.LogInformation("  normative <keyword> [--rfc N]");
         logger.LogInformation("  evidence <query> [--limit N] [--budget N]");
+        logger.LogInformation("  ask <question> [--limit N] [--keyword KW]");
         logger.LogInformation("  stats");
     }
 
@@ -138,11 +141,44 @@ internal sealed class CliCommand(ISearchService searchService, ContextAssembler 
         return 0;
     }
 
+    private async Task<int> RunAskAsync(string[] args, TextWriter output, CancellationToken cancellationToken)
+    {
+        if (args.Length < 2)
+        {
+            logger.LogError("Usage: --cli ask <question> [--limit N] [--keyword KW]");
+            return 1;
+        }
+
+        if (askService is null)
+        {
+            logger.LogError("Ask verb requires a chat model to be configured (RfcRag__ChatModel).");
+            return 1;
+        }
+
+        string question = args[1];
+        int limit = ParseIntFlag(args, "--limit", defaultValue: 0);
+        string? keyword = ParseStringFlag(args, "--keyword");
+        int? effectiveLimit = limit > 0 ? limit : null;
+
+        var answer = await askService.AskAsync(question, effectiveLimit, keyword, cancellationToken).ConfigureAwait(false);
+
+        await output.WriteLineAsync(JsonSerializer.Serialize(answer, jsonOptions)).ConfigureAwait(false);
+        return 0;
+    }
+
     private static int ParseIntFlag(string[] args, string flag, int defaultValue)
     {
         int idx = Array.IndexOf(args, flag);
         if (idx >= 0 && idx + 1 < args.Length && int.TryParse(args[idx + 1], out int value))
             return value;
         return defaultValue;
+    }
+
+    private static string? ParseStringFlag(string[] args, string flag)
+    {
+        int idx = Array.IndexOf(args, flag);
+        if (idx >= 0 && idx + 1 < args.Length)
+            return args[idx + 1];
+        return null;
     }
 }
