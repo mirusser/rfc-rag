@@ -54,6 +54,18 @@ _Avoid_: evidence chunk, context snippet
 A reference from a generated answer to an Evidence Section, consisting of the evidence id and a verbatim quote from the section text. Citations are the proof that an answer's claims are grounded in indexed RFC content.
 _Avoid_: reference (ambiguous with RFC bibliographic references), footnote
 
+**Answer Evaluation Metric**:
+A computed score that measures the quality of a generated answer against a Golden Question: citation precision, citation recall, citation F1, and a boolean flag for correct no-answer classification. Metrics are computed by `AnswerEvaluationMetrics.Evaluate` per question and aggregated by `AnswerEvaluationMetrics.Aggregate`.
+
+**Citation Precision**:
+The fraction of citations in a generated answer that are grounded (i.e. the cited evidence id exists in the Evidence Pack and the quoted text is a substring of the section text). Equivalent to the standard information-retrieval precision applied to citations: `|grounded citations| / |total citations|`. NaN or 1.0 when there are zero citations.
+
+**Citation Recall**:
+The fraction of required RFCs (the Golden Question's `mustCite` field) that are correctly cited. NaN or 1.0 when there are no must-cite requirements.
+
+**Golden Question**:
+A curated question-answer expectation tuple in `golden_questions.json` with fields for expected RFCs, expected sections, must-cite/should-not-cite RFCs, answer type, and corpus marker. Golden questions are the ground truth for both retrieval and answer evaluation.
+
 ## Relationships
 
 - The **Mirror** may contain several candidate files for one **RFC**; resolution always picks exactly one **Source**.
@@ -75,3 +87,14 @@ _Avoid_: reference (ambiguous with RFC bibliographic references), footnote
 
 - "secondary/auxiliary XML parsing" was ambiguous between *fallback* and *metadata enrichment* — resolved: strict fallback, one Source per RFC (ADR-0001).
 - "binding requirements" (README phrasing) vs. what the index stores — resolved: a **Normative Occurrence** is a lexical uppercase-keyword match; it does not verify BCP 14 adoption.
+## Answer Evaluation Metrics
+
+**Citation Precision** is the fraction of uniquely cited RFCs that are in the Golden Question `mustCite` set.
+
+**Citation Recall** is the fraction of `mustCite` RFCs that appear in the generated answer citations.
+
+**Quote Faithfulness** is the fraction of citations whose `relevantText` is non-empty and appears verbatim in the cited Evidence Section. Missing evidence ids, empty quotes, and non-verbatim quotes count against the metric when evidence is supplied to evaluation.
+
+**Obsolete Citation Rate** is the fraction of uniquely cited RFCs that are known to be obsolete from indexed RFC metadata. The metric function is pure; runners pass obsolete RFC numbers derived from corpus metadata.
+
+**No-answer Accuracy** currently means refusal accuracy for Golden Questions whose `answerType` is `no_answer`. Factual and normative questions are not included in that aggregate until the metric is widened to full no-answer classification accuracy.

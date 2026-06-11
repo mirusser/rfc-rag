@@ -49,6 +49,10 @@ internal sealed class CliCommandRouter(
             return true;
         }
 
+        bool answerMode = args.Any(a =>
+            string.Equals(a, "--answers", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(a, "--answer", StringComparison.OrdinalIgnoreCase));
+
         int evalArgIndex = Array.FindIndex(args,
             a => string.Equals(a, "--eval", StringComparison.OrdinalIgnoreCase));
 
@@ -61,15 +65,27 @@ internal sealed class CliCommandRouter(
 
             if (string.IsNullOrWhiteSpace(questionsFilePath))
             {
-                logger.LogError("Usage: --eval <golden-questions-file-path> [--corpus testdata|full|all] [--limit N]");
+                logger.LogError("Usage: --eval <golden-questions-file-path> [--answers] [--corpus testdata|full|all] [--limit N]");
                 return true;
             }
 
             string corpus = ParseStringArg(args, "--corpus", "testdata");
             int topK = ParseIntArg(args, "--limit", 10);
 
-            var command = new EvalCommand(searchService, indexingRepository, TimeProvider.System, loggerFactory.CreateLogger<EvalCommand>());
-            await command.RunAsync(questionsFilePath, topK, corpus, cancellationToken).ConfigureAwait(false);
+            var command = new EvalCommand(searchService, indexingRepository,
+                TimeProvider.System, loggerFactory.CreateLogger<EvalCommand>(), askService);
+
+            if (answerMode)
+            {
+                await command.RunAnswerEvalAsync(questionsFilePath, topK, corpus, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                await command.RunRetrievalEvalAsync(questionsFilePath, topK, corpus, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
             return true;
         }
 

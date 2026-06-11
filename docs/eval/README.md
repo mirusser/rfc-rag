@@ -56,6 +56,22 @@ make eval
 make eval-answers
 ```
 
+`make eval-answers` runs the real CLI path:
+
+```bash
+dotnet run --project src/RfcRag/ -- --eval docs/eval/golden_questions.json --answers --corpus all
+```
+
+The answer-eval JSON is a manifest-stamped `RetrievalEvalReport` with normal retrieval metrics plus an `answerEval` section. The `--answers` flag is canonical; `--answer` is kept as a compatibility alias. `--limit N` controls both retrieval eval depth and the ask pipeline search limit.
+
+Before running local answer eval, load the same configuration used by the CLI server: at minimum `RfcRag__RfcMirrorPath`, `RfcRag__PostgresConnectionString`, and chat model/provider credentials. See [configuration.md](../configuration.md).
+
+The `Category=AnswerQuality` tests are a fake-chat CI harness for answer verification behavior. They are not a real-model score:
+
+```bash
+dotnet test tests/RfcRag.Tests/ --filter "Category=AnswerQuality" --no-restore
+```
+
 ## Baseline Reports
 
 The committed baseline (`reports/baseline-testdata.json`) is the reference for the testdata-corpus retrieval metrics. It is updated only when metrics improve. Full-corpus and answer reports are gitignored.
