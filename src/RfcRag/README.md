@@ -67,11 +67,11 @@ Returns: { rfcNumber, title, updates: [...], obsoletes: [...], updated_by: [{num
 ```
 
 ### `rfc_stats`
-Get statistics about the indexed RFC corpus.
+Get statistics about the indexed RFC corpus, including the latest Index Manifest with provenance data.
 
 ```
 Parameters: none
-Returns: JSON string { indexedRfcs, sections, abnfBlocks, normativeOccurrences, lastIndexedAtUtc }
+Returns: JSON string { indexedRfcs, sections, abnfBlocks, normativeOccurrences, lastIndexedAtUtc, manifest }
 ```
 
 ### `get_rfc_metadata`

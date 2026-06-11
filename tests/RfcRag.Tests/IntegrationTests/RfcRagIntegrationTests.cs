@@ -20,6 +20,7 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
 
     private static readonly string[] ExpectedTables =
     [
+        "index_manifest",
         "indexed_rfcs",
         "normative_occurrences",
         "rfc_abnf_blocks",
@@ -473,6 +474,61 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
 
     private static SearchService CreateSearchService(NpgsqlDataSource dataSource) =>
         new(new SearchRepository(dataSource), new MetadataRepository(dataSource), CreateEmbeddingService());
+
+    [Fact]
+    public async Task GetStatsAsync_AfterIndexing_IncludesManifest()
+    {
+        await using var dataSource = await CreateMigratedDataSourceAsync();
+        IIndexerService indexer = CreateIndexer(dataSource);
+        ISearchService search = CreateSearchService(dataSource);
+
+        await indexer.IndexAllAsync(CancellationToken.None);
+
+        string statsJson = await search.GetStatsAsync(CancellationToken.None);
+
+        Assert.Contains("\"manifest\"", statsJson);
+        Assert.Contains("\"parserType\"", statsJson);
+        Assert.Contains("\"embeddingModel\"", statsJson);
+        Assert.DoesNotContain("\"manifest\":null", statsJson);
+    }
+
+    [Fact]
+    public async Task IndexAllAsync_WritesManifestRow()
+    {
+        await using var dataSource = await CreateMigratedDataSourceAsync();
+        IIndexerService indexer = CreateIndexer(dataSource);
+        var repository = new IndexingRepository(dataSource);
+
+        await indexer.IndexAllAsync(CancellationToken.None);
+
+        IndexManifest? manifest = await repository.GetLatestManifestAsync(CancellationToken.None);
+
+        Assert.NotNull(manifest);
+        Assert.Equal("Text", manifest.ParserType);
+        Assert.Equal("OpenRouter", manifest.EmbeddingProvider);
+        Assert.Contains("text-embedding-3-small", manifest.EmbeddingModel);
+        Assert.Equal(1536, manifest.EmbeddingDimensions);
+        Assert.True(manifest.RfcCount > 0);
+        Assert.True(manifest.SectionCount > 0);
+        Assert.NotEmpty(manifest.MirrorPath);
+    }
+
+    [Fact]
+    public async Task IndexAllAsync_IncrementalRun_StillWritesManifest()
+    {
+        await using var dataSource = await CreateMigratedDataSourceAsync();
+        IIndexerService indexer = CreateIndexer(dataSource);
+        var repository = new IndexingRepository(dataSource);
+
+        await indexer.IndexAllAsync(CancellationToken.None);
+        await indexer.IndexAllAsync(CancellationToken.None);
+
+        await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
+        int manifestCount = await connection.ExecuteScalarAsync<int>(
+            "select count(*) from rfc_rag.index_manifest");
+
+        Assert.Equal(2, manifestCount);
+    }
 
     private static EmbeddingService CreateEmbeddingService() =>
         new(new FakeEmbeddingGenerator(), new EmbeddingRetryPolicy(TimeProvider.System),

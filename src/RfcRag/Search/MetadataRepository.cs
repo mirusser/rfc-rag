@@ -108,7 +108,25 @@ internal sealed class MetadataRepository(NpgsqlDataSource dataSource)
                     'sections', (select count(*) from rfc_rag.rfc_sections),
                     'abnfBlocks', (select count(*) from rfc_rag.rfc_abnf_blocks),
                     'normativeOccurrences', (select count(*) from rfc_rag.normative_occurrences),
-                    'lastIndexedAtUtc', (select max(indexed_at_utc) from rfc_rag.indexed_rfcs)
+                    'lastIndexedAtUtc', (select max(indexed_at_utc) from rfc_rag.indexed_rfcs),
+                    'manifest', (
+                        select row_to_json(m)
+                        from (
+                            select
+                                id as "id",
+                                parser_type as "parserType",
+                                parser_version as "parserVersion",
+                                embedding_provider as "embeddingProvider",
+                                embedding_model as "embeddingModel",
+                                embedding_dimensions as "embeddingDimensions",
+                                rfc_count as "rfcCount",
+                                section_count as "sectionCount",
+                                created_at as "createdAt"
+                            from rfc_rag.index_manifest
+                            order by created_at desc
+                            limit 1
+                        ) m
+                    )
                 )::text
                 """,
                 cancellationToken: cancellationToken)).ConfigureAwait(false);

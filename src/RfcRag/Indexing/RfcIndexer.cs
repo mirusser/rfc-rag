@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using RfcRag.Infrastructure;
 
 namespace RfcRag.Indexing;
 
@@ -48,6 +49,26 @@ internal sealed class RfcIndexer(
                 logger.LogDebug("Indexing RFC {RfcNumber}...", sourceFile.RfcNumber);
                 await IndexFileAsync(sourceFile, mirrorPath, force: false, indexedHashes, ct).ConfigureAwait(false);
             }).ConfigureAwait(false);
+
+        int rfcCount = await repository.GetIndexedCountAsync(cancellationToken).ConfigureAwait(false);
+        int sectionCount = await repository.GetIndexedSectionCountAsync(cancellationToken).ConfigureAwait(false);
+
+        await repository.InsertManifestAsync(
+            mirrorPath,
+            options.RfcParserType.ToString(),
+            parserVersion: RfcRagConventions.ParserVersion,
+            options.EmbeddingProvider.ToString(),
+            options.EmbeddingModel,
+            options.EmbeddingDimensions,
+            options.EmbeddingBatchSize,
+            rfcCount,
+            sectionCount,
+            cancellationToken).ConfigureAwait(false);
+
+        logger.LogInformation(
+            "Indexing run complete: {RfcCount} RFCs, {SectionCount} sections indexed",
+            rfcCount,
+            sectionCount);
     }
 
     public async Task IndexSingleAsync(int rfcNumber, bool force, CancellationToken cancellationToken)
@@ -68,6 +89,26 @@ internal sealed class RfcIndexer(
         }
 
         await IndexFileAsync(sourceFile.Value, mirrorPath, force, cachedHashes: null, cancellationToken).ConfigureAwait(false);
+
+        int rfcCount = await repository.GetIndexedCountAsync(cancellationToken).ConfigureAwait(false);
+        int sectionCount = await repository.GetIndexedSectionCountAsync(cancellationToken).ConfigureAwait(false);
+
+        await repository.InsertManifestAsync(
+            mirrorPath,
+            options.RfcParserType.ToString(),
+            parserVersion: RfcRagConventions.ParserVersion,
+            options.EmbeddingProvider.ToString(),
+            options.EmbeddingModel,
+            options.EmbeddingDimensions,
+            options.EmbeddingBatchSize,
+            rfcCount,
+            sectionCount,
+            cancellationToken).ConfigureAwait(false);
+
+        logger.LogInformation(
+            "Single-RFC indexing complete: {RfcCount} RFCs, {SectionCount} sections indexed",
+            rfcCount,
+            sectionCount);
     }
 
     public Task<int> GetIndexedCountAsync(CancellationToken cancellationToken) =>

@@ -128,7 +128,7 @@ public sealed class EmbeddingDimensionMigrationTests : IAsyncLifetime
             new MetadataRepository(dataSource!),
             embeddingService);
 
-        var cliRouter = new CliCommandRouter(searchService, NullLoggerFactory.Instance);
+        var cliRouter = new CliCommandRouter(searchService, new IndexingRepository(dataSource!), NullLoggerFactory.Instance);
         return new RfcRagStartupService(
             options,
             dataSource!,

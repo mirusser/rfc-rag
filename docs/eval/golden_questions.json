@@ -1,0 +1,292 @@
+[
+  {
+    "id": "q001",
+    "question": "What does RFC 2119 define for the keyword MUST?",
+    "expectedRfcs": [2119],
+    "expectedSections": ["1"],
+    "mustCite": [2119],
+    "shouldNotCite": [],
+    "answerType": "normative_explanation",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q002",
+    "question": "What is the difference between SHOULD and MUST in RFC specifications?",
+    "expectedRfcs": [2119],
+    "expectedSections": ["1"],
+    "mustCite": [2119],
+    "shouldNotCite": [],
+    "answerType": "normative_explanation",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q003",
+    "question": "How does TLS 1.3 perform the handshake ClientHello?",
+    "expectedRfcs": [8446],
+    "expectedSections": ["4.1"],
+    "mustCite": [8446],
+    "shouldNotCite": [],
+    "answerType": "factual",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q004",
+    "question": "What cipher suites are supported in TLS 1.3?",
+    "expectedRfcs": [8446],
+    "expectedSections": ["4.1.2", "9.1"],
+    "mustCite": [8446],
+    "shouldNotCite": [],
+    "answerType": "factual",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q005",
+    "question": "How are URI components defined in RFC 3986?",
+    "expectedRfcs": [3986],
+    "expectedSections": ["3"],
+    "mustCite": [3986],
+    "shouldNotCite": [],
+    "answerType": "factual",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q006",
+    "question": "What are the rules for percent-encoding in a URI?",
+    "expectedRfcs": [3986],
+    "expectedSections": ["2.1"],
+    "mustCite": [3986],
+    "shouldNotCite": [],
+    "answerType": "normative_explanation",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q007",
+    "question": "What does HTTP semantics say about the GET method?",
+    "expectedRfcs": [9110],
+    "expectedSections": ["9.3.1"],
+    "mustCite": [9110],
+    "shouldNotCite": [],
+    "answerType": "normative_explanation",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q008",
+    "question": "What are the HTTP status codes for redirection?",
+    "expectedRfcs": [9110],
+    "expectedSections": ["15.4"],
+    "mustCite": [9110],
+    "shouldNotCite": [],
+    "answerType": "factual",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q009",
+    "question": "How does QUIC handle stream flow control?",
+    "expectedRfcs": [9000],
+    "expectedSections": ["4.1"],
+    "mustCite": [9000],
+    "shouldNotCite": [],
+    "answerType": "factual",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q010",
+    "question": "What is a QUIC connection ID and how is it used?",
+    "expectedRfcs": [9000],
+    "expectedSections": ["5.1"],
+    "mustCite": [9000],
+    "shouldNotCite": [],
+    "answerType": "factual",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q011",
+    "question": "What is the syntax for URI authority component?",
+    "expectedRfcs": [3986],
+    "expectedSections": ["3.2"],
+    "mustCite": [3986],
+    "shouldNotCite": [],
+    "answerType": "factual",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q012",
+    "question": "How does RFC 9110 define the Accept header?",
+    "expectedRfcs": [9110],
+    "expectedSections": ["12.5.1"],
+    "mustCite": [9110],
+    "shouldNotCite": [],
+    "answerType": "factual",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q013",
+    "question": "What certificate types are supported in TLS 1.3?",
+    "expectedRfcs": [8446],
+    "expectedSections": ["4.2.3"],
+    "mustCite": [8446],
+    "shouldNotCite": [],
+    "answerType": "factual",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q014",
+    "question": "How does QUIC protect packet headers from modification?",
+    "expectedRfcs": [9000],
+    "expectedSections": ["12.1"],
+    "mustCite": [9000],
+    "shouldNotCite": [],
+    "answerType": "normative_explanation",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q015",
+    "question": "What is the OPTIONAL keyword meaning in RFC 2119?",
+    "expectedRfcs": [2119],
+    "expectedSections": ["1"],
+    "mustCite": [2119],
+    "shouldNotCite": [],
+    "answerType": "normative_explanation",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q016",
+    "question": "Does HTTP GET allow a request body?",
+    "expectedRfcs": [9110],
+    "expectedSections": ["9.3.1"],
+    "mustCite": [9110],
+    "shouldNotCite": [],
+    "answerType": "normative_explanation",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q017",
+    "question": "What is the purpose of the RFC 9999 fictional test RFC?",
+    "expectedRfcs": [9999],
+    "expectedSections": [],
+    "mustCite": [],
+    "shouldNotCite": [],
+    "answerType": "no_answer",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q018",
+    "question": "What does quantum cryptography say about TLS key exchange?",
+    "expectedRfcs": [],
+    "expectedSections": [],
+    "mustCite": [],
+    "shouldNotCite": [],
+    "answerType": "no_answer",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q019",
+    "question": "What does the Mars colony RFC say about networking?",
+    "expectedRfcs": [],
+    "expectedSections": [],
+    "mustCite": [],
+    "shouldNotCite": [],
+    "answerType": "no_answer",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q020",
+    "question": "What is the recommended order of cipher suites in TLS 1.3?",
+    "expectedRfcs": [8446],
+    "expectedSections": ["9.1"],
+    "mustCite": [8446],
+    "shouldNotCite": [],
+    "answerType": "normative_explanation",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q021",
+    "question": "How does RFC 9110 handle content negotiation compared to RFC 7231?",
+    "expectedRfcs": [9110],
+    "expectedSections": ["12"],
+    "mustCite": [9110],
+    "shouldNotCite": [7231],
+    "answerType": "factual",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q022",
+    "question": "What did RFC 7231 define for HTTP GET semantics?",
+    "expectedRfcs": [7231],
+    "expectedSections": [],
+    "mustCite": [],
+    "shouldNotCite": [],
+    "answerType": "no_answer",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q022b",
+    "question": "Which RFC contains the current HTTP semantics for status code definitions?",
+    "expectedRfcs": [9110],
+    "expectedSections": ["15"],
+    "mustCite": [9110],
+    "shouldNotCite": [7231],
+    "answerType": "factual",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q023",
+    "question": "What ABNF grammar does RFC 3986 define for scheme?",
+    "expectedRfcs": [3986],
+    "expectedSections": ["3.1"],
+    "mustCite": [3986],
+    "shouldNotCite": [],
+    "answerType": "factual",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q024",
+    "question": "What QUIC packet types are defined in the transport specification?",
+    "expectedRfcs": [9000],
+    "expectedSections": ["17.2"],
+    "mustCite": [9000],
+    "shouldNotCite": [],
+    "answerType": "factual",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q025",
+    "question": "How does TLS 1.3 session resumption work with 0-RTT data?",
+    "expectedRfcs": [8446],
+    "expectedSections": ["2.3"],
+    "mustCite": [8446],
+    "shouldNotCite": [],
+    "answerType": "factual",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q026",
+    "question": "What are the MUST requirements for URI normalization?",
+    "expectedRfcs": [3986],
+    "expectedSections": ["6"],
+    "mustCite": [3986],
+    "shouldNotCite": [],
+    "answerType": "normative_explanation",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q027",
+    "question": "How does QUIC handle connection migration?",
+    "expectedRfcs": [9000],
+    "expectedSections": ["9"],
+    "mustCite": [9000],
+    "shouldNotCite": [],
+    "answerType": "factual",
+    "corpus": "full"
+  },
+  {
+    "id": "q028",
+    "question": "What RFC defines the DNS resolution protocol?",
+    "expectedRfcs": [1035],
+    "expectedSections": [],
+    "mustCite": [],
+    "shouldNotCite": [],
+    "answerType": "factual",
+    "corpus": "full"
+  }
+]

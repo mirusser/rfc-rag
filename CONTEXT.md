@@ -38,6 +38,10 @@ _Avoid_: binding requirement (overclaims), requirement keyword hit
 Retrieval that fuses the semantic (vector) and lexical (full-text) rankings of Sections into one result list.
 _Avoid_: semantic search (that is only one arm of it)
 
+**Index Manifest**:
+A row written at the end of every successful indexing run that records provenance: mirror path, parser type and version, embedding provider/model/dimensions, batch parameters, counts, and creation timestamp. Every eval report and trace carries the manifest id so results are comparable across runs.
+_Avoid_: index metadata (too generic), indexing log
+
 ## Relationships
 
 - The **Mirror** may contain several candidate files for one **RFC**; resolution always picks exactly one **Source**.

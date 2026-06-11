@@ -1,4 +1,5 @@
 using System.Text.Json;
+using RfcRag.Evaluation;
 using RfcRag.Indexing;
 using RfcRag.Infrastructure;
 using RfcRag.Parsing;
@@ -95,12 +96,11 @@ public sealed class RetrievalQualityFixture : IAsyncLifetime
     }
 }
 
+[Trait("Category", "Integration")]
 [Trait("Category", "RetrievalQuality")]
 public sealed class RetrievalQualityTests(RetrievalQualityFixture fixture) : IClassFixture<RetrievalQualityFixture>
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
-
-    private sealed record class EvalQuery(string Query, int[] ExpectedRfcAny);
 
     [Theory]
     [MemberData(nameof(GetFixtureQueries))]
@@ -130,5 +130,50 @@ public sealed class RetrievalQualityTests(RetrievalQualityFixture fixture) : ICl
     {
         public string Query { get; set; } = string.Empty;
         public int[] ExpectedRfcAny { get; set; } = [];
+    }
+
+    [Fact]
+    public async Task GoldenQuestions_TestdataCorpus_MeetsBaselineThresholds()
+    {
+        string fixturePath = Path.Combine("eval", "golden_questions.json");
+        string json = await File.ReadAllTextAsync(fixturePath, CancellationToken.None);
+        var allQuestions = JsonSerializer.Deserialize<GoldenQuestion[]>(json, JsonOptions) ?? [];
+
+        // Only testdata questions with RFC expectations (skip no_answer: they have empty expectedRfcs)
+        var scorableQuestions = allQuestions
+            .Where(q => string.Equals(q.Corpus, "testdata", StringComparison.Ordinal)
+                && q.ExpectedRfcs.Length > 0)
+            .ToArray();
+
+        Assert.True(scorableQuestions.Length >= 10, "Expected at least 10 scorable testdata questions.");
+
+        var results = new List<RetrievalQueryResult>();
+        foreach (var question in scorableQuestions)
+        {
+            IReadOnlyList<SearchResult> searchResults = await fixture.SearchService
+                .SearchAsync(question.Question, limit: 10, normativeKeyword: null, CancellationToken.None);
+
+            int[] rankedRfcs = searchResults.Select(r => r.RfcNumber).Distinct().ToArray();
+
+            results.Add(new RetrievalQueryResult(
+                question.Id, question.Question, question.Corpus,
+                HitAt1: RetrievalMetrics.HitAtK(rankedRfcs, question.ExpectedRfcs, k: 1),
+                HitAt5: RetrievalMetrics.HitAtK(rankedRfcs, question.ExpectedRfcs, k: 5),
+                HitAt10: RetrievalMetrics.HitAtK(rankedRfcs, question.ExpectedRfcs, k: 10),
+                ReciprocalRank: RetrievalMetrics.ReciprocalRank(rankedRfcs, question.ExpectedRfcs),
+                NdcgAt10: RetrievalMetrics.NdcgAtK(rankedRfcs, question.ExpectedRfcs, k: 10),
+                LatencyMs: 0,
+                TopKRfcs: rankedRfcs,
+                Error: null));
+        }
+
+        var agg = RetrievalMetrics.Aggregate(results);
+
+        // Thresholds measured from SemanticFakeEmbeddingGenerator baseline (docs/eval/reports/baseline-testdata.json).
+        // Do not lower without a measured regression justification.
+        Assert.True(agg.HitAt10 >= 0.90,
+            $"hit@10={agg.HitAt10:F3} is below the 0.90 baseline threshold.");
+        Assert.True(agg.Mrr >= 0.75,
+            $"MRR={agg.Mrr:F3} is below the 0.75 baseline threshold.");
     }
 }

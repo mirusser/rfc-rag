@@ -9,6 +9,12 @@ Pass `--cli <verb> [args]` to run a one-shot query against an indexed database i
 | `normative` | `<keyword> [--rfc N]` | Find sections containing a normative keyword (MUST, SHOULD, …) |
 | `stats` | *(none)* | Print indexed corpus statistics as JSON |
 
+Pass `--eval <golden-questions-file> [--corpus testdata|full|all] [--limit N]` (top-level flag, not under `--cli`) to run the retrieval evaluation harness.
+
+```bash
+dotnet run --project src/RfcRag/ -- --eval docs/eval/golden_questions.json --corpus testdata
+```
+
 ### From source
 
 ```bash

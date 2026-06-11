@@ -210,7 +210,7 @@ public static class RfcRagTools
     }
 
     [McpServerTool(Name = "rfc_stats", ReadOnly = true, OpenWorld = false)]
-    [Description("Get statistics about the indexed RFC corpus.")]
+    [Description("Get statistics about the indexed RFC corpus, including the latest Index Manifest.")]
     public static async Task<CallToolResult> RfcStats(
         ISearchService search,
         CancellationToken cancellationToken = default)

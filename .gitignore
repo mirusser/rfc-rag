@@ -83,3 +83,7 @@ InfraGate.sln.DotSettings.user
 # ── Agent runtime & skills ───────────────────────────────────────────────────
 .agents/*
 !.agents/skills/
+
+# ── Eval reports (only testdata baseline is committed) ───────────────────────
+docs/eval/reports/*.json
+!docs/eval/reports/baseline-testdata.json

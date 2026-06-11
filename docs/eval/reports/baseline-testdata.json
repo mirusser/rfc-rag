@@ -1,0 +1,391 @@
+{
+  "generatedAt": "2026-06-11T13:04:40.8127275+00:00",
+  "corpus": "testdata",
+  "manifestId": "384aeece-ae5a-4042-90d0-3dfb00725594",
+  "embeddingModel": "openai/text-embedding-3-small",
+  "parserType": "Text",
+  "queriesRun": 24,
+  "aggregate": {
+    "hitAt1": 0.6666666666666666,
+    "hitAt5": 0.9166666666666666,
+    "hitAt10": 0.9166666666666666,
+    "mrr": 0.7618055555555555,
+    "ndcgAt10": 0.8004299427509295,
+    "avgLatencyMs": 16
+  },
+  "results": [
+    {
+      "id": "q001",
+      "question": "What does RFC 2119 define for the keyword MUST?",
+      "corpus": "testdata",
+      "hitAt1": false,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 0.2,
+      "ndcgAt10": 0.38685280723454163,
+      "latencyMs": 35,
+      "topKRfcs": [
+        9110,
+        9000,
+        8446,
+        3986,
+        2119
+      ]
+    },
+    {
+      "id": "q002",
+      "question": "What is the difference between SHOULD and MUST in RFC specifications?",
+      "corpus": "testdata",
+      "hitAt1": false,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 0.3333333333333333,
+      "ndcgAt10": 0.5,
+      "latencyMs": 12,
+      "topKRfcs": [
+        1035,
+        9110,
+        2119,
+        8446,
+        9000
+      ]
+    },
+    {
+      "id": "q003",
+      "question": "How does TLS 1.3 perform the handshake ClientHello?",
+      "corpus": "testdata",
+      "hitAt1": true,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 1,
+      "ndcgAt10": 1,
+      "latencyMs": 11,
+      "topKRfcs": [
+        8446,
+        9000
+      ]
+    },
+    {
+      "id": "q004",
+      "question": "What cipher suites are supported in TLS 1.3?",
+      "corpus": "testdata",
+      "hitAt1": true,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 1,
+      "ndcgAt10": 1,
+      "latencyMs": 12,
+      "topKRfcs": [
+        8446
+      ]
+    },
+    {
+      "id": "q005",
+      "question": "How are URI components defined in RFC 3986?",
+      "corpus": "testdata",
+      "hitAt1": false,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 0.5,
+      "ndcgAt10": 0.6309297535714575,
+      "latencyMs": 11,
+      "topKRfcs": [
+        9110,
+        3986,
+        2119
+      ]
+    },
+    {
+      "id": "q006",
+      "question": "What are the rules for percent-encoding in a URI?",
+      "corpus": "testdata",
+      "hitAt1": true,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 1,
+      "ndcgAt10": 1,
+      "latencyMs": 10,
+      "topKRfcs": [
+        3986,
+        8446,
+        9110
+      ]
+    },
+    {
+      "id": "q007",
+      "question": "What does HTTP semantics say about the GET method?",
+      "corpus": "testdata",
+      "hitAt1": true,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 1,
+      "ndcgAt10": 1,
+      "latencyMs": 17,
+      "topKRfcs": [
+        9110,
+        3986
+      ]
+    },
+    {
+      "id": "q008",
+      "question": "What are the HTTP status codes for redirection?",
+      "corpus": "testdata",
+      "hitAt1": true,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 1,
+      "ndcgAt10": 1,
+      "latencyMs": 19,
+      "topKRfcs": [
+        9110,
+        3986
+      ]
+    },
+    {
+      "id": "q009",
+      "question": "How does QUIC handle stream flow control?",
+      "corpus": "testdata",
+      "hitAt1": true,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 1,
+      "ndcgAt10": 1,
+      "latencyMs": 21,
+      "topKRfcs": [
+        9000
+      ]
+    },
+    {
+      "id": "q010",
+      "question": "What is a QUIC connection ID and how is it used?",
+      "corpus": "testdata",
+      "hitAt1": true,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 1,
+      "ndcgAt10": 1,
+      "latencyMs": 24,
+      "topKRfcs": [
+        9000
+      ]
+    },
+    {
+      "id": "q011",
+      "question": "What is the syntax for URI authority component?",
+      "corpus": "testdata",
+      "hitAt1": false,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 0.5,
+      "ndcgAt10": 0.6309297535714575,
+      "latencyMs": 23,
+      "topKRfcs": [
+        9110,
+        3986
+      ]
+    },
+    {
+      "id": "q012",
+      "question": "How does RFC 9110 define the Accept header?",
+      "corpus": "testdata",
+      "hitAt1": true,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 1,
+      "ndcgAt10": 1,
+      "latencyMs": 22,
+      "topKRfcs": [
+        9110,
+        3986,
+        2119
+      ]
+    },
+    {
+      "id": "q013",
+      "question": "What certificate types are supported in TLS 1.3?",
+      "corpus": "testdata",
+      "hitAt1": true,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 1,
+      "ndcgAt10": 1,
+      "latencyMs": 18,
+      "topKRfcs": [
+        8446,
+        9110
+      ]
+    },
+    {
+      "id": "q014",
+      "question": "How does QUIC protect packet headers from modification?",
+      "corpus": "testdata",
+      "hitAt1": true,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 1,
+      "ndcgAt10": 1,
+      "latencyMs": 20,
+      "topKRfcs": [
+        9000
+      ]
+    },
+    {
+      "id": "q015",
+      "question": "What is the OPTIONAL keyword meaning in RFC 2119?",
+      "corpus": "testdata",
+      "hitAt1": true,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 1,
+      "ndcgAt10": 1,
+      "latencyMs": 15,
+      "topKRfcs": [
+        2119,
+        9110,
+        3986,
+        1035
+      ]
+    },
+    {
+      "id": "q016",
+      "question": "Does HTTP GET allow a request body?",
+      "corpus": "testdata",
+      "hitAt1": true,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 1,
+      "ndcgAt10": 1,
+      "latencyMs": 14,
+      "topKRfcs": [
+        9110
+      ]
+    },
+    {
+      "id": "q017",
+      "question": "What is the purpose of the RFC 9999 fictional test RFC?",
+      "corpus": "testdata",
+      "hitAt1": false,
+      "hitAt5": false,
+      "hitAt10": false,
+      "reciprocalRank": 0,
+      "ndcgAt10": 0,
+      "latencyMs": 18,
+      "topKRfcs": [
+        2119,
+        9110,
+        3986,
+        1035
+      ]
+    },
+    {
+      "id": "q020",
+      "question": "What is the recommended order of cipher suites in TLS 1.3?",
+      "corpus": "testdata",
+      "hitAt1": true,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 1,
+      "ndcgAt10": 1,
+      "latencyMs": 14,
+      "topKRfcs": [
+        8446
+      ]
+    },
+    {
+      "id": "q021",
+      "question": "How does RFC 9110 handle content negotiation compared to RFC 7231?",
+      "corpus": "testdata",
+      "hitAt1": false,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 0.5,
+      "ndcgAt10": 0.6309297535714575,
+      "latencyMs": 15,
+      "topKRfcs": [
+        2119,
+        9110,
+        3986,
+        1035
+      ]
+    },
+    {
+      "id": "q022",
+      "question": "What did RFC 7231 define for HTTP GET semantics?",
+      "corpus": "testdata",
+      "hitAt1": false,
+      "hitAt5": false,
+      "hitAt10": false,
+      "reciprocalRank": 0,
+      "ndcgAt10": 0,
+      "latencyMs": 18,
+      "topKRfcs": [
+        9110,
+        3986
+      ]
+    },
+    {
+      "id": "q023",
+      "question": "What ABNF grammar does RFC 3986 define for scheme?",
+      "corpus": "testdata",
+      "hitAt1": false,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 0.25,
+      "ndcgAt10": 0.43067655807339306,
+      "latencyMs": 18,
+      "topKRfcs": [
+        9110,
+        1035,
+        2119,
+        3986
+      ]
+    },
+    {
+      "id": "q024",
+      "question": "What QUIC packet types are defined in the transport specification?",
+      "corpus": "testdata",
+      "hitAt1": true,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 1,
+      "ndcgAt10": 1,
+      "latencyMs": 19,
+      "topKRfcs": [
+        9000
+      ]
+    },
+    {
+      "id": "q025",
+      "question": "How does TLS 1.3 session resumption work with 0-RTT data?",
+      "corpus": "testdata",
+      "hitAt1": true,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 1,
+      "ndcgAt10": 1,
+      "latencyMs": 10,
+      "topKRfcs": [
+        8446,
+        9110,
+        9000,
+        1035
+      ]
+    },
+    {
+      "id": "q026",
+      "question": "What are the MUST requirements for URI normalization?",
+      "corpus": "testdata",
+      "hitAt1": true,
+      "hitAt5": true,
+      "hitAt10": true,
+      "reciprocalRank": 1,
+      "ndcgAt10": 1,
+      "latencyMs": 9,
+      "topKRfcs": [
+        3986,
+        2119,
+        9110
+      ]
+    }
+  ]
+}

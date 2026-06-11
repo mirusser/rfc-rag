@@ -258,4 +258,86 @@ internal sealed class IndexingRepository(NpgsqlDataSource dataSource)
                 cancellationToken: cancellationToken)).ConfigureAwait(false);
         }
     }
+
+    public async Task<int> GetIndexedSectionCountAsync(CancellationToken cancellationToken)
+    {
+        var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using (connection.ConfigureAwait(false))
+        {
+            return await connection.ExecuteScalarAsync<int>(new CommandDefinition(
+                "select count(*) from rfc_rag.rfc_sections",
+                cancellationToken: cancellationToken)).ConfigureAwait(false);
+        }
+    }
+
+    public async Task InsertManifestAsync(
+        string mirrorPath,
+        string parserType,
+        string parserVersion,
+        string embeddingProvider,
+        string embeddingModel,
+        int embeddingDimensions,
+        int embeddingBatchSize,
+        int rfcCount,
+        int sectionCount,
+        CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(mirrorPath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(parserType);
+        ArgumentException.ThrowIfNullOrWhiteSpace(embeddingModel);
+
+        var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using (connection.ConfigureAwait(false))
+        {
+            await connection.ExecuteAsync(new CommandDefinition(
+                """
+                insert into rfc_rag.index_manifest
+                    (mirror_path, parser_type, parser_version, embedding_provider, embedding_model,
+                     embedding_dimensions, embedding_batch_size, rfc_count, section_count)
+                values
+                    (@MirrorPath, @ParserType, @ParserVersion, @EmbeddingProvider, @EmbeddingModel,
+                     @EmbeddingDimensions, @EmbeddingBatchSize, @RfcCount, @SectionCount)
+                """,
+                new
+                {
+                    MirrorPath = mirrorPath,
+                    ParserType = parserType,
+                    ParserVersion = parserVersion,
+                    EmbeddingProvider = embeddingProvider,
+                    EmbeddingModel = embeddingModel,
+                    EmbeddingDimensions = embeddingDimensions,
+                    EmbeddingBatchSize = embeddingBatchSize,
+                    RfcCount = rfcCount,
+                    SectionCount = sectionCount
+                },
+                cancellationToken: cancellationToken)).ConfigureAwait(false);
+        }
+    }
+
+    public async Task<IndexManifest?> GetLatestManifestAsync(CancellationToken cancellationToken)
+    {
+        var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using (connection.ConfigureAwait(false))
+        {
+            return await connection.QuerySingleOrDefaultAsync<IndexManifest>(new CommandDefinition(
+                """
+                select
+                    id as "Id",
+                    mirror_path as "MirrorPath",
+                    parser_type as "ParserType",
+                    parser_version as "ParserVersion",
+                    embedding_provider as "EmbeddingProvider",
+                    embedding_model as "EmbeddingModel",
+                    embedding_dimensions as "EmbeddingDimensions",
+                    embedding_batch_size as "EmbeddingBatchSize",
+                    rfc_count as "RfcCount",
+                    section_count as "SectionCount",
+                    created_at as "CreatedAt"
+                from rfc_rag.index_manifest
+                order by created_at desc
+                limit 1
+                """,
+                cancellationToken: cancellationToken)).ConfigureAwait(false);
+        }
+    }
 }

@@ -1,4 +1,4 @@
-.PHONY: help quickstart quickstart-down quickstart-logs build test docker-build smoke-test pull tool-install tool-update
+.PHONY: help quickstart quickstart-down quickstart-logs build test eval docker-build smoke-test pull tool-install tool-update
 
 TAG ?= latest
 
@@ -19,6 +19,9 @@ build:  ## Build the solution in Release configuration
 
 test:  ## Run all tests
 	./scripts/run-all-tests.sh
+
+eval:  ## Run retrieval eval against the indexed RFC mirror (requires indexed DB and RfcMirrorPath)
+	dotnet run --project src/RfcRag/ -- --eval docs/eval/golden_questions.json --corpus all
 
 docker-build:  ## Build the Docker image locally
 	docker build -t rfc-rag:$(TAG) .
