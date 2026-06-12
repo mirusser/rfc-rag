@@ -1,9 +1,13 @@
+using Microsoft.Extensions.Options;
+using RfcRag.Settings;
+
 namespace RfcRag.Search;
 
 internal sealed class SearchService(
     SearchRepository searchRepository,
     MetadataRepository metadataRepository,
-    EmbeddingService embeddingService) : ISearchService
+    EmbeddingService embeddingService,
+    IOptions<RfcRagOptions> options) : ISearchService
 {
 
     public async Task<IReadOnlyList<SearchResult>> SearchAsync(
@@ -15,18 +19,75 @@ internal sealed class SearchService(
         ArgumentException.ThrowIfNullOrWhiteSpace(query);
 
         // Normalize whitespace-only keyword to null so the SQL predicate is not applied
-        string? keyword = string.IsNullOrWhiteSpace(normativeKeyword) ? null : normativeKeyword;
+        QueryPlan? queryPlan = options.Value.QueryPlannerEnabled ? QueryPlanner.Plan(query) : null;
+        string? keyword = string.IsNullOrWhiteSpace(normativeKeyword)
+            ? queryPlan?.SuggestedNormativeKeyword
+            : normativeKeyword;
 
         IReadOnlyList<float[]> embeddings = await embeddingService.GenerateEmbeddingsAsync(
             [query],
             cancellationToken).ConfigureAwait(false);
 
-        return await searchRepository.SearchHybridAsync(
+        IReadOnlyList<SearchResult> results = await searchRepository.SearchHybridAsync(
             query,
             embeddings[0],
             limit,
             keyword,
             cancellationToken).ConfigureAwait(false);
+
+        if (queryPlan is null || queryPlan.SectionReferences.Count == 0)
+            return results;
+
+        return await MergeReferencedSectionsAsync(
+            queryPlan.SectionReferences,
+            results,
+            limit,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<IReadOnlyList<SearchResult>> MergeReferencedSectionsAsync(
+        IReadOnlyList<QuerySectionReference> sectionReferences,
+        IReadOnlyList<SearchResult> searchResults,
+        int limit,
+        CancellationToken cancellationToken)
+    {
+        var seen = new HashSet<(int RfcNumber, string Section)>();
+        var mergedResults = new List<SearchResult>(sectionReferences.Count + searchResults.Count);
+
+        foreach (QuerySectionReference sectionReference in sectionReferences)
+        {
+            if (!seen.Add((sectionReference.RfcNumber, sectionReference.Section)))
+                continue;
+
+            RfcSection? section = await searchRepository
+                .GetSectionAsync(sectionReference.RfcNumber, sectionReference.Section, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (section is null)
+                continue;
+
+            mergedResults.Add(new SearchResult(
+                section.Id,
+                section.RfcNumber,
+                section.Title,
+                section.Section,
+                section.Heading,
+                section.Text,
+                section.SourcePath,
+                section.Url,
+                Score: 1.0));
+        }
+
+        foreach (SearchResult searchResult in searchResults)
+        {
+            if (seen.Add((searchResult.RfcNumber, searchResult.Section)))
+                mergedResults.Add(searchResult);
+        }
+
+        int effectiveLimit = limit > 0 ? limit : searchResults.Count;
+        return effectiveLimit > 0
+            ? mergedResults.Take(effectiveLimit).ToArray()
+            : mergedResults;
     }
 
     public Task<RfcSection?> GetSectionAsync(int rfcNumber, string section, CancellationToken cancellationToken) =>

@@ -72,6 +72,7 @@ docker run --rm -i --network host \
 | `RfcRag__ChatProvider` | `OpenRouter` | `OpenRouter` or `Local` | Chat provider for answer generation — used when `ChatModel` is set |
 | `RfcRag__MaxAnswerTokens` | `1024` | ≥ 1 | Maximum tokens in generated answers |
 | `RfcRag__EvidenceBudgetChars` | `16000` | ≥ 1 | Maximum evidence text characters sent to the chat model |
+| `RfcRag__QueryPlannerEnabled` | `true` | `true` or `false` | Enables deterministic query planning for RFC/section references, protocol hints, and strong normative-intent filters. Disable for A/B retrieval evaluation |
 | `OpenRouter__ApiKey` | *(required for OpenRouter)* | OpenRouter API key — not needed when `EmbeddingProvider=Local` |
 
 ### OpenTelemetry Metrics

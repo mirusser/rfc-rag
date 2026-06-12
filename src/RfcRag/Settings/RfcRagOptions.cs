@@ -92,4 +92,7 @@ public sealed record class RfcRagOptions
     /// pack when this budget is exceeded.
     /// </summary>
     public int EvidenceBudgetChars { get; init; } = 16_000;
+
+    /// <summary>When true, deterministic query planning can refine retrieval before answer generation.</summary>
+    public bool QueryPlannerEnabled { get; init; } = true;
 }

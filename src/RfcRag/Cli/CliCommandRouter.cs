@@ -69,8 +69,8 @@ internal sealed class CliCommandRouter(
                 return true;
             }
 
-            string corpus = ParseStringArg(args, "--corpus", "testdata");
-            int topK = ParseIntArg(args, "--limit", 10);
+            string corpus = CliArgParser.ParseStringFlag(args, "--corpus", "testdata");
+            int topK = CliArgParser.ParseIntFlag(args, "--limit", 10);
 
             var command = new EvalCommand(searchService, indexingRepository,
                 TimeProvider.System, loggerFactory.CreateLogger<EvalCommand>(), askService);
@@ -92,19 +92,4 @@ internal sealed class CliCommandRouter(
         return false;
     }
 
-    private static string ParseStringArg(string[] args, string flag, string defaultValue)
-    {
-        int idx = Array.IndexOf(args, flag);
-        if (idx >= 0 && idx + 1 < args.Length)
-            return args[idx + 1];
-        return defaultValue;
-    }
-
-    private static int ParseIntArg(string[] args, string flag, int defaultValue)
-    {
-        int idx = Array.IndexOf(args, flag);
-        if (idx >= 0 && idx + 1 < args.Length && int.TryParse(args[idx + 1], out int value))
-            return value;
-        return defaultValue;
-    }
 }

@@ -53,9 +53,14 @@ internal sealed class RfcIndexer(
         int rfcCount = await repository.GetIndexedCountAsync(cancellationToken).ConfigureAwait(false);
         int sectionCount = await repository.GetIndexedSectionCountAsync(cancellationToken).ConfigureAwait(false);
 
+        string manifestParserType = sourceFiles.Any(sourceFile =>
+            sourceFile.Path.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
+            ? options.RfcParserType.ToString()
+            : nameof(RfcParserType.Text);
+
         await repository.InsertManifestAsync(
             mirrorPath,
-            options.RfcParserType.ToString(),
+            manifestParserType,
             parserVersion: RfcRagConventions.ParserVersion,
             options.EmbeddingProvider.ToString(),
             options.EmbeddingModel,

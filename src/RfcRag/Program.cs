@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ModelContextProtocol.Protocol;
 using OpenTelemetry.Metrics;
-using RfcRag.Settings;
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Logging.ClearProviders();
@@ -21,7 +20,8 @@ builder.Services.AddRfcRagServices();
 string? chatModel = builder.Configuration.GetSection(RfcRagOptions.SectionName)["ChatModel"];
 string? chatProvider = builder.Configuration.GetSection(RfcRagOptions.SectionName)["ChatProvider"];
 if (!string.IsNullOrWhiteSpace(chatModel) &&
-    (!Enum.TryParse<ChatProvider>(chatProvider, ignoreCase: true, out var parsed) || parsed.IsEnabled()))
+    Enum.TryParse<ChatProvider>(chatProvider, ignoreCase: true, out var parsed) &&
+    parsed.IsEnabled())
 {
     builder.Services.AddRfcRagAnswering();
 }

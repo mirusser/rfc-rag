@@ -314,13 +314,15 @@ internal sealed class IndexingRepository(NpgsqlDataSource dataSource)
         }
     }
 
-    public async Task<IndexManifest?> GetLatestManifestAsync(CancellationToken cancellationToken)
+    public async Task<IndexManifest?> GetLatestManifestAsync(
+        CancellationToken cancellationToken,
+        string? mirrorPath = null)
     {
         var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using (connection.ConfigureAwait(false))
         {
             return await connection.QuerySingleOrDefaultAsync<IndexManifest>(new CommandDefinition(
-                """
+                $"""
                 select
                     id as "Id",
                     mirror_path as "MirrorPath",
@@ -334,9 +336,11 @@ internal sealed class IndexingRepository(NpgsqlDataSource dataSource)
                     section_count as "SectionCount",
                     created_at as "CreatedAt"
                 from rfc_rag.index_manifest
+                {(mirrorPath is not null ? "where mirror_path = @MirrorPath" : "")}
                 order by created_at desc
                 limit 1
                 """,
+                new { MirrorPath = mirrorPath },
                 cancellationToken: cancellationToken)).ConfigureAwait(false);
         }
     }

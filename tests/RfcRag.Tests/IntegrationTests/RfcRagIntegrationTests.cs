@@ -1,6 +1,6 @@
+using System.Globalization;
 using Dapper;
 using RfcRag.Indexing;
-using RfcRag.Infrastructure;
 using RfcRag.Models;
 using RfcRag.Parsing;
 using RfcRag.Search;
@@ -8,16 +8,12 @@ using RfcRag.Settings;
 using RfcRag.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using Npgsql;
-using Testcontainers.PostgreSql;
 
 namespace RfcRag.Tests.IntegrationTests;
 
 [Trait("Category", "Integration")]
-public sealed class RfcRagIntegrationTests : IAsyncLifetime
+public sealed class RfcRagIntegrationTests : IClassFixture<MediumCorpusFixture>
 {
-    private const string PostgresImage = "pgvector/pgvector:pg17";
-
     private static readonly string[] ExpectedTables =
     [
         "index_manifest",
@@ -28,32 +24,17 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
         "schema_migrations"
     ];
 
-    private PostgreSqlContainer? container;
+    private readonly MediumCorpusFixture fixture;
 
-    public async ValueTask InitializeAsync()
+    public RfcRagIntegrationTests(MediumCorpusFixture fixture)
     {
-        container = new PostgreSqlBuilder(PostgresImage)
-            .Build();
-
-        await container.StartAsync(TestContext.Current.CancellationToken);
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (container is not null)
-        {
-            await container.DisposeAsync();
-        }
+        this.fixture = fixture;
     }
 
     [Fact]
     public async Task RunMigrations_OnEmptyDatabase_CreatesExpectedTables()
     {
-        await using var dataSource = NpgsqlDataSource.Create(container!.GetConnectionString());
-
-        await RfcRagMigrationRunner.ApplyAsync(dataSource, CancellationToken.None);
-
-        await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
+        await using var connection = await fixture.DataSource.OpenConnectionAsync(CancellationToken.None);
         var actual = (await connection.QueryAsync<string>(
                 """
                 select table_name
@@ -69,19 +50,12 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task IndexAndSearch_WithFixtureRfcs_ReturnsRelevantResults()
     {
-        await using var dataSource = await CreateMigratedDataSourceAsync();
-        IIndexerService indexer = CreateIndexer(dataSource);
-        ISearchService search = CreateSearchService(dataSource);
+        IReadOnlyList<SearchResult> results = await fixture.SearchService.SearchAsync(
+            "HTTP semantics", 100, null, CancellationToken.None);
+        RfcSection? rfc9110Section = await fixture.SearchService.GetSectionAsync(
+            9110, "1", CancellationToken.None);
 
-        await indexer.IndexAllAsync(CancellationToken.None);
-
-        int indexedCount = await indexer.GetIndexedCountAsync(CancellationToken.None);
-        IReadOnlyList<SearchResult> results = await search.SearchAsync("HTTP semantics", 100, null, CancellationToken.None);
-        // Verify rfc9110 is indexed via direct lookup — hybrid search ranking is unreliable
-        // with fake embeddings across a large corpus (random vector scores drown lexical signal).
-        RfcSection? rfc9110Section = await search.GetSectionAsync(9110, "1", CancellationToken.None);
-
-        Assert.True(indexedCount >= 9000);
+        Assert.True(fixture.IndexedCount >= 190);
         Assert.True(results.Count > 0);
         Assert.NotNull(rfc9110Section);
         Assert.Equal(9110, rfc9110Section.RfcNumber);
@@ -91,13 +65,8 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task GetSectionAsync_WithExistingSection_ReturnsExactMatch()
     {
-        await using var dataSource = await CreateMigratedDataSourceAsync();
-        IIndexerService indexer = CreateIndexer(dataSource);
-        ISearchService search = CreateSearchService(dataSource);
-
-        await indexer.IndexAllAsync(CancellationToken.None);
-
-        RfcSection? section = await search.GetSectionAsync(2119, "1", CancellationToken.None);
+        RfcSection? section = await fixture.SearchService.GetSectionAsync(
+            2119, "1", CancellationToken.None);
 
         Assert.NotNull(section);
         Assert.Contains("MUST", section.Text);
@@ -108,13 +77,8 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task SearchNormativeAsync_WithKeyword_ReturnsMatchingSections()
     {
-        await using var dataSource = await CreateMigratedDataSourceAsync();
-        IIndexerService indexer = CreateIndexer(dataSource);
-        ISearchService search = CreateSearchService(dataSource);
-
-        await indexer.IndexAllAsync(CancellationToken.None);
-
-        IReadOnlyList<SearchResult> results = await search.SearchNormativeAsync("MUST", null, 20, CancellationToken.None);
+        IReadOnlyList<SearchResult> results = await fixture.SearchService.SearchNormativeAsync(
+            "MUST", null, 20, CancellationToken.None);
 
         Assert.Contains(results, result => result.RfcNumber == 2119);
         Assert.Contains(results, result => result.Excerpt.Contains("MUST"));
@@ -123,14 +87,12 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task GetIndexedRfcMetadataAsync_AfterIndexing_IncludesGrammarStyle()
     {
-        await using var dataSource = await CreateMigratedDataSourceAsync();
-        IIndexerService indexer = CreateIndexer(dataSource);
-        var metadataRepository = new MetadataRepository(dataSource);
+        var metadataRepository = new MetadataRepository(fixture.DataSource);
 
-        await indexer.IndexAllAsync(CancellationToken.None);
-
-        RfcMetadata? tlsMetadata = await metadataRepository.GetIndexedRfcMetadataAsync(8446, CancellationToken.None);
-        RfcMetadata? rfc2119Metadata = await metadataRepository.GetIndexedRfcMetadataAsync(2119, CancellationToken.None);
+        RfcMetadata? tlsMetadata = await metadataRepository.GetIndexedRfcMetadataAsync(
+            8446, CancellationToken.None);
+        RfcMetadata? rfc2119Metadata = await metadataRepository.GetIndexedRfcMetadataAsync(
+            2119, CancellationToken.None);
 
         Assert.NotNull(tlsMetadata);
         Assert.Equal(GrammarStyleConstants.TlsPresentationLang, tlsMetadata.GrammarStyle);
@@ -141,25 +103,19 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task SearchAbnf_FindsGrammarBlocks_AcrossRecentRfcs()
     {
-        await using var dataSource = await CreateMigratedDataSourceAsync();
-        IIndexerService indexer = CreateIndexer(dataSource);
-        SearchService search = CreateSearchService(dataSource);
-
-        await indexer.IndexAllAsync(CancellationToken.None);
-
-        IReadOnlyList<SearchResult> uriResults = await search.SearchAbnfAsync(
+        IReadOnlyList<SearchResult> uriResults = await fixture.SearchService.SearchAbnfAsync(
             "URI", null, 100, CancellationToken.None);
         Assert.Contains(uriResults, r => r.RfcNumber == 3986);
 
-        IReadOnlyList<SearchResult> httpResults = await search.SearchAbnfAsync(
+        IReadOnlyList<SearchResult> httpResults = await fixture.SearchService.SearchAbnfAsync(
             "expectation", null, 100, CancellationToken.None);
         Assert.Contains(httpResults, r => r.RfcNumber == 9110);
 
-        IReadOnlyList<SearchResult> httpTokenResults = await search.SearchAbnfAsync(
+        IReadOnlyList<SearchResult> httpTokenResults = await fixture.SearchService.SearchAbnfAsync(
             "token", null, 100, CancellationToken.None);
         Assert.Contains(httpTokenResults, r => r.RfcNumber == 9110);
 
-        IReadOnlyList<SearchResult> filteredResults = await search.SearchAbnfAsync(
+        IReadOnlyList<SearchResult> filteredResults = await fixture.SearchService.SearchAbnfAsync(
             "URI", [3986], 100, CancellationToken.None);
         Assert.Contains(filteredResults, r => r.RfcNumber == 3986);
     }
@@ -167,32 +123,58 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task IncrementalIndex_SkipsUnchangedRfcs()
     {
-        await using var dataSource = await CreateMigratedDataSourceAsync();
-        IIndexerService indexer = CreateIndexer(dataSource);
+        string tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            // Copy one existing RFC file into temp dir for the incremental index test
+            string sourceFile = Path.Combine(
+                Directory.GetCurrentDirectory(), "TestData", "rfc2119.txt");
+            string destFile = Path.Combine(tempDir, "rfc2119.txt");
+            File.Copy(sourceFile, destFile);
 
-        await indexer.IndexAllAsync(CancellationToken.None);
-        int originalCount = await indexer.GetIndexedCountAsync(CancellationToken.None);
+            // Create an indexer that only sees this temp dir
+            var indexingRepository = new IndexingRepository(fixture.DataSource);
+            var embeddingService = CreateEmbeddingService();
+            var options = Options.Create(new RfcRagOptions
+            {
+                RfcMirrorPath = tempDir,
+                PostgresConnectionString = fixture.ConnectionString,
+                EmbeddingBatchSize = 5
+            });
 
-        await indexer.IndexAllAsync(CancellationToken.None);
-        int incrementalCount = await indexer.GetIndexedCountAsync(CancellationToken.None);
+            IIndexerService indexer = new RfcIndexer(
+                fixture.DataSource, indexingRepository,
+                new RfcParser(), new RfcXmlParser(),
+                embeddingService, options, NullLogger<RfcIndexer>.Instance);
 
-        Assert.True(originalCount > 0);
-        Assert.Equal(originalCount, incrementalCount);
+            await indexer.IndexAllAsync(CancellationToken.None);
+            int originalCount = await indexer.GetIndexedCountAsync(CancellationToken.None);
+
+            await indexer.IndexAllAsync(CancellationToken.None);
+            int incrementalCount = await indexer.GetIndexedCountAsync(CancellationToken.None);
+
+            Assert.True(originalCount > 0);
+            Assert.Equal(originalCount, incrementalCount);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
     }
 
     [Fact]
     public async Task SearchAsync_WithNormativeKeyword_FiltersResults()
     {
-        await using var dataSource = await CreateMigratedDataSourceAsync();
-        var repository = new SearchRepository(dataSource);
-        var metadataRepository = new MetadataRepository(dataSource);
-        var service = new SearchService(repository, metadataRepository, CreateEmbeddingService());
+        var repository = new SearchRepository(fixture.DataSource);
+        var metadataRepository = new MetadataRepository(fixture.DataSource);
+        var service = new SearchService(repository, metadataRepository, CreateEmbeddingService(), CreateSearchOptions());
 
         var sectionId1 = Guid.NewGuid();
         var sectionId2 = Guid.NewGuid();
         var sectionId3 = Guid.NewGuid();
 
-        await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
+        await using var connection = await fixture.DataSource.OpenConnectionAsync(CancellationToken.None);
         await connection.ExecuteAsync(
             """
             insert into rfc_rag.rfc_sections (id, rfc_number, title, section, heading, text, source_path, url, source_sha256)
@@ -221,23 +203,127 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task SearchAsync_ExplicitNormativeKeyword_OverridesPlannerSuggestion()
+    {
+        var repository = new SearchRepository(fixture.DataSource);
+        var metadataRepository = new MetadataRepository(fixture.DataSource);
+        var service = new SearchService(repository, metadataRepository, CreateEmbeddingService(), CreateSearchOptions());
+
+        var mustSectionId = Guid.NewGuid();
+        var mustNotSectionId = Guid.NewGuid();
+
+        string mustEmbedding = await GenerateVectorLiteralAsync("Forbidden transport clients MUST use encryption");
+        string mustNotEmbedding = await GenerateVectorLiteralAsync("Forbidden transport clients MUST NOT use plaintext");
+
+        await using var connection = await fixture.DataSource.OpenConnectionAsync(CancellationToken.None);
+        await connection.ExecuteAsync(
+            $"""
+            insert into rfc_rag.rfc_sections (id, rfc_number, title, section, heading, text, source_path, url, source_sha256, embedding)
+            values
+              (@MustSectionId, 2119, 'Key words', '1', 'Requirements', 'Forbidden transport clients MUST use encryption', '/rfc2119.txt', 'https://example.com/rfc2119', 'abc', {mustEmbedding}),
+              (@MustNotSectionId, 2119, 'Key words', '2', 'Prohibitions', 'Forbidden transport clients MUST NOT use plaintext', '/rfc2119.txt', 'https://example.com/rfc2119', 'def', {mustNotEmbedding})
+            """,
+            new { MustSectionId = mustSectionId, MustNotSectionId = mustNotSectionId });
+        await connection.ExecuteAsync(
+            """
+            insert into rfc_rag.normative_occurrences (id, section_id, rfc_number, keyword, line_offset)
+            values
+              (@MustOccurrenceId, @MustSectionId, 2119, 'MUST', 0),
+              (@MustNotOccurrenceId, @MustNotSectionId, 2119, 'MUST NOT', 0)
+            """,
+            new
+            {
+                MustOccurrenceId = Guid.NewGuid(),
+                MustNotOccurrenceId = Guid.NewGuid(),
+                MustSectionId = mustSectionId,
+                MustNotSectionId = mustNotSectionId,
+            });
+
+        IReadOnlyList<SearchResult> results = await service.SearchAsync(
+            "forbidden encryption",
+            limit: 10,
+            normativeKeyword: "MUST",
+            CancellationToken.None);
+
+        Assert.NotEmpty(results);
+        // Keyword "MUST" must include section 1 (has MUST) and exclude section 2 (has MUST NOT).
+        // With left-join fusion, corpus sections matching FTS + keyword may also appear.
+        Assert.Contains(results, r => r.Section == "1");
+        Assert.DoesNotContain(results, r => r.Section == "2");
+    }
+
+    [Fact]
+    public async Task SearchAsync_PlannerSuggestedNormativeKeyword_FiltersWhenKeywordMissing()
+    {
+        var repository = new SearchRepository(fixture.DataSource);
+        var metadataRepository = new MetadataRepository(fixture.DataSource);
+        var service = new SearchService(repository, metadataRepository, CreateEmbeddingService(), CreateSearchOptions());
+
+        var mustSectionId = Guid.NewGuid();
+        var mustNotSectionId = Guid.NewGuid();
+
+        string mustEmbedding = await GenerateVectorLiteralAsync("Forbidden transport clients MUST use encryption");
+        string mustNotEmbedding = await GenerateVectorLiteralAsync("Forbidden transport clients MUST NOT use plaintext");
+
+        await using var connection = await fixture.DataSource.OpenConnectionAsync(CancellationToken.None);
+        await connection.ExecuteAsync(
+            $"""
+            insert into rfc_rag.rfc_sections (id, rfc_number, title, section, heading, text, source_path, url, source_sha256, embedding)
+            values
+              (@MustSectionId, 2119, 'Key words', '1', 'Requirements', 'Forbidden transport clients MUST use encryption', '/rfc2119.txt', 'https://example.com/rfc2119', 'abc', {mustEmbedding}),
+              (@MustNotSectionId, 2119, 'Key words', '2', 'Prohibitions', 'Forbidden transport clients MUST NOT use plaintext', '/rfc2119.txt', 'https://example.com/rfc2119', 'def', {mustNotEmbedding})
+            """,
+            new { MustSectionId = mustSectionId, MustNotSectionId = mustNotSectionId });
+        await connection.ExecuteAsync(
+            """
+            insert into rfc_rag.normative_occurrences (id, section_id, rfc_number, keyword, line_offset)
+            values
+              (@MustOccurrenceId, @MustSectionId, 2119, 'MUST', 0),
+              (@MustNotOccurrenceId, @MustNotSectionId, 2119, 'MUST NOT', 0)
+            """,
+            new
+            {
+                MustOccurrenceId = Guid.NewGuid(),
+                MustNotOccurrenceId = Guid.NewGuid(),
+                MustSectionId = mustSectionId,
+                MustNotSectionId = mustNotSectionId,
+            });
+
+        IReadOnlyList<SearchResult> results = await service.SearchAsync(
+            "forbidden transport",
+            limit: 10,
+            normativeKeyword: null,
+            CancellationToken.None);
+
+        Assert.NotEmpty(results);
+        // Planner suggests "MUST NOT" from the query text. Section 2 (MUST NOT) must be included;
+        // section 1 (MUST) must be excluded.
+        Assert.Contains(results, r => r.Section == "2");
+        Assert.DoesNotContain(results, r => r.Section == "1");
+    }
+
+    [Fact]
     public async Task SearchAsync_KeywordWithNoMatches_ReturnsEmpty()
     {
-        await using var dataSource = await CreateMigratedDataSourceAsync();
-        var repository = new SearchRepository(dataSource);
-        var metadataRepository = new MetadataRepository(dataSource);
-        var service = new SearchService(repository, metadataRepository, CreateEmbeddingService());
+        var repository = new SearchRepository(fixture.DataSource);
+        var metadataRepository = new MetadataRepository(fixture.DataSource);
+        var service = new SearchService(repository, metadataRepository, CreateEmbeddingService(), CreateSearchOptions());
 
         var sectionId1 = Guid.NewGuid();
         var sectionId2 = Guid.NewGuid();
 
-        await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
+        string uniqueToken = "UNIQUEMARKER_ENCRYPTION_";
+
+        string embedding1 = await GenerateVectorLiteralAsync($"The key words MUST use encryption {uniqueToken}");
+        string embedding2 = await GenerateVectorLiteralAsync($"Definitions of MUST and SHOULD levels {uniqueToken}");
+
+        await using var connection = await fixture.DataSource.OpenConnectionAsync(CancellationToken.None);
         await connection.ExecuteAsync(
-            """
-            insert into rfc_rag.rfc_sections (id, rfc_number, title, section, heading, text, source_path, url, source_sha256)
+            $"""
+            insert into rfc_rag.rfc_sections (id, rfc_number, title, section, heading, text, source_path, url, source_sha256, embedding)
             values
-              (@Id1, 2119, 'Key words', '1', 'Introduction', 'The key words MUST use encryption', '/rfc2119.txt', 'https://example.com/rfc2119', 'abc'),
-              (@Id2, 2119, 'Key words', '2', 'Definitions', 'Definitions of MUST and SHOULD levels', '/rfc2119.txt', 'https://example.com/rfc2119', 'def')
+              (@Id1, 2119, 'Key words', '1', 'Introduction', 'The key words MUST use encryption {uniqueToken}', '/rfc2119.txt', 'https://example.com/rfc2119', 'abc', {embedding1}),
+              (@Id2, 2119, 'Key words', '2', 'Definitions', 'Definitions of MUST and SHOULD levels {uniqueToken}', '/rfc2119.txt', 'https://example.com/rfc2119', 'def', {embedding2})
             """,
             new { Id1 = sectionId1, Id2 = sectionId2 });
         await connection.ExecuteAsync(
@@ -249,7 +335,8 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
             """,
             new { OccId1 = Guid.NewGuid(), OccId2 = Guid.NewGuid(), Id1 = sectionId1, Id2 = sectionId2 });
 
-        IReadOnlyList<SearchResult> results = await service.SearchAsync("encryption", 10, "MUST NOT", CancellationToken.None);
+        IReadOnlyList<SearchResult> results = await service.SearchAsync(
+            $"encryption {uniqueToken}", 10, "MUST NOT", CancellationToken.None);
 
         Assert.Empty(results);
     }
@@ -257,15 +344,14 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task SearchAsync_WhitespaceKeyword_TreatedAsNoFilter()
     {
-        await using var dataSource = await CreateMigratedDataSourceAsync();
-        var repository = new SearchRepository(dataSource);
-        var metadataRepository = new MetadataRepository(dataSource);
-        var service = new SearchService(repository, metadataRepository, CreateEmbeddingService());
+        var repository = new SearchRepository(fixture.DataSource);
+        var metadataRepository = new MetadataRepository(fixture.DataSource);
+        var service = new SearchService(repository, metadataRepository, CreateEmbeddingService(), CreateSearchOptions());
 
         var sectionId1 = Guid.NewGuid();
         var sectionId2 = Guid.NewGuid();
 
-        await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
+        await using var connection = await fixture.DataSource.OpenConnectionAsync(CancellationToken.None);
         await connection.ExecuteAsync(
             """
             insert into rfc_rag.rfc_sections (id, rfc_number, title, section, heading, text, source_path, url, source_sha256)
@@ -293,15 +379,14 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task SearchRepository_SearchHybridAsync_WithNormativeKeyword_FiltersCorrectly()
     {
-        await using var dataSource = await CreateMigratedDataSourceAsync();
-        var repository = new SearchRepository(dataSource);
+        var repository = new SearchRepository(fixture.DataSource);
         var embeddingService = CreateEmbeddingService();
 
         var sectionId1 = Guid.NewGuid();
         var sectionId2 = Guid.NewGuid();
         var sectionId3 = Guid.NewGuid();
 
-        await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
+        await using var connection = await fixture.DataSource.OpenConnectionAsync(CancellationToken.None);
         await connection.ExecuteAsync(
             """
             insert into rfc_rag.rfc_sections (id, rfc_number, title, section, heading, text, source_path, url, source_sha256, embedding)
@@ -332,12 +417,11 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task SearchAsync_KeywordFilter_BeyondCandidateWindow_FillsLimit()
     {
-        await using var dataSource = await CreateMigratedDataSourceAsync();
-        var repository = new SearchRepository(dataSource);
-        var metadataRepository = new MetadataRepository(dataSource);
-        var service = new SearchService(repository, metadataRepository, CreateEmbeddingService());
+        var repository = new SearchRepository(fixture.DataSource);
+        var metadataRepository = new MetadataRepository(fixture.DataSource);
+        var service = new SearchService(repository, metadataRepository, CreateEmbeddingService(), CreateSearchOptions());
 
-        await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
+        await using var connection = await fixture.DataSource.OpenConnectionAsync(CancellationToken.None);
 
         var sectionIds = new List<Guid>();
         // Sections 0-19: match query but NO normative keywords — survive lexical rank
@@ -378,8 +462,6 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task IndexAllAsync_TxtAndXmlSameNumber_XmlMode_IndexesOnlyTxt()
     {
-        await using var dataSource = await CreateMigratedDataSourceAsync();
-
         string tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
         Directory.CreateDirectory(tempDir);
         try
@@ -388,7 +470,7 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
                 Network Working Group
                 Request for Comments: 9999
 
-                                                   Test RFC
+                                                       Test RFC
 
                 1.  Introduction
 
@@ -408,24 +490,24 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
                 </rfc>
                 """, TestContext.Current.CancellationToken);
 
-            var indexingRepository = new IndexingRepository(dataSource);
+            var indexingRepository = new IndexingRepository(fixture.DataSource);
             var embeddingService = CreateEmbeddingService();
             var options = Options.Create(new RfcRagOptions
             {
                 RfcMirrorPath = tempDir,
-                PostgresConnectionString = container!.GetConnectionString(),
+                PostgresConnectionString = fixture.ConnectionString,
                 RfcParserType = RfcParserType.Xml,
                 EmbeddingBatchSize = 5
             });
 
             IIndexerService indexer = new RfcIndexer(
-                dataSource, indexingRepository,
+                fixture.DataSource, indexingRepository,
                 new RfcParser(), new RfcXmlParser(),
                 embeddingService, options, NullLogger<RfcIndexer>.Instance);
 
             await indexer.IndexAllAsync(CancellationToken.None);
 
-            await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
+            await using var connection = await fixture.DataSource.OpenConnectionAsync(CancellationToken.None);
             var indexedRows = (await connection.QueryAsync<dynamic>(
                 "select rfc_number, source_path from rfc_rag.indexed_rfcs where rfc_number = 9999"))
                 .ToList();
@@ -443,48 +525,10 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
         }
     }
 
-    private async Task<NpgsqlDataSource> CreateMigratedDataSourceAsync()
-    {
-        var dataSource = NpgsqlDataSource.Create(container!.GetConnectionString());
-        await RfcRagMigrationRunner.ApplyAsync(dataSource, CancellationToken.None);
-
-        return dataSource;
-    }
-
-    private RfcIndexer CreateIndexer(NpgsqlDataSource dataSource)
-    {
-        var indexingRepository = new IndexingRepository(dataSource);
-        var embeddingService = CreateEmbeddingService();
-        var options = Options.Create(new RfcRagOptions
-        {
-            RfcMirrorPath = Path.Combine(Directory.GetCurrentDirectory(), "TestData"),
-            PostgresConnectionString = container!.GetConnectionString(),
-            EmbeddingBatchSize = 5
-        });
-
-        return new RfcIndexer(
-            dataSource,
-            indexingRepository,
-            new RfcParser(),
-            new RfcXmlParser(),
-            embeddingService,
-            options,
-            NullLogger<RfcIndexer>.Instance);
-    }
-
-    private static SearchService CreateSearchService(NpgsqlDataSource dataSource) =>
-        new(new SearchRepository(dataSource), new MetadataRepository(dataSource), CreateEmbeddingService());
-
     [Fact]
     public async Task GetStatsAsync_AfterIndexing_IncludesManifest()
     {
-        await using var dataSource = await CreateMigratedDataSourceAsync();
-        IIndexerService indexer = CreateIndexer(dataSource);
-        ISearchService search = CreateSearchService(dataSource);
-
-        await indexer.IndexAllAsync(CancellationToken.None);
-
-        string statsJson = await search.GetStatsAsync(CancellationToken.None);
+        string statsJson = await fixture.SearchService.GetStatsAsync(CancellationToken.None);
 
         Assert.Contains("\"manifest\"", statsJson);
         Assert.Contains("\"parserType\"", statsJson);
@@ -495,18 +539,14 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task IndexAllAsync_WritesManifestRow()
     {
-        await using var dataSource = await CreateMigratedDataSourceAsync();
-        IIndexerService indexer = CreateIndexer(dataSource);
-        var repository = new IndexingRepository(dataSource);
+        var repository = new IndexingRepository(fixture.DataSource);
 
-        await indexer.IndexAllAsync(CancellationToken.None);
-
-        IndexManifest? manifest = await repository.GetLatestManifestAsync(CancellationToken.None);
+        string fixtureMirrorPath = Path.Combine(Directory.GetCurrentDirectory(), "TestData");
+        IndexManifest? manifest = await repository.GetLatestManifestAsync(CancellationToken.None, fixtureMirrorPath);
 
         Assert.NotNull(manifest);
         Assert.Equal("Text", manifest.ParserType);
-        Assert.Equal("OpenRouter", manifest.EmbeddingProvider);
-        Assert.Contains("text-embedding-3-small", manifest.EmbeddingModel);
+        Assert.Equal("Local", manifest.EmbeddingProvider);
         Assert.Equal(1536, manifest.EmbeddingDimensions);
         Assert.True(manifest.RfcCount > 0);
         Assert.True(manifest.SectionCount > 0);
@@ -516,21 +556,61 @@ public sealed class RfcRagIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task IndexAllAsync_IncrementalRun_StillWritesManifest()
     {
-        await using var dataSource = await CreateMigratedDataSourceAsync();
-        IIndexerService indexer = CreateIndexer(dataSource);
-        var repository = new IndexingRepository(dataSource);
+        string tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            string sourceFile = Path.Combine(
+                Directory.GetCurrentDirectory(), "TestData", "rfc2119.txt");
+            string destFile = Path.Combine(tempDir, "rfc2119.txt");
+            File.Copy(sourceFile, destFile);
 
-        await indexer.IndexAllAsync(CancellationToken.None);
-        await indexer.IndexAllAsync(CancellationToken.None);
+            var indexingRepository = new IndexingRepository(fixture.DataSource);
+            var embeddingService = CreateEmbeddingService();
+            var options = Options.Create(new RfcRagOptions
+            {
+                RfcMirrorPath = tempDir,
+                PostgresConnectionString = fixture.ConnectionString,
+                EmbeddingBatchSize = 5
+            });
 
-        await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
-        int manifestCount = await connection.ExecuteScalarAsync<int>(
-            "select count(*) from rfc_rag.index_manifest");
+            IIndexerService indexer = new RfcIndexer(
+                fixture.DataSource, indexingRepository,
+                new RfcParser(), new RfcXmlParser(),
+                embeddingService, options, NullLogger<RfcIndexer>.Instance);
 
-        Assert.Equal(2, manifestCount);
+            await indexer.IndexAllAsync(CancellationToken.None);
+            await indexer.IndexAllAsync(CancellationToken.None);
+
+            await using var connection = await fixture.DataSource.OpenConnectionAsync(CancellationToken.None);
+            int manifestCount = await connection.ExecuteScalarAsync<int>(
+                "select count(*) from rfc_rag.index_manifest where mirror_path = @MirrorPath",
+                new { MirrorPath = tempDir });
+
+            Assert.Equal(2, manifestCount);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
     }
 
     private static EmbeddingService CreateEmbeddingService() =>
         new(new FakeEmbeddingGenerator(), new EmbeddingRetryPolicy(TimeProvider.System),
             5, embeddingDimensions: 1536, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
+
+    private static IOptions<RfcRagOptions> CreateSearchOptions() =>
+        Options.Create(new RfcRagOptions
+        {
+            RfcMirrorPath = string.Empty,
+            PostgresConnectionString = string.Empty,
+        });
+
+    private static async Task<string> GenerateVectorLiteralAsync(string text)
+    {
+        var generator = new FakeEmbeddingGenerator();
+        var embeddings = await generator.GenerateAsync([text], cancellationToken: CancellationToken.None);
+        float[] vector = embeddings[0].Vector.ToArray();
+        return $"'[{string.Join(",", vector.Select(v => v.ToString(CultureInfo.InvariantCulture)))}]'::vector";
+    }
 }

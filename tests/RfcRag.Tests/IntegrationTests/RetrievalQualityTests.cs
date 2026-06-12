@@ -41,7 +41,12 @@ public sealed class RetrievalQualityFixture : IAsyncLifetime
         var embeddingService = new EmbeddingService(
             new SemanticFakeEmbeddingGenerator(), new EmbeddingRetryPolicy(TimeProvider.System),
             5, embeddingDimensions: 1536, maxConcurrency: 1, NullLogger<EmbeddingService>.Instance);
-        SearchService = new SearchService(repository, metadataRepository, embeddingService);
+        var searchOptions = Options.Create(new RfcRagOptions
+        {
+            RfcMirrorPath = tempRfcDir,
+            PostgresConnectionString = container.GetConnectionString(),
+        });
+        SearchService = new SearchService(repository, metadataRepository, embeddingService, searchOptions);
     }
 
     public async ValueTask DisposeAsync()
@@ -115,6 +120,17 @@ public sealed class RetrievalQualityTests(RetrievalQualityFixture fixture) : ICl
         Assert.True(hit,
             $"Query '{query}' — expected one of [{string.Join(", ", expectedRfcAny)}] in top-10. " +
             $"Got: [{string.Join(", ", rfcNumbers.OrderBy(n => n))}]");
+    }
+
+    [Fact]
+    public async Task SearchAsync_RfcSectionReference_ReturnsReferencedSectionFirst()
+    {
+        IReadOnlyList<SearchResult> results = await fixture.SearchService
+            .SearchAsync("What does RFC 9110 section 9.3.1 say?", limit: 10, normativeKeyword: null, CancellationToken.None);
+
+        Assert.NotEmpty(results);
+        Assert.Equal(9110, results[0].RfcNumber);
+        Assert.Equal("9.3.1", results[0].Section);
     }
 
     public static IEnumerable<object[]> GetFixtureQueries()

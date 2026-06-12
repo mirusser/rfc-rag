@@ -1,7 +1,9 @@
 using System.Text.Json;
+using Microsoft.Extensions.Options;
 using RfcRag.Indexing;
 using RfcRag.Models;
 using RfcRag.Search;
+using RfcRag.Settings;
 using RfcRag.Tests.Fakes;
 using RfcRag.Tools;
 using Microsoft.Extensions.Logging;
@@ -683,7 +685,12 @@ public sealed class RfcRagToolsTests
         return new SearchService(
             new SearchRepository(dataSource),
             new MetadataRepository(dataSource),
-            CreateEmbeddingService());
+            CreateEmbeddingService(),
+            Options.Create(new RfcRagOptions
+            {
+                RfcMirrorPath = string.Empty,
+                PostgresConnectionString = string.Empty,
+            }));
     }
 
     private static EmbeddingService CreateEmbeddingService() =>

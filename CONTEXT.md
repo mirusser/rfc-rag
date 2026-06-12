@@ -38,6 +38,10 @@ _Avoid_: binding requirement (overclaims), requirement keyword hit
 Retrieval that fuses the semantic (vector) and lexical (full-text) rankings of Sections into one result list.
 _Avoid_: semantic search (that is only one arm of it)
 
+**Query Plan**:
+A deterministic, pure interpretation of a user query that records detected RFC numbers, explicit RFC section references, protocol seed RFCs, strong normative-intent filters, ABNF/grammar intent, historical intent, and the rationale for each detection. Retrieval may use it for direct section routing and effective filters; answer output reports it for traceability.
+_Avoid_: LLM query rewrite, ranking model, hidden prompt analysis
+
 **Index Manifest**:
 A row written at the end of every successful indexing run that records provenance: mirror path, parser type and version, embedding provider/model/dimensions, batch parameters, counts, and creation timestamp. Every eval report and trace carries the manifest id so results are comparable across runs.
 _Avoid_: index metadata (too generic), indexing log

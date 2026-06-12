@@ -94,8 +94,8 @@ internal sealed class BenchmarkCommand(ISearchService searchService, ILogger<Ben
 
     private sealed class BenchmarkQuery
     {
-        public string Query { get; set; } = string.Empty;
-        public int[] ExpectedRfcAny { get; set; } = [];
+        public string Query { get; init; } = string.Empty;
+        public int[] ExpectedRfcAny { get; init; } = [];
     }
 
     private sealed record class BenchmarkQueryResult(

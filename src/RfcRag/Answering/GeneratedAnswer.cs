@@ -21,6 +21,53 @@ public sealed record class GeneratedAnswer
 
     /// <summary>When <see langword="true"/>, the question could not be answered from the available evidence.</summary>
     public bool NoAnswer { get; init; }
+
+    /// <summary>Retrieval strategy and filters used to assemble the evidence.</summary>
+    public RetrievalInfo? Retrieval { get; init; }
+}
+
+/// <summary>Metadata describing how evidence retrieval was planned.</summary>
+public sealed record class RetrievalInfo
+{
+    public string Strategy { get; init; } = string.Empty;
+
+    public RetrievalFilters Filters { get; init; } = new();
+
+    public RetrievalPlanInfo? Plan { get; init; }
+}
+
+/// <summary>Search filters applied during retrieval.</summary>
+public sealed record class RetrievalFilters
+{
+    public string? NormativeKeyword { get; init; }
+}
+
+/// <summary>Deterministic query plan reported for traceability.</summary>
+public sealed record class RetrievalPlanInfo
+{
+    public IReadOnlyList<int> RfcNumbers { get; init; } = [];
+
+    public IReadOnlyList<RetrievalSectionReference> SectionReferences { get; init; } = [];
+
+    public IReadOnlyList<int> ProtocolRfcNumbers { get; init; } = [];
+
+    public string? SuggestedNormativeKeyword { get; init; }
+
+    public bool HasAbnfIntent { get; init; }
+
+    public bool IncludeObsolete { get; init; }
+
+    public bool NeedsCurrentSpec { get; init; } = true;
+
+    public IReadOnlyList<string> Rationale { get; init; } = [];
+}
+
+/// <summary>Explicit RFC section reference detected in a query.</summary>
+public sealed record class RetrievalSectionReference
+{
+    public int RfcNumber { get; init; }
+
+    public string Section { get; init; } = string.Empty;
 }
 
 /// <summary>

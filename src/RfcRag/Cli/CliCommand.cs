@@ -50,7 +50,7 @@ internal sealed class CliCommand(ISearchService searchService, ContextAssembler 
         }
 
         string query = args[1];
-        int limit = ParseIntFlag(args, "--limit", defaultValue: 10);
+        int limit = CliArgParser.ParseIntFlag(args, "--limit", 10);
 
         var results = await searchService.SearchAsync(query, limit, normativeKeyword: null, cancellationToken)
             .ConfigureAwait(false);
@@ -84,7 +84,7 @@ internal sealed class CliCommand(ISearchService searchService, ContextAssembler 
         }
 
         string keyword = args[1];
-        int rfcFlag = ParseIntFlag(args, "--rfc", defaultValue: -1);
+        int rfcFlag = CliArgParser.ParseIntFlag(args, "--rfc", -1);
         int[]? rfcFilter = rfcFlag > 0 ? [rfcFlag] : null;
 
         var results = await searchService.SearchNormativeAsync(
@@ -128,8 +128,8 @@ internal sealed class CliCommand(ISearchService searchService, ContextAssembler 
         }
 
         string query = args[1];
-        int limit = ParseIntFlag(args, "--limit", defaultValue: 10);
-        int budget = ParseIntFlag(args, "--budget", defaultValue: 10000);
+        int limit = CliArgParser.ParseIntFlag(args, "--limit", 10);
+        int budget = CliArgParser.ParseIntFlag(args, "--budget", 10000);
 
         var results = await searchService.SearchAsync(
             query, limit, normativeKeyword: null, cancellationToken).ConfigureAwait(false);
@@ -156,8 +156,8 @@ internal sealed class CliCommand(ISearchService searchService, ContextAssembler 
         }
 
         string question = args[1];
-        int limit = ParseIntFlag(args, "--limit", defaultValue: 0);
-        string? keyword = ParseStringFlag(args, "--keyword");
+        int limit = CliArgParser.ParseIntFlag(args, "--limit", 0);
+        string? keyword = CliArgParser.ParseStringFlag(args, "--keyword");
         int? effectiveLimit = limit > 0 ? limit : null;
 
         var answer = await askService.AskAsync(question, effectiveLimit, keyword, cancellationToken).ConfigureAwait(false);
@@ -166,19 +166,4 @@ internal sealed class CliCommand(ISearchService searchService, ContextAssembler 
         return 0;
     }
 
-    private static int ParseIntFlag(string[] args, string flag, int defaultValue)
-    {
-        int idx = Array.IndexOf(args, flag);
-        if (idx >= 0 && idx + 1 < args.Length && int.TryParse(args[idx + 1], out int value))
-            return value;
-        return defaultValue;
-    }
-
-    private static string? ParseStringFlag(string[] args, string flag)
-    {
-        int idx = Array.IndexOf(args, flag);
-        if (idx >= 0 && idx + 1 < args.Length)
-            return args[idx + 1];
-        return null;
-    }
 }

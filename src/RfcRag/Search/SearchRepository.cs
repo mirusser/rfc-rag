@@ -141,7 +141,7 @@ internal sealed class SearchRepository(NpgsqlDataSource dataSource)
                         coalesce(lexical.id, vector.id) as id,
                         (coalesce(1.0 / (60 + lexical.rank), 0) + coalesce(1.0 / (60 + vector.rank), 0))::float8 as score
                     from lexical
-                    full join vector on lexical.id = vector.id
+                    {{(normativeKeyword is not null ? "left" : "full")}} join vector on lexical.id = vector.id
                 )
                 select
                     {{SearchResultProjection}},

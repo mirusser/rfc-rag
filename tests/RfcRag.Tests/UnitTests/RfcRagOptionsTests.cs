@@ -39,4 +39,16 @@ public sealed class RfcRagOptionsTests
 
         Assert.Equal("http://localhost:11434/v1", options.LocalEmbeddingEndpoint);
     }
+
+    [Fact]
+    public void QueryPlannerEnabled_DefaultValue_IsTrue()
+    {
+        var options = new RfcRagOptions
+        {
+            RfcMirrorPath = string.Empty,
+            PostgresConnectionString = string.Empty,
+        };
+
+        Assert.True(options.QueryPlannerEnabled);
+    }
 }

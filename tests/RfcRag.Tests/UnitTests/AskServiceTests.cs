@@ -95,6 +95,31 @@ public sealed class AskServiceTests
     }
 
     [Fact]
+    public async Task AskAsync_QueryPlannerEnabled_ReportsRetrievalPlan()
+    {
+        var section = MakeSection(9110, "9.3.1", "GET", "Forbidden HTTP method text.");
+        var result = MakeResult(9110, "9.3.1", "GET", "Forbidden HTTP method...", 0.95);
+        var searchService = new FakeSearchService
+        {
+            SearchResults = [result],
+            SingleSection = section,
+            TocMap = new Dictionary<string, string?> { ["9.3.1"] = "GET" },
+        };
+        var askService = CreateAskService(searchService);
+
+        GeneratedAnswer answer = await askService.AskAsync(
+            "Which behavior is forbidden for HTTP?",
+            cancellationToken: CancellationToken.None);
+
+        Assert.Equal("MUST NOT", searchService.LastNormativeKeyword);
+        Assert.NotNull(answer.Retrieval);
+        Assert.Equal("query-planner", answer.Retrieval.Strategy);
+        Assert.Equal("MUST NOT", answer.Retrieval.Filters.NormativeKeyword);
+        Assert.Equal("MUST NOT", answer.Retrieval.Plan?.SuggestedNormativeKeyword);
+        Assert.Contains(9110, answer.Retrieval.Plan?.ProtocolRfcNumbers ?? []);
+    }
+
+    [Fact]
     public async Task AskAsync_NoSearchResults_ReturnsNoAnswer()
     {
         var askService = CreateAskService();
