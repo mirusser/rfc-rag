@@ -28,12 +28,32 @@ internal sealed class SearchService(
             [query],
             cancellationToken).ConfigureAwait(false);
 
-        IReadOnlyList<SearchResult> results = await searchRepository.SearchHybridAsync(
-            query,
-            embeddings[0],
-            limit,
-            keyword,
-            cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<SearchResult> results;
+        if (options.Value.RerankerEnabled)
+        {
+            IReadOnlyList<HybridCandidate> candidates = await searchRepository.SearchHybridWideCandidatesAsync(
+                query,
+                embeddings[0],
+                limit,
+                keyword,
+                cancellationToken).ConfigureAwait(false);
+
+            IReadOnlyList<int> candidateRfcNumbers = candidates.Select(c => c.RfcNumber).Distinct().ToList();
+            IReadOnlyDictionary<int, RfcRelationsBatch> rfcStatuses = candidateRfcNumbers.Count > 0
+                ? await metadataRepository.GetRelationsBatchAsync(candidateRfcNumbers, cancellationToken).ConfigureAwait(false)
+                : new Dictionary<int, RfcRelationsBatch>();
+
+            results = DeterministicReranker.Rerank(query, candidates, queryPlan, rfcStatuses, limit);
+        }
+        else
+        {
+            results = await searchRepository.SearchHybridAsync(
+                query,
+                embeddings[0],
+                limit,
+                keyword,
+                cancellationToken).ConfigureAwait(false);
+        }
 
         if (queryPlan is null || queryPlan.SectionReferences.Count == 0)
             return results;

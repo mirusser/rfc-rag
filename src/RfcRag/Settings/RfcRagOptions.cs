@@ -95,4 +95,11 @@ public sealed record class RfcRagOptions
 
     /// <summary>When true, deterministic query planning can refine retrieval before answer generation.</summary>
     public bool QueryPlannerEnabled { get; init; } = true;
+
+    /// <summary>
+    /// When true, a wider fused candidate set is fetched and reranked deterministically
+    /// using signal weights (RFC number match, section match, heading terms, protocol hints,
+    /// obsolete penalty). Disable for A/B comparison against baseline hybrid search.
+    /// </summary>
+    public bool RerankerEnabled { get; init; } = true;
 }

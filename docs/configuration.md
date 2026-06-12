@@ -73,6 +73,7 @@ docker run --rm -i --network host \
 | `RfcRag__MaxAnswerTokens` | `1024` | ≥ 1 | Maximum tokens in generated answers |
 | `RfcRag__EvidenceBudgetChars` | `16000` | ≥ 1 | Maximum evidence text characters sent to the chat model |
 | `RfcRag__QueryPlannerEnabled` | `true` | `true` or `false` | Enables deterministic query planning for RFC/section references, protocol hints, and strong normative-intent filters. Disable for A/B retrieval evaluation |
+| `RfcRag__RerankerEnabled` | `true` | `true` or `false` | Enables deterministic reranking of the wider fused candidate set using signal weights (RFC number match, section match, heading terms, protocol hints, obsolete penalty). Disable for A/B comparison against baseline hybrid search |
 | `OpenRouter__ApiKey` | *(required for OpenRouter)* | OpenRouter API key — not needed when `EmbeddingProvider=Local` |
 
 ### OpenTelemetry Metrics

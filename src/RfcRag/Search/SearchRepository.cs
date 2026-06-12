@@ -34,6 +34,7 @@ internal sealed class SearchRepository(NpgsqlDataSource dataSource)
         """;
 
     private const int MaxLimit = 100;
+    private const int CandidateExpansionFactor = 4;
 
     /// <summary>
     /// Full-text lexical search using PostgreSQL tsvector.
@@ -114,7 +115,7 @@ internal sealed class SearchRepository(NpgsqlDataSource dataSource)
         ArgumentNullException.ThrowIfNull(embedding);
 
         int normalizedLimit = NormalizeLimit(limit);
-        int candidateLimit = normalizedLimit * 4;
+        int candidateLimit = normalizedLimit * CandidateExpansionFactor;
         var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using (connection.ConfigureAwait(false))
         {
@@ -158,6 +159,75 @@ internal sealed class SearchRepository(NpgsqlDataSource dataSource)
                     NormativeKeyword = normativeKeyword ?? string.Empty,
                     CandidateLimit = candidateLimit,
                     Limit = normalizedLimit
+                },
+                cancellationToken: cancellationToken)).ConfigureAwait(false);
+
+            return results.AsList();
+        }
+    }
+
+    /// <summary>
+    /// Hybrid search returning a wider fused candidate set with both arm ranks and RRF score,
+    /// suitable for application-side reranking. Returns up to <c>limit × 4</c> candidates.
+    /// Callers not using the reranker should use <see cref="SearchHybridAsync"/> instead.
+    /// </summary>
+    public async Task<IReadOnlyList<HybridCandidate>> SearchHybridWideCandidatesAsync(
+        string query,
+        float[] embedding,
+        int limit,
+        string? normativeKeyword,
+        CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(query);
+        ArgumentNullException.ThrowIfNull(embedding);
+
+        int normalizedLimit = NormalizeLimit(limit);
+        int candidateLimit = normalizedLimit * CandidateExpansionFactor;
+        var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using (connection.ConfigureAwait(false))
+        {
+            var results = await connection.QueryAsync<HybridCandidate>(new CommandDefinition(
+                $$"""
+                with lexical as (
+                    select id, row_number() over (order by ts_rank(search_vector, plainto_tsquery('english', @Query)) desc) as rank
+                    from rfc_rag.rfc_sections
+                    where plainto_tsquery('english', @Query) @@ search_vector
+                      {{(normativeKeyword is not null ? "and exists (select 1 from rfc_rag.normative_occurrences o where o.section_id = rfc_sections.id and o.keyword = upper(@NormativeKeyword))" : "")}}
+                    order by ts_rank(search_vector, plainto_tsquery('english', @Query)) desc
+                    limit @CandidateLimit
+                ),
+                vector as (
+                    select id, row_number() over (order by embedding <=> cast(@Embedding as vector)) as rank
+                    from rfc_rag.rfc_sections
+                    where embedding is not null
+                      {{(normativeKeyword is not null ? "and exists (select 1 from rfc_rag.normative_occurrences o where o.section_id = rfc_sections.id and o.keyword = upper(@NormativeKeyword))" : "")}}
+                    order by embedding <=> cast(@Embedding as vector)
+                    limit @CandidateLimit
+                ),
+                fused as (
+                    select
+                        coalesce(lexical.id, vector.id) as id,
+                        coalesce(lexical.rank, 0) as "LexicalRank",
+                        coalesce(vector.rank, 0) as "VectorRank",
+                        (coalesce(1.0 / (60 + lexical.rank), 0) + coalesce(1.0 / (60 + vector.rank), 0))::float8 as "RrfScore"
+                    from lexical
+                    {{(normativeKeyword is not null ? "left" : "full")}} join vector on lexical.id = vector.id
+                )
+                select
+                    {{SearchResultProjection}},
+                    fused."LexicalRank",
+                    fused."VectorRank",
+                    fused."RrfScore"
+                from fused
+                join rfc_rag.rfc_sections on rfc_sections.id = fused.id
+                order by fused."RrfScore" desc, rfc_number, section
+                """,
+                new
+                {
+                    Query = query,
+                    Embedding = embedding,
+                    NormativeKeyword = normativeKeyword ?? string.Empty,
+                    CandidateLimit = candidateLimit
                 },
                 cancellationToken: cancellationToken)).ConfigureAwait(false);
 

@@ -101,6 +101,47 @@ public sealed class SearchRepositoryTests : IAsyncLifetime
         Assert.Equal("Shared Heading", section.Heading);
     }
 
+    [Fact]
+    public async Task SearchHybridWideCandidatesAsync_MatchingText_ReturnsCandidatesWithRrfScoresAndArmRanks()
+    {
+        await InsertSectionsAsync("1", "2", "3");
+        var repository = CreateRepository();
+
+        float[] dummyEmbedding = new float[1536];
+
+        // The default InsertSectionsAsync produces text "Text for section N";
+        // query "section text" matches all three via the lexical arm
+        IReadOnlyList<HybridCandidate> candidates = await repository.SearchHybridWideCandidatesAsync(
+            "section text",
+            dummyEmbedding,
+            limit: 10,
+            normativeKeyword: null,
+            TestContext.Current.CancellationToken);
+
+        Assert.NotEmpty(candidates);
+        Assert.All(candidates, c => Assert.True(c.RrfScore > 0));
+        Assert.All(candidates, c => Assert.True(c.LexicalRank > 0 || c.VectorRank > 0));
+        Assert.Equal(RfcNumber, candidates[0].RfcNumber);
+    }
+
+    [Fact]
+    public async Task SearchHybridWideCandidatesAsync_NoMatches_ReturnsEmpty()
+    {
+        await InsertSectionsAsync("1", "2");
+        var repository = CreateRepository();
+
+        float[] dummyEmbedding = new float[1536];
+
+        IReadOnlyList<HybridCandidate> candidates = await repository.SearchHybridWideCandidatesAsync(
+            "zzzzunmatchablexxx",
+            dummyEmbedding,
+            limit: 10,
+            normativeKeyword: null,
+            TestContext.Current.CancellationToken);
+
+        Assert.Empty(candidates);
+    }
+
     private SearchRepository CreateRepository() => new(dataSource!);
 
     private async Task InsertSectionsAsync(params string[] sections)
