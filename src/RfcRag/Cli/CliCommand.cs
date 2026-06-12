@@ -31,13 +31,13 @@ internal sealed class CliCommand(ISearchService searchService, ContextAssembler 
 
         return cliArgs[0].ToUpperInvariant() switch
         {
-            "SEARCH"    => await RunSearchAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
-            "SECTION"   => await RunSectionAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
+            "SEARCH" => await RunSearchAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
+            "SECTION" => await RunSectionAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
             "NORMATIVE" => await RunNormativeAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
-            "STATS"     => await RunStatsAsync(output, cancellationToken).ConfigureAwait(false),
-            "EVIDENCE"  => await RunEvidenceAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
-            "ASK"       => await RunAskAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
-            _           => PrintUnknownVerb(cliArgs[0])
+            "STATS" => await RunStatsAsync(output, cancellationToken).ConfigureAwait(false),
+            "EVIDENCE" => await RunEvidenceAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
+            "ASK" => await RunAskAsync(cliArgs, output, cancellationToken).ConfigureAwait(false),
+            _ => PrintUnknownVerb(cliArgs[0])
         };
     }
 

@@ -385,11 +385,14 @@ public sealed class ContextAssemblerTests
         {
             SectionMap = new Dictionary<(int, string), RfcSection>
             {
-                [(8446, "4.2")] = s1, [(9110, "1")] = s2, [(8446, "1")] = s3,
+                [(8446, "4.2")] = s1,
+                [(9110, "1")] = s2,
+                [(8446, "1")] = s3,
             },
             TocMap = new Dictionary<string, string?>
             {
-                ["1"] = "Intro", ["4.2"] = "ServerHello",
+                ["1"] = "Intro",
+                ["4.2"] = "ServerHello",
             },
         };
         var assembler = new ContextAssembler(fakeService);
