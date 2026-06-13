@@ -89,7 +89,7 @@ flowchart TB
     Tools <-->|"MCP stdio"| Clients
 ```
 
-The parser extracts sections, metadata, normative keywords, and ABNF grammar blocks from RFC text files. Section text is embedded via OpenRouter (`text-embedding-3-small`, 1536-dim) and stored alongside `tsvector` for full-text search. Hybrid search fuses vector cosine similarity with lexical full-text scores using Reciprocal Rank Fusion (RRF). A separate MCP stdio server exposes 11 tools for AI agents.
+The parser extracts sections, metadata, normative keywords, and ABNF grammar blocks from RFC text files. Section text is embedded via OpenRouter (`text-embedding-3-small`, 1536-dim) and stored alongside `tsvector` for full-text search. Hybrid search fuses vector cosine similarity with lexical full-text scores using Reciprocal Rank Fusion (RRF). A separate MCP stdio server exposes 12 tools for AI agents.
 
 ## ⚡ Quick Start
 
@@ -115,8 +115,9 @@ Full configuration guide: [configuration.md](/docs/configuration.md)
 ### 🔎 Search & Retrieval
 
 | Tool | Purpose |
-|---|---|
+|---|---|---|
 | `search_rfc` | Hybrid search (vector + full-text) with RRF fusion. Supports `normative_keyword` filtering. |
+| `ask_rfc` | Ask a natural-language question about RFCs. Runs hybrid search, assembles evidence, and generates a cited answer with optional errata enrichment. |
 | `get_rfc` | RFC metadata, table of contents, and section preview |
 | `get_rfc_full` | Full concatenated text of an RFC (use sparingly) |
 | `get_rfc_section` | Specific section with child expansion for nested subsections |

@@ -4,6 +4,7 @@ namespace RfcRag.Evaluation;
 
 internal static class AnswerEvaluationMetrics
 {
+    private const string ExpectedAnswerTypeNoAnswer = "no_answer";
     /// <summary>
     /// Computes citation precision: fraction of uniquely cited RFCs that are in the must-cite set.
     /// </summary>
@@ -63,7 +64,7 @@ internal static class AnswerEvaluationMetrics
     /// </summary>
     public static bool? CorrectlyDeclined(bool noAnswer, string expectedAnswerType)
     {
-        if (!string.Equals(expectedAnswerType, "no_answer", StringComparison.Ordinal))
+        if (!string.Equals(expectedAnswerType, ExpectedAnswerTypeNoAnswer, StringComparison.Ordinal))
             return null; // N/A
 
         return noAnswer;

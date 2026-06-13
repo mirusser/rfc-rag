@@ -96,7 +96,7 @@ public static class RfcRagTools
             (RfcSection parent, IReadOnlyList<RfcSection> children) = await search.GetSectionWithChildrenAsync(
                 rfcNumber, section, depth, cancellationToken).ConfigureAwait(false);
 
-            if (parent.Section.Length == 0)
+            if (parent == RfcSection.Empty)
                 return ErrorResult($"Section {section} of RFC {rfcNumber} is not indexed.");
 
             return JsonResult(new { section = parent, children });

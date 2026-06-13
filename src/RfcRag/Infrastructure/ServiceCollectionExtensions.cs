@@ -27,6 +27,10 @@ internal static class ServiceCollectionExtensions
             });
         }
 
+        services.TryAddSingleton<TraceQueue>();
+        services.TryAddSingleton<ITraceQueue>(sp => sp.GetRequiredService<TraceQueue>());
+        services.AddHostedService<TraceBackgroundService>();
+
         services.TryAddSingleton<QueryTraceWriter>();
 
         return services

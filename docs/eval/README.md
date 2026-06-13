@@ -23,6 +23,7 @@ Each item in `golden_questions.json` has the following fields:
 | `mustCite` | int[] | For answer eval: RFC numbers that MUST appear in citations. |
 | `shouldNotCite` | int[] | For answer eval: RFC numbers that MUST NOT appear in citations. |
 | `answerType` | string | One of `"normative_explanation"`, `"factual"`, or `"no_answer"`. |
+| `includeObsolete` | bool | Optional; when true, answer eval passes `include_obsolete` to `ask_rfc` to suppress the −0.10 penalty for obsoleted RFCs. Default false. |
 | `includeErrata` | bool | Optional; when true, answer eval calls `ask_rfc` with errata enrichment enabled. |
 | `errataStatus` | string | Optional errata status filter for `includeErrata` questions; defaults to `"verified"`. |
 | `corpus` | string | `"testdata"` for questions answerable from the 6 TestData RFCs; `"full"` for full-mirror items. |

@@ -9,6 +9,9 @@ namespace RfcRag.Answering;
 /// </summary>
 internal static class CitationVerifier
 {
+    private const string StatusUncited = "uncited";
+    private const string StatusSupported = "supported";
+    private const string WarningType = "verification_warning";
     // Sentence-ending punctuation (. ! ?) followed by whitespace and an uppercase letter,
     // but NOT after known abbreviations that commonly appear mid-sentence.
     // Explicit timeout prevents ReDoS from pathological input.
@@ -57,10 +60,10 @@ internal static class CitationVerifier
             string status;
             if (claimEvidenceIds.Count == 0)
             {
-                status = "uncited";
+                status = StatusUncited;
                 warnings.Add(new AnswerWarning
                 {
-                    Type = "verification_warning",
+                    Type = WarningType,
                     Message = $"Claim contains no inline citations: \"{Truncate(claim, 120)}\"",
                 });
             }
@@ -89,13 +92,13 @@ internal static class CitationVerifier
                     }
                 }
 
-                status = anySupported ? "supported" : "unsupported";
+                status = anySupported ? StatusSupported : "unsupported";
 
                 if (!anySupported)
                 {
                     warnings.Add(new AnswerWarning
                     {
-                        Type = "verification_warning",
+                        Type = WarningType,
                         Message = $"Claim citations could not be verified against evidence: \"{Truncate(claim, 120)}\"",
                         EvidenceId = claimEvidenceIds[0],
                     });
@@ -111,7 +114,7 @@ internal static class CitationVerifier
         }
 
         double supportRate = claims.Count > 0
-            ? (double)claims.Count(c => string.Equals(c.Status, "supported", StringComparison.Ordinal)) / claims.Count
+            ? (double)claims.Count(c => string.Equals(c.Status, StatusSupported, StringComparison.Ordinal)) / claims.Count
             : 0.0;
 
         return new ClaimVerificationResult

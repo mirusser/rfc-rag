@@ -24,6 +24,9 @@ public sealed record class RfcSection
     /// <summary>The full text content of this section.</summary>
     public string Text { get; init; } = string.Empty;
 
+    /// <summary>Sentinel value representing "not found" or "no section".</summary>
+    public static RfcSection Empty { get; } = new();
+
     /// <summary>Relative path within the RFC mirror (e.g., "rfc9110.txt").</summary>
     public string SourcePath { get; init; } = string.Empty;
 

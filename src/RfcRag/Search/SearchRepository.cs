@@ -382,7 +382,7 @@ internal sealed class SearchRepository(NpgsqlDataSource dataSource)
                 cancellationToken: cancellationToken)).ConfigureAwait(false);
 
             if (parent is null)
-                return (new RfcSection(), []);
+                return (RfcSection.Empty, []);
 
             if (depth <= 0)
                 return (parent, []);

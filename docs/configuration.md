@@ -71,11 +71,11 @@ docker run --rm -i --network host \
 | `RfcRag__MaxEmbeddingConcurrency` | `8` | ≥ 1 | Maximum number of concurrent embedding API requests across all in-flight files |
 | `RfcRag__ChatModel` | *(not set)* | OpenAI-compatible model ID (e.g., `openai/gpt-4o-mini`) | Chat model for answer generation. When unset, `ask_rfc` is disabled and the server remains retrieval-only |
 | `RfcRag__ChatProvider` | `OpenRouter` | `OpenRouter` or `Local` | Chat provider for answer generation — used when `ChatModel` is set |
-| `RfcRag__ClaimSupportMetricEnabled` | `true` | `true` / `false` | Enables claim-support verification in generated answers. When enabled, the CitationVerifier segments answers into claims, checks each against evidence, and emits verification warnings for unsupported or uncited claims |
 | `RfcRag__MaxAnswerTokens` | `1024` | ≥ 1 | Maximum tokens in generated answers |
 | `RfcRag__EvidenceBudgetChars` | `16000` | ≥ 1 | Maximum evidence text characters sent to the chat model |
 | `RfcRag__QueryPlannerEnabled` | `true` | `true` or `false` | Enables deterministic query planning for RFC/section references, protocol hints, and strong normative-intent filters. Disable for A/B retrieval evaluation |
 | `RfcRag__RerankerEnabled` | `true` | `true` or `false` | Enables deterministic reranking of the wider fused candidate set using signal weights (RFC number match, section match, heading terms, protocol hints, obsolete penalty). Disable for A/B comparison against baseline hybrid search |
+| `RfcRag__TraceDirectory` | *(not set)* | Local directory path | Optional directory for per-query JSONL trace files. When set, each `ask_rfc` call writes a trace line with stage timestamps and retrieval metadata. When unset, tracing is disabled entirely |
 | `OpenRouter__ApiKey` | *(required for OpenRouter)* | OpenRouter API key — not needed when `EmbeddingProvider=Local` |
 
 ### OpenTelemetry Metrics

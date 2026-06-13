@@ -5,7 +5,6 @@ using ModelContextProtocol.Server;
 
 namespace RfcRag.Tools;
 
-[McpServerToolType]
 [Description("RFC question-answering tools")]
 public static class RfcAskTools
 {

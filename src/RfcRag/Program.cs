@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -19,11 +20,19 @@ builder.Services.AddRfcRagServices();
 
 string? chatModel = builder.Configuration.GetSection(RfcRagOptions.SectionName)["ChatModel"];
 string? chatProvider = builder.Configuration.GetSection(RfcRagOptions.SectionName)["ChatProvider"];
-if (!string.IsNullOrWhiteSpace(chatModel) &&
+bool answeringEnabled = !string.IsNullOrWhiteSpace(chatModel) &&
     Enum.TryParse<ChatProvider>(chatProvider, ignoreCase: true, out var parsed) &&
-    parsed.IsEnabled())
+    parsed.IsEnabled();
+if (answeringEnabled)
 {
     builder.Services.AddRfcRagAnswering();
+}
+
+// Track which tool types to register based on answering module state
+var mcpToolTypes = new List<Type> { typeof(RfcRag.Tools.RfcRagTools) };
+if (answeringEnabled)
+{
+    mcpToolTypes.Add(typeof(RfcRag.Tools.RfcAskTools));
 }
 
 builder.Services.AddSingleton<CliCommandRouter>();
@@ -42,7 +51,7 @@ if (!string.IsNullOrWhiteSpace(otlpEndpoint))
 builder.Services
     .AddMcpServer()
     .WithStdioServerTransport()
-    .WithToolsFromAssembly()
+    .WithTools(mcpToolTypes.AsEnumerable())
     .WithRequestFilters(filters =>
     {
         filters.AddCallToolFilter(next => (request, cancellationToken) =>

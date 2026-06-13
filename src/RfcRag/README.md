@@ -14,7 +14,7 @@ Hybrid search combining vector similarity and full-text lexical search with reci
 
 ```
 Parameters: query (string), limit (int, default=10), normative_keyword (string?, optional, e.g. "MUST NOT", "SHOULD"), include_obsolete (bool, default=false)
-Returns: JSON array of { rfcNumber, title, section, heading, excerpt, sourcePath, url, score, status? }
+Returns: JSON array of { id, rfcNumber, title, section, heading, excerpt, sourcePath, url, score, status? }
   status: { category: "current"|"updated"|"obsoleted", obsoletedBy: int[], updatedBy: int[] } — present when RFC has relation metadata
 ```
 
@@ -80,7 +80,7 @@ Get statistics about the indexed RFC corpus, including the latest Index Manifest
 
 ```
 Parameters: none
-Returns: JSON string { indexedRfcs, sections, abnfBlocks, normativeOccurrences, lastIndexedAtUtc, manifest }
+Returns: JSON string { indexedRfcs, sections, abnfBlocks, normativeOccurrences, errata, lastIndexedAtUtc, manifest }
 ```
 
 ### `get_rfc_metadata`
@@ -138,8 +138,10 @@ Returns: JSON object with { total, rfcs: [{ rfcNumber, title, ... }] }
 - `Search/ISearchService.cs` — search and retrieval interface
 - `Indexing/IIndexerService.cs` — indexing service interface
 - `SearchResult.cs` — ranked search result model
-- `Answering/` — evidence assembly and enrichment (`ContextAssembler.cs`, `EvidencePack.cs`, `EvidenceSection.cs`, `EvidenceWarning.cs`)
-- `Models/` — database entity models (`RfcSection.cs`, `RfcAbnfBlock.cs`, `NormativeOccurrence.cs`, `RfcMetadata.cs`, `RfcRelationsBatch.cs`)
+- `Answering/` — evidence assembly, enrichment, and answer generation (`ContextAssembler.cs`, `EvidencePack.cs`, `EvidenceSection.cs`, `EvidenceWarning.cs`, `AnswerGenerator.cs`, `AnswerEvaluationMetrics.cs`, `CitationVerifier.cs`, `QuestionAnalyzer.cs`)
+- `Indexing/IndexManifest.cs` — index manifest model with provenance data (parser, embeddings, counts)
+- `Indexing/ErrataLoader.cs` — RFC Editor errata snapshot loader (JSON deserialization and status filtering)
+- `Models/` — database entity models (`RfcSection.cs`, `RfcAbnfBlock.cs`, `NormativeOccurrence.cs`, `RfcMetadata.cs`, `RfcErratum.cs`, `RfcRelationsBatch.cs`)
 
 ## Running Tests
 

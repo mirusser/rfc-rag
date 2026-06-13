@@ -47,7 +47,7 @@ A deterministic, pure interpretation of a user query that records detected RFC n
 _Avoid_: LLM query rewrite, ranking model, hidden prompt analysis
 
 **Query Trace**:
-A per-query record written as one JSONL line when `RfcRag__TraceDirectory` is configured. Each trace captures the question, timed pipeline stages (search → assemble → generate → verify), candidate RFC numbers, answer and warning counts, and retrieval metadata. The trace writer is fail-open — I/O failures produce a logged warning and the query succeeds. Traces are daily-rotated files under the configured directory.
+A per-query record written as one JSONL line when `RfcRag__TraceDirectory` is configured. Each trace captures the question, timed pipeline stages (search → assemble → generate), candidate RFC numbers, answer and warning counts, and retrieval metadata. The trace writer is fail-open — I/O failures produce a logged warning and the query succeeds. Traces are daily-rotated files under the configured directory.
 _Avoid_: audit log, telemetry event (implies streaming), query log (too generic)
 
 **Index Manifest**:

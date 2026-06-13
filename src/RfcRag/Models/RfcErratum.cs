@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace RfcRag.Models;
 
 /// <summary>A single RFC Editor erratum loaded from a local errata snapshot.</summary>
@@ -13,7 +15,7 @@ public sealed record class RfcErratum
     public const string ReportedStatus = "reported";
 
     /// <summary>The three valid errata statuses recognized by the RFC Editor.</summary>
-    public static readonly string[] ValidStatuses = [VerifiedStatus, HeldForDocumentUpdateStatus, ReportedStatus];
+    public static readonly ImmutableArray<string> ValidStatuses = [VerifiedStatus, HeldForDocumentUpdateStatus, ReportedStatus];
 
     /// <summary>
     /// Normalizes an errata status string: trims whitespace, replaces spaces/hyphens with underscores,

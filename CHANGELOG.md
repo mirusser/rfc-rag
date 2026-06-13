@@ -19,6 +19,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Citation verifier with deterministic claim segmentation and support checking.
 - `ClaimSupportRate` golden evaluation metric for answer citation quality.
 - ADRs 0006 (optional answering), 0008 (golden eval gates), 0009 (errata snapshot).
+- **Answering pipeline**: `ask_rfc` tool — natural-language Q&A over RFCs with hybrid search, evidence assembly, and LLM-generated cited answers.
+- **Errata enrichment**: `include_errata` and `errata_status` parameters on `ask_rfc`. Loads RFC Editor errata from a local JSON snapshot; matching errata produce evidence and answer warnings.
+- **Question analysis**: deterministic `QuestionAnalyzer` extracts RFC numbers, section references, protocol seeds, normative-intent filters, and ABNF/grammar intent from user queries — no LLM dependency.
+- **Answer evaluation**: `AnswerEvaluationMetrics` with citation precision, citation recall, citation F1, quote faithfulness, obsolete citation rate, and no-answer accuracy.
+- **Query trace channel**: fire-and-forget `QueryTrace` writer replaced with `Channel<QueryTrace>` background consumer — trace I/O failures no longer block query response.
+- **Hostile injection test fixture**: `HostileModelFixture` validates that the answer pipeline rejects prompt injection, hallucination seeding, and structural manipulation in user questions.
 
 ### Changed
 

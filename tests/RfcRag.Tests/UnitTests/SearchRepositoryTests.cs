@@ -124,6 +124,25 @@ public sealed class SearchRepositoryTests : IAsyncLifetime
         Assert.Equal(RfcNumber, candidates[0].RfcNumber);
     }
 
+    [Theory]
+    [InlineData(-5, 1)]
+    [InlineData(0, 1)]
+    [InlineData(1, 1)]
+    [InlineData(100, 3)]
+    [InlineData(101, 3)]
+    public async Task SearchLexicalAsync_LimitBoundary_ClampsToExpectedCount(int limit, int expectedCount)
+    {
+        await InsertSectionsAsync("1", "2", "3");
+        var repository = CreateRepository();
+
+        IReadOnlyList<SearchResult> results = await repository.SearchLexicalAsync(
+            "section text",
+            limit,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(expectedCount, results.Count);
+    }
+
     [Fact]
     public async Task SearchHybridWideCandidatesAsync_NoMatches_ReturnsEmpty()
     {

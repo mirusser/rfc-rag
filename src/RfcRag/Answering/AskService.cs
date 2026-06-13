@@ -12,7 +12,7 @@ internal sealed class AskService(
     ContextAssembler contextAssembler,
     AnswerGenerator answerGenerator,
     IOptions<RfcRagOptions> options,
-    QueryTraceWriter traceWriter) : IAskService
+    ITraceQueue traceQueue) : IAskService
 {
     /// <summary>Default number of search results to retrieve from hybrid search.</summary>
     private const int DefaultSearchLimit = 20;
@@ -89,7 +89,7 @@ internal sealed class AskService(
             WarningCount = answer.Warnings.Count,
         };
 
-        _ = traceWriter.WriteAsync(trace, cancellationToken);
+        traceQueue.Enqueue(trace);
 
         return answer with
         {
