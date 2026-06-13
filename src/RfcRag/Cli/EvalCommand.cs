@@ -244,7 +244,7 @@ internal sealed class EvalCommand(
         try
         {
             IReadOnlyList<SearchResult> results = await searchService
-                .SearchAsync(question.Question, topK, normativeKeyword: null, cancellationToken)
+                .SearchAsync(question.Question, topK, normativeKeyword: null, includeObsolete: false, cancellationToken)
                 .ConfigureAwait(false);
 
             timer.Stop();

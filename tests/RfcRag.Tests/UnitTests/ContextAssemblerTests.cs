@@ -42,7 +42,7 @@ public sealed class ContextAssemblerTests
         var assembler = new ContextAssembler(fakeService);
 
         var pack = await assembler.AssembleAsync(
-            "test query", [], budgetChars: 5000, CancellationToken.None);
+            "test query", [], budgetChars: 5000, includeObsolete: false, CancellationToken.None);
 
         Assert.Empty(pack.Sections);
         Assert.Equal(0, pack.TotalChars);
@@ -66,7 +66,7 @@ public sealed class ContextAssemblerTests
         var assembler = new ContextAssembler(fakeService);
 
         var pack = await assembler.AssembleAsync(
-            "test query", [result], budgetChars: 5000, CancellationToken.None);
+            "test query", [result], budgetChars: 5000, includeObsolete: false, CancellationToken.None);
 
         Assert.Single(pack.Sections);
         var evidence = pack.Sections[0];
@@ -95,7 +95,7 @@ public sealed class ContextAssemblerTests
         var assembler = new ContextAssembler(fakeService);
 
         var pack = await assembler.AssembleAsync(
-            "test query", [result1, result2], budgetChars: 5000, CancellationToken.None);
+            "test query", [result1, result2], budgetChars: 5000, includeObsolete: false, CancellationToken.None);
 
         Assert.Single(pack.Sections);
         Assert.Equal(0.95, pack.Sections[0].Score);
@@ -129,7 +129,7 @@ public sealed class ContextAssemblerTests
         var assembler = new ContextAssembler(fakeService);
 
         var pack = await assembler.AssembleAsync(
-            "test query", [resultChild, resultParent], budgetChars: 5000, CancellationToken.None);
+            "test query", [resultChild, resultParent], budgetChars: 5000, includeObsolete: false, CancellationToken.None);
 
         // The child should be kept; parent collapsed
         Assert.Single(pack.Sections);
@@ -164,7 +164,7 @@ public sealed class ContextAssemblerTests
 
         // Budget allows section1 (100 chars) but not section2 (200 chars)
         var pack = await assembler.AssembleAsync(
-            "test query", [result1, result2], budgetChars: 150, CancellationToken.None);
+            "test query", [result1, result2], budgetChars: 150, includeObsolete: false, CancellationToken.None);
 
         Assert.True(pack.BudgetExceeded);
         Assert.Contains(pack.Warnings, w => w.Type == "budget_exceeded");
@@ -189,7 +189,7 @@ public sealed class ContextAssemblerTests
 
         // Budget is smaller than the single section
         var pack = await assembler.AssembleAsync(
-            "test query", [result], budgetChars: 100, CancellationToken.None);
+            "test query", [result], budgetChars: 100, includeObsolete: false, CancellationToken.None);
 
         // Must include at least the top section even if oversized
         Assert.Single(pack.Sections);
@@ -219,7 +219,7 @@ public sealed class ContextAssemblerTests
         var assembler = new ContextAssembler(fakeService);
 
         var pack = await assembler.AssembleAsync(
-            "test query", [result], budgetChars: 5000, CancellationToken.None);
+            "test query", [result], budgetChars: 5000, includeObsolete: false, CancellationToken.None);
 
         Assert.Single(pack.Sections);
         var evidence = pack.Sections[0];
@@ -252,7 +252,7 @@ public sealed class ContextAssemblerTests
         var assembler = new ContextAssembler(fakeService);
 
         var pack = await assembler.AssembleAsync(
-            "test query", [r1, r2], budgetChars: 5000, CancellationToken.None);
+            "test query", [r1, r2], budgetChars: 5000, includeObsolete: false, CancellationToken.None);
 
         Assert.Equal(2, pack.Sections.Count);
         Assert.Equal(8446, pack.Sections[0].RfcNumber); // higher score first
@@ -283,7 +283,7 @@ public sealed class ContextAssemblerTests
         var assembler = new ContextAssembler(fakeService);
 
         var pack = await assembler.AssembleAsync(
-            "test query", results, budgetChars: 5000, CancellationToken.None);
+            "test query", results, budgetChars: 5000, includeObsolete: false, CancellationToken.None);
 
         // Only 5 sections should be included (cap per RFC)
         Assert.Equal(5, pack.Sections.Count);
@@ -292,59 +292,103 @@ public sealed class ContextAssemblerTests
     }
 
     [Fact]
-    public async Task AssembleAsync_Enrichment_PopulatesRelationNotes()
+    public async Task AssembleAsync_WithObsoletedRfc_PopulatesRelationNotes()
     {
         var section = MakeSection(9110, "1", "Intro", "Full text.");
-        var result = MakeResult(9110, "1", "Intro", "excerpt", 0.95);
+        var result = MakeResult(9110, "1", "Intro", "excerpt", 0.95) with
+        {
+            Status = new RfcStatusBlock { Category = RfcStatusCategory.Obsoleted, ObsoletedBy = [9112] },
+        };
 
         var fakeService = new FakeSearchService
         {
             SectionMap = new Dictionary<(int, string), RfcSection> { [(9110, "1")] = section },
             TocMap = new Dictionary<string, string?> { ["1"] = "Intro" },
-            RelationsBatch = new Dictionary<int, RfcRelationsBatch>
-            {
-                [9110] = new RfcRelationsBatch
-                {
-                    RfcNumber = 9110,
-                    ObsoletedBy = [9112],
-                },
-            },
         };
         var assembler = new ContextAssembler(fakeService);
 
         var pack = await assembler.AssembleAsync(
-            "test query", [result], budgetChars: 5000, CancellationToken.None);
+            "test query", [result], budgetChars: 5000, includeObsolete: false, CancellationToken.None);
 
         Assert.Single(pack.RelationNotes);
         Assert.Contains("RFC 9110 is obsoleted by RFC 9112.", pack.RelationNotes);
     }
 
     [Fact]
-    public async Task AssembleAsync_Enrichment_AddsObsoletedRfcWarning()
+    public async Task AssembleAsync_WithObsoletedRfc_AddsWarning()
     {
         var section = MakeSection(9110, "1", "Intro", "Full text.");
-        var result = MakeResult(9110, "1", "Intro", "excerpt", 0.95);
+        var result = MakeResult(9110, "1", "Intro", "excerpt", 0.95) with
+        {
+            Status = new RfcStatusBlock { Category = RfcStatusCategory.Obsoleted, ObsoletedBy = [9112, 9113] },
+        };
 
         var fakeService = new FakeSearchService
         {
             SectionMap = new Dictionary<(int, string), RfcSection> { [(9110, "1")] = section },
             TocMap = new Dictionary<string, string?> { ["1"] = "Intro" },
-            RelationsBatch = new Dictionary<int, RfcRelationsBatch>
-            {
-                [9110] = new RfcRelationsBatch
-                {
-                    RfcNumber = 9110,
-                    ObsoletedBy = [9112, 9113],
-                },
-            },
         };
         var assembler = new ContextAssembler(fakeService);
 
         var pack = await assembler.AssembleAsync(
-            "test query", [result], budgetChars: 5000, CancellationToken.None);
+            "test query", [result], budgetChars: 5000, includeObsolete: false, CancellationToken.None);
 
         var warning = Assert.Single(pack.Warnings, w => w.Type == "obsoleted_rfc");
         Assert.Contains("RFC 9110 is obsoleted by RFC 9112, 9113", warning.Message);
+    }
+
+    [Fact]
+    public async Task AssembleAsync_WithObsoletedRfc_PopulatesStatusBlock()
+    {
+        var section = MakeSection(7231, "4.3.1", "GET", "The GET method requests transfer of a representation.");
+        var result = MakeResult(7231, "4.3.1", "GET", "The GET method...", 0.90) with
+        {
+            Status = new RfcStatusBlock { Category = RfcStatusCategory.Obsoleted, ObsoletedBy = [9110] },
+        };
+
+        var fakeService = new FakeSearchService
+        {
+            SectionMap = new Dictionary<(int, string), RfcSection> { [(7231, "4.3.1")] = section },
+            TocMap = new Dictionary<string, string?> { ["4.3.1"] = "GET" },
+        };
+        var assembler = new ContextAssembler(fakeService);
+
+        var pack = await assembler.AssembleAsync(
+            "HTTP GET method", [result], budgetChars: 5000, includeObsolete: false, CancellationToken.None);
+
+        var evidence = Assert.Single(pack.Sections);
+        Assert.NotNull(evidence.Status);
+        Assert.Equal("obsoleted", evidence.Status!.Category);
+        Assert.Contains(9110, evidence.Status.ObsoletedBy);
+    }
+
+    [Fact]
+    public async Task AssembleAsync_IncludeObsolete_True_StatusPopulatedButWarningOmitted()
+    {
+        var section = MakeSection(7231, "4.3.1", "GET", "The GET method requests transfer of a representation.");
+        var result = MakeResult(7231, "4.3.1", "GET", "The GET method...", 0.90) with
+        {
+            Status = new RfcStatusBlock { Category = RfcStatusCategory.Obsoleted, ObsoletedBy = [9110] },
+        };
+
+        var fakeService = new FakeSearchService
+        {
+            SectionMap = new Dictionary<(int, string), RfcSection> { [(7231, "4.3.1")] = section },
+            TocMap = new Dictionary<string, string?> { ["4.3.1"] = "GET" },
+        };
+        var assembler = new ContextAssembler(fakeService);
+
+        var pack = await assembler.AssembleAsync(
+            "HTTP GET method", [result], budgetChars: 5000, includeObsolete: true, CancellationToken.None);
+
+        // Status is always populated regardless of includeObsolete
+        var evidence = Assert.Single(pack.Sections);
+        Assert.NotNull(evidence.Status);
+        Assert.Equal("obsoleted", evidence.Status!.Category);
+        Assert.Contains(9110, evidence.Status.ObsoletedBy);
+
+        // Warning is suppressed when includeObsolete=true
+        Assert.DoesNotContain(pack.Warnings, w => w.Type == "obsoleted_rfc");
     }
 
     [Fact]
@@ -362,7 +406,7 @@ public sealed class ContextAssemblerTests
         var assembler = new ContextAssembler(fakeService);
 
         var pack = await assembler.AssembleAsync(
-            "test query", [result1], budgetChars: 5000, CancellationToken.None);
+            "test query", [result1], budgetChars: 5000, includeObsolete: false, CancellationToken.None);
 
         Assert.Equal(100, pack.TotalChars);
         Assert.Equal(25, pack.EstimatedTokens); // 100 / 4
@@ -398,7 +442,7 @@ public sealed class ContextAssemblerTests
         var assembler = new ContextAssembler(fakeService);
 
         var pack = await assembler.AssembleAsync(
-            "test query", [r1, r2, r3], budgetChars: 5000, CancellationToken.None);
+            "test query", [r1, r2, r3], budgetChars: 5000, includeObsolete: false, CancellationToken.None);
 
         // Same score → ordered by RfcNumber then Section
         // 8446#1 (section "1" comes before "4.2"), then 8446#4.2, then 9110#1
@@ -417,11 +461,11 @@ public sealed class ContextAssemblerTests
         await cts.CancelAsync();
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            assembler.AssembleAsync("query", [], 5000, cts.Token));
+            assembler.AssembleAsync("query", [], 5000, false, cts.Token));
     }
 
     [Fact]
-    public async Task AssembleAsync_Enrichment_PopulatesNormativeOccurrences()
+    public async Task AssembleAsync_WithNormativeOccurrences_PopulatesEnrichment()
     {
         var sectionId = Guid.NewGuid();
         var section = MakeSection(9110, "1", "Intro", "Full text about MUST requirements.");
@@ -447,7 +491,7 @@ public sealed class ContextAssemblerTests
         var assembler = new ContextAssembler(fakeService);
 
         var pack = await assembler.AssembleAsync(
-            "test query", [result], budgetChars: 5000, CancellationToken.None);
+            "test query", [result], budgetChars: 5000, includeObsolete: false, CancellationToken.None);
 
         var evidence = Assert.Single(pack.Sections);
         Assert.NotNull(evidence.NormativeOccurrences);
@@ -484,6 +528,6 @@ public sealed class ContextAssemblerTests
         await cts.CancelAsync();
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            assembler.AssembleAsync("query", [result1, result2], 5000, cts.Token));
+            assembler.AssembleAsync("query", [result1, result2], 5000, false, cts.Token));
     }
 }

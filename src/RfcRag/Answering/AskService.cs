@@ -1,7 +1,3 @@
-using Microsoft.Extensions.Options;
-using RfcRag.Search;
-using RfcRag.Settings;
-
 namespace RfcRag.Answering;
 
 /// <summary>
@@ -24,6 +20,7 @@ internal sealed class AskService(
         string question,
         int? limit = null,
         string? normativeKeyword = null,
+        bool includeObsolete = false,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -37,12 +34,12 @@ internal sealed class AskService(
 
         // Phase 1: Hybrid search
         IReadOnlyList<SearchResult> results = await searchService.SearchAsync(
-            question, effectiveLimit, effectiveNormativeKeyword, cancellationToken)
+            question, effectiveLimit, effectiveNormativeKeyword, includeObsolete, cancellationToken)
             .ConfigureAwait(false);
 
         // Phase 2: Evidence assembly
         EvidencePack pack = await contextAssembler.AssembleAsync(
-            question, results, opts.EvidenceBudgetChars, cancellationToken)
+            question, results, opts.EvidenceBudgetChars, includeObsolete, cancellationToken)
             .ConfigureAwait(false);
 
         // Phase 3: Answer generation

@@ -87,6 +87,20 @@ A curated question-answer expectation tuple in `golden_questions.json` with fiel
 > **Dev:** "RFC 793 is from 1981 — it can't cite BCP 14. Do its uppercase MUSTs produce **Normative Occurrences**?"
 > **Domain expert:** "Yes. A **Normative Occurrence** is a lexical signal, not proof of formal BCP 14 adoption. That's a deliberate trade-off for recall across the whole corpus."
 
+## RFC Status vocabulary
+
+Each indexed RFC may carry a **Status Block** derived from relation metadata (which RFC obsoletes or updates it):
+
+| Term | Meaning |
+|---|---|
+| **current** | No RFC obsoletes or updates it. Default category when no relation row exists. |
+| **updated** | One or more RFCs have issued partial updates to it, but it has not been fully superseded. |
+| **obsoleted** | One or more RFCs have fully superseded it. The reranker applies a −0.10 score penalty by default. |
+
+The `status` field is a nullable JSON object `{ category, obsoletedBy: int[], updatedBy: int[] }` returned on every **Search Result** and **Evidence Section** where relation metadata is available.
+
+The `include_obsolete` parameter (available on `search_rfc`, `ask_rfc`, and CLI `--include-obsolete`) suppresses the −0.10 penalty and omits obsolescence warnings in assembled evidence. It defaults to `false`. Golden questions that intentionally target a historical RFC (e.g. a question explicitly about RFC 7231 after 9110 was published) should set `includeObsolete: true` in the golden question schema to avoid false retrieval regressions.
+
 ## Flagged ambiguities
 
 - "secondary/auxiliary XML parsing" was ambiguous between *fallback* and *metadata enrichment* — resolved: strict fallback, one Source per RFC (ADR-0001).

@@ -177,6 +177,7 @@ public sealed class EvalCommandTests : IAsyncLifetime
             string question,
             int? limit = null,
             string? normativeKeyword = null,
+            bool includeObsolete = false,
             CancellationToken cancellationToken = default)
         {
             LastLimit = limit;

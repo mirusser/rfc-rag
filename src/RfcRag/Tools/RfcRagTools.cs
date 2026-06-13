@@ -13,15 +13,16 @@ public static class RfcRagTools
     private static readonly JsonSerializerOptions jsonOptions = new() { WriteIndented = false, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     [McpServerTool(Name = "search_rfc", ReadOnly = true, OpenWorld = false)]
-    [Description("Search RFCs using hybrid vector + full-text search. Returns ranked sections with excerpts.")]
+    [Description("Search RFCs using hybrid vector + full-text search. Returns ranked sections with excerpts and RFC status.")]
     public static async Task<CallToolResult> SearchRfc(
         ISearchService search,
         [Description("Search query for RFC content.")] string query,
         [Description("Maximum ranked sections to return, from 1 to 100.")] int limit = 10,
         [Description("Optional normative keyword filter (e.g., 'MUST NOT', 'SHOULD', 'REQUIRED'). When set, only sections containing this RFC 2119/8174 keyword are returned.")] string? normative_keyword = null,
+        [Description("When true, includes obsoleted RFCs without penalty or warning. Default false demotes and flags obsoleted RFCs.")] bool include_obsolete = false,
         CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<SearchResult> results = await search.SearchAsync(query, limit, normative_keyword, cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<SearchResult> results = await search.SearchAsync(query, limit, normative_keyword, include_obsolete, cancellationToken).ConfigureAwait(false);
         return JsonResult(results);
     }
 

@@ -13,4 +13,8 @@ public sealed record class SearchResult(
     string Excerpt,
     string SourcePath,
     string Url,
-    double Score);
+    double Score)
+{
+    /// <summary>RFC status block populated after relation enrichment. Null when status is unavailable.</summary>
+    public RfcStatusBlock? Status { get; init; }
+}

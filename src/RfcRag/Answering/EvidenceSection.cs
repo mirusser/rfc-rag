@@ -40,4 +40,7 @@ internal sealed record class EvidenceSection
 
     /// <summary>Relation note for this section's RFC (e.g., obsoletion warning). Populated during enrichment.</summary>
     public string? RelationNote { get; init; }
+
+    /// <summary>RFC status block populated during enrichment. Null when status is unavailable.</summary>
+    public RfcStatusBlock? Status { get; init; }
 }

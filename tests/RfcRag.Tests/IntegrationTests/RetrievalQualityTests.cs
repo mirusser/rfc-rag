@@ -15,7 +15,7 @@ namespace RfcRag.Tests.IntegrationTests;
 
 public sealed class RetrievalQualityFixture : IAsyncLifetime
 {
-    private static readonly int[] TrackedRfcNumbers = [1035, 2119, 3986, 5681, 8446, 9000, 9110];
+    private static readonly int[] TrackedRfcNumbers = [1035, 2119, 3986, 5681, 7231, 8446, 9000, 9110];
 
     private const string PostgresImage = "pgvector/pgvector:pg17";
 
@@ -112,7 +112,7 @@ public sealed class RetrievalQualityTests(RetrievalQualityFixture fixture) : ICl
     public async Task SearchAsync_WithFixtureQuery_HitsExpectedRfc(string query, int[] expectedRfcAny)
     {
         IReadOnlyList<SearchResult> results = await fixture.SearchService
-            .SearchAsync(query, limit: 10, normativeKeyword: null, CancellationToken.None);
+            .SearchAsync(query, limit: 10, normativeKeyword: null, includeObsolete: false, CancellationToken.None);
 
         var rfcNumbers = results.Select(r => r.RfcNumber).ToHashSet();
         bool hit = expectedRfcAny.Any(rfcNumbers.Contains);
@@ -126,7 +126,7 @@ public sealed class RetrievalQualityTests(RetrievalQualityFixture fixture) : ICl
     public async Task SearchAsync_RfcSectionReference_ReturnsReferencedSectionFirst()
     {
         IReadOnlyList<SearchResult> results = await fixture.SearchService
-            .SearchAsync("What does RFC 9110 section 9.3.1 say?", limit: 10, normativeKeyword: null, CancellationToken.None);
+            .SearchAsync("What does RFC 9110 section 9.3.1 say?", limit: 10, normativeKeyword: null, includeObsolete: false, CancellationToken.None);
 
         Assert.NotEmpty(results);
         Assert.Equal(9110, results[0].RfcNumber);
@@ -167,7 +167,7 @@ public sealed class RetrievalQualityTests(RetrievalQualityFixture fixture) : ICl
         foreach (var question in scorableQuestions)
         {
             IReadOnlyList<SearchResult> searchResults = await fixture.SearchService
-                .SearchAsync(question.Question, limit: 10, normativeKeyword: null, CancellationToken.None);
+                .SearchAsync(question.Question, limit: 10, normativeKeyword: null, includeObsolete: question.IncludeObsolete, CancellationToken.None);
 
             int[] rankedRfcs = searchResults.Select(r => r.RfcNumber).Distinct().ToArray();
 

@@ -288,5 +288,26 @@
     "shouldNotCite": [],
     "answerType": "factual",
     "corpus": "full"
+  },
+  {
+    "id": "q029",
+    "question": "What are the current HTTP GET method semantics?",
+    "expectedRfcs": [9110],
+    "expectedSections": ["9.3.1"],
+    "mustCite": [9110],
+    "shouldNotCite": [7231],
+    "answerType": "factual",
+    "corpus": "testdata"
+  },
+  {
+    "id": "q030",
+    "question": "What did RFC 7231 originally specify for the HTTP GET method?",
+    "expectedRfcs": [7231],
+    "expectedSections": ["4.3.1"],
+    "mustCite": [7231],
+    "shouldNotCite": [],
+    "answerType": "factual",
+    "corpus": "testdata",
+    "includeObsolete": true
   }
 ]

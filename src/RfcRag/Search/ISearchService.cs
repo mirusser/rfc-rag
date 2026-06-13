@@ -2,7 +2,7 @@ namespace RfcRag.Search;
 
 public interface ISearchService
 {
-    Task<IReadOnlyList<SearchResult>> SearchAsync(string query, int limit, string? normativeKeyword, CancellationToken cancellationToken);
+    Task<IReadOnlyList<SearchResult>> SearchAsync(string query, int limit, string? normativeKeyword, bool includeObsolete, CancellationToken cancellationToken);
 
     Task<RfcSection?> GetSectionAsync(int rfcNumber, string section, CancellationToken cancellationToken);
 

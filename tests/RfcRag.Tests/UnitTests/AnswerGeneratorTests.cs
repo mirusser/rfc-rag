@@ -206,6 +206,90 @@ public sealed class AnswerGeneratorTests
         Assert.Equal("fake-model", result.Model);
     }
 
+    // ── Relation-notes / current-vs-historical prompt tests ──────────
+
+    [Fact]
+    public async Task GenerateAsync_WithRelationNotes_RendersNotesInUserPrompt()
+    {
+        var pack = new EvidencePack
+        {
+            Query = "HTTP GET semantics",
+            Sections =
+            [
+                new EvidenceSection
+                {
+                    EvidenceId = "7231#4.3.1",
+                    RfcNumber = 7231,
+                    Section = "4.3.1",
+                    Heading = "GET",
+                    Text = "The GET method requests transfer of a representation.",
+                    Score = 0.9,
+                },
+            ],
+            RelationNotes = ["RFC 7231 is obsoleted by RFC 9110."],
+            EstimatedTokens = 50,
+            BudgetChars = 10000,
+        };
+        var fakeClient = new FakeChatClient(ValidJsonResponse);
+        var generator = CreateGenerator(fakeClient);
+
+        await generator.GenerateAsync(pack, "What does RFC 7231 say about GET?", CancellationToken.None);
+
+        Assert.NotEmpty(fakeClient.CapturedCalls);
+        var userMessage = fakeClient.CapturedCalls[0].Messages
+            .First(m => m.Role == "user");
+        Assert.Contains("NOTE: RFC 7231 is obsoleted by RFC 9110.", userMessage.Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GenerateAsync_WithRelationNotes_AddsCurrentSpecPreferenceRuleToSystemPrompt()
+    {
+        var pack = new EvidencePack
+        {
+            Query = "HTTP GET semantics",
+            Sections =
+            [
+                new EvidenceSection
+                {
+                    EvidenceId = "7231#4.3.1",
+                    RfcNumber = 7231,
+                    Section = "4.3.1",
+                    Text = "The GET method requests transfer of a representation.",
+                    Score = 0.9,
+                },
+            ],
+            RelationNotes = ["RFC 7231 is obsoleted by RFC 9110."],
+            EstimatedTokens = 50,
+            BudgetChars = 10000,
+        };
+        var fakeClient = new FakeChatClient(ValidJsonResponse);
+        var generator = CreateGenerator(fakeClient);
+
+        await generator.GenerateAsync(pack, "test question", CancellationToken.None);
+
+        Assert.NotEmpty(fakeClient.CapturedCalls);
+        var systemMessage = fakeClient.CapturedCalls[0].Messages
+            .First(m => m.Role == "system");
+        Assert.Contains("PREFER", systemMessage.Text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("successor RFC", systemMessage.Text, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task GenerateAsync_WithoutRelationNotes_SystemPromptLacksPreferenceRule()
+    {
+        var pack = PackWithSections((9110, "9.3.1", "GET method text"));
+        var fakeClient = new FakeChatClient(ValidJsonResponse);
+        var generator = CreateGenerator(fakeClient);
+
+        await generator.GenerateAsync(pack, "test question", CancellationToken.None);
+
+        Assert.NotEmpty(fakeClient.CapturedCalls);
+        var systemMessage = fakeClient.CapturedCalls[0].Messages
+            .First(m => m.Role == "system");
+        // No obsoleted-RFC notes → rule #7 must not appear
+        Assert.DoesNotContain("successor RFC", systemMessage.Text, StringComparison.OrdinalIgnoreCase);
+    }
+
     // ── CitationDiscipline tests ──────────────────────────────────────
 
     [Fact]

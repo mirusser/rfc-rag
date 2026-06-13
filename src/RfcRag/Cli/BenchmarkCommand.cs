@@ -64,7 +64,7 @@ internal sealed class BenchmarkCommand(ISearchService searchService, ILogger<Ben
         try
         {
             results = await searchService.SearchAsync(
-                query.Query, topK, normativeKeyword: null, cancellationToken).ConfigureAwait(false);
+                query.Query, topK, normativeKeyword: null, includeObsolete: false, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

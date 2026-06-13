@@ -26,7 +26,7 @@ public sealed class RfcRagToolsTests
                 "https://www.rfc-editor.org/rfc/rfc2119", 0.95)]
         };
 
-        CallToolResult result = await RfcRagTools.SearchRfc(fake, "test", 10, null, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.SearchRfc(fake, "test", 10, null, false, CancellationToken.None);
         string json = JsonFrom(result);
 
         Assert.StartsWith("[", json);
@@ -227,7 +227,7 @@ public sealed class RfcRagToolsTests
     {
         var fake = new FakeSearchService { SearchResults = [] };
 
-        CallToolResult result = await RfcRagTools.SearchRfc(fake, "HTTP", 10, null, CancellationToken.None);
+        CallToolResult result = await RfcRagTools.SearchRfc(fake, "HTTP", 10, null, false, CancellationToken.None);
         string json = JsonFrom(result);
 
         using var doc = JsonDocument.Parse(json);
@@ -582,7 +582,7 @@ public sealed class RfcRagToolsTests
         var fake = new FakeSearchService { SearchException = expected };
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => RfcRagTools.SearchRfc(fake, "test", 10, null, CancellationToken.None));
+            () => RfcRagTools.SearchRfc(fake, "test", 10, null, false, CancellationToken.None));
 
         Assert.Same(expected, ex);
     }
@@ -642,7 +642,7 @@ public sealed class RfcRagToolsTests
                 "https://www.rfc-editor.org/rfc/rfc8827", 0.95)]
         };
 
-        CallToolResult result = await RfcRagTools.SearchRfc(fake, "unencrypted", 10, "MUST NOT", CancellationToken.None);
+        CallToolResult result = await RfcRagTools.SearchRfc(fake, "unencrypted", 10, "MUST NOT", false, CancellationToken.None);
         string json = JsonFrom(result);
 
         Assert.Equal("MUST NOT", fake.LastNormativeKeyword);
@@ -661,12 +661,28 @@ public sealed class RfcRagToolsTests
                 "https://www.rfc-editor.org/rfc/rfc2119", 0.95)]
         };
 
-        CallToolResult result = await RfcRagTools.SearchRfc(fake, "test", 10, cancellationToken: CancellationToken.None);
+        CallToolResult result = await RfcRagTools.SearchRfc(fake, "test", 10, cancellationToken: CancellationToken.None, include_obsolete: false);
         string json = JsonFrom(result);
 
         Assert.Null(fake.LastNormativeKeyword);
         using var doc = JsonDocument.Parse(json);
         Assert.Single(doc.RootElement.EnumerateArray());
+    }
+
+    [Fact]
+    public async Task SearchRfc_WithIncludeObsolete_PassesFlagToService()
+    {
+        var fake = new FakeSearchService
+        {
+            SearchResults = [new SearchResult(
+                Guid.NewGuid(), 7231, "HTTP/1.1 Semantics", "4.3.1", "GET",
+                "The GET method requests transfer of a representation.", "rfc7231.txt",
+                "https://www.rfc-editor.org/rfc/rfc7231", 0.85)]
+        };
+
+        await RfcRagTools.SearchRfc(fake, "HTTP GET method", 10, null, include_obsolete: true, CancellationToken.None);
+
+        Assert.True(fake.LastIncludeObsolete);
     }
 
     private static string JsonFrom(CallToolResult result)

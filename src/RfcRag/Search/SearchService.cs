@@ -1,6 +1,3 @@
-using Microsoft.Extensions.Options;
-using RfcRag.Settings;
-
 namespace RfcRag.Search;
 
 internal sealed class SearchService(
@@ -14,6 +11,7 @@ internal sealed class SearchService(
         string query,
         int limit,
         string? normativeKeyword,
+        bool includeObsolete,
         CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(query);
@@ -24,11 +22,16 @@ internal sealed class SearchService(
             ? queryPlan?.SuggestedNormativeKeyword
             : normativeKeyword;
 
+        // Explicit includeObsolete parameter overrides the plan's historical-intent detection
+        bool effectiveIncludeObsolete = includeObsolete || (queryPlan?.IncludeObsolete ?? false);
+
         IReadOnlyList<float[]> embeddings = await embeddingService.GenerateEmbeddingsAsync(
             [query],
             cancellationToken).ConfigureAwait(false);
 
         IReadOnlyList<SearchResult> results;
+        IReadOnlyDictionary<int, RfcRelationsBatch> rfcStatuses;
+
         if (options.Value.RerankerEnabled)
         {
             IReadOnlyList<HybridCandidate> candidates = await searchRepository.SearchHybridWideCandidatesAsync(
@@ -39,11 +42,16 @@ internal sealed class SearchService(
                 cancellationToken).ConfigureAwait(false);
 
             IReadOnlyList<int> candidateRfcNumbers = candidates.Select(c => c.RfcNumber).Distinct().ToList();
-            IReadOnlyDictionary<int, RfcRelationsBatch> rfcStatuses = candidateRfcNumbers.Count > 0
+            rfcStatuses = candidateRfcNumbers.Count > 0
                 ? await metadataRepository.GetRelationsBatchAsync(candidateRfcNumbers, cancellationToken).ConfigureAwait(false)
                 : new Dictionary<int, RfcRelationsBatch>();
 
-            results = DeterministicReranker.Rerank(query, candidates, queryPlan, rfcStatuses, limit);
+            // Pass effectiveIncludeObsolete so the reranker suppresses the penalty when requested
+            QueryPlan? planForReranker = effectiveIncludeObsolete && queryPlan is not null
+                ? queryPlan with { IncludeObsolete = true }
+                : queryPlan;
+
+            results = DeterministicReranker.Rerank(query, candidates, planForReranker, rfcStatuses, limit);
         }
         else
         {
@@ -53,7 +61,14 @@ internal sealed class SearchService(
                 limit,
                 keyword,
                 cancellationToken).ConfigureAwait(false);
+
+            IReadOnlyList<int> resultRfcNumbers = results.Select(r => r.RfcNumber).Distinct().ToList();
+            rfcStatuses = resultRfcNumbers.Count > 0
+                ? await metadataRepository.GetRelationsBatchAsync(resultRfcNumbers, cancellationToken).ConfigureAwait(false)
+                : new Dictionary<int, RfcRelationsBatch>();
         }
+
+        results = EnrichWithStatus(results, rfcStatuses);
 
         if (queryPlan is null || queryPlan.SectionReferences.Count == 0)
             return results;
@@ -61,13 +76,29 @@ internal sealed class SearchService(
         return await MergeReferencedSectionsAsync(
             queryPlan.SectionReferences,
             results,
+            rfcStatuses,
             limit,
             cancellationToken).ConfigureAwait(false);
+    }
+
+    internal static IReadOnlyList<SearchResult> EnrichWithStatus(
+        IReadOnlyList<SearchResult> results,
+        IReadOnlyDictionary<int, RfcRelationsBatch> rfcStatuses)
+    {
+        if (rfcStatuses.Count == 0)
+            return results;
+
+        return results
+            .Select(r => rfcStatuses.TryGetValue(r.RfcNumber, out var rel)
+                ? r with { Status = RfcStatusBlock.From(rel) }
+                : r)
+            .ToArray();
     }
 
     private async Task<IReadOnlyList<SearchResult>> MergeReferencedSectionsAsync(
         IReadOnlyList<QuerySectionReference> sectionReferences,
         IReadOnlyList<SearchResult> searchResults,
+        IReadOnlyDictionary<int, RfcRelationsBatch> rfcStatuses,
         int limit,
         CancellationToken cancellationToken)
     {
@@ -86,6 +117,10 @@ internal sealed class SearchService(
             if (section is null)
                 continue;
 
+            RfcStatusBlock? status = rfcStatuses.TryGetValue(sectionReference.RfcNumber, out var rel)
+                ? RfcStatusBlock.From(rel)
+                : null;
+
             mergedResults.Add(new SearchResult(
                 section.Id,
                 section.RfcNumber,
@@ -95,7 +130,10 @@ internal sealed class SearchService(
                 section.Text,
                 section.SourcePath,
                 section.Url,
-                Score: 1.0));
+                Score: 1.0)
+            {
+                Status = status,
+            });
         }
 
         foreach (SearchResult searchResult in searchResults)

@@ -21,12 +21,14 @@ internal sealed class ContextAssembler(ISearchService searchService)
     /// <param name="query">The original search query.</param>
     /// <param name="results">Ranked search results (highest score first).</param>
     /// <param name="budgetChars">Maximum total characters for included Section texts.</param>
+    /// <param name="includeObsolete">When true, suppresses obsoleted-RFC warnings (penalties were already suppressed upstream).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>An assembled Evidence Pack with deduplicated, ordered Sections and warnings.</returns>
     public async Task<EvidencePack> AssembleAsync(
         string query,
         IReadOnlyList<SearchResult> results,
         int budgetChars,
+        bool includeObsolete,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -51,7 +53,6 @@ internal sealed class ContextAssembler(ISearchService searchService)
         // Phase 3: Fetch full section text and build evidence sections
         var evidenceSections = new List<EvidenceSection>();
         var sectionIds = new List<Guid>();
-        var rfcNumbers = new HashSet<int>();
         int totalChars = 0;
         bool budgetExceeded = false;
         bool hadAtLeastOne = false;
@@ -100,10 +101,10 @@ internal sealed class ContextAssembler(ISearchService searchService)
                 Text = section.Text,
                 Score = result.Score,
                 EvidenceId = $"{result.RfcNumber}#{result.Section}",
+                Status = result.Status,
             });
 
             sectionIds.Add(result.Id);
-            rfcNumbers.Add(result.RfcNumber);
         }
 
         // Phase 4: Enrichment — batch-fetch relations and normative occurrences
@@ -111,7 +112,7 @@ internal sealed class ContextAssembler(ISearchService searchService)
         if (evidenceSections.Count > 0)
         {
             relationNotes = await EnrichAsync(
-                evidenceSections, sectionIds, rfcNumbers.ToList(), warnings, cancellationToken)
+                evidenceSections, sectionIds, warnings, includeObsolete, cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -301,38 +302,33 @@ internal sealed class ContextAssembler(ISearchService searchService)
     private async Task<IReadOnlyList<string>> EnrichAsync(
         List<EvidenceSection> sections,
         List<Guid> sectionIds,
-        IReadOnlyList<int> rfcNumbers,
         List<EvidenceWarning> warnings,
+        bool includeObsolete,
         CancellationToken cancellationToken)
     {
-        // Batch-fetch relations for all RFCs in the evidence
-        var relations = await searchService.GetRelationsBatchAsync(rfcNumbers, cancellationToken)
-            .ConfigureAwait(false);
-
+        // Status is already populated on each section from SearchResult.Status (set by SearchService).
+        // No second GetRelationsBatchAsync call needed.
         var relationNotes = new List<string>();
         for (int i = 0; i < sections.Count; i++)
         {
             var section = sections[i];
-            if (!relations.TryGetValue(section.RfcNumber, out var rel))
+            if (section.Status is null || section.Status.ObsoletedBy.Count == 0 || includeObsolete)
                 continue;
 
-            if (rel.ObsoletedBy.Count > 0)
+            string obsMessage = $"RFC {section.RfcNumber} is obsoleted by RFC {string.Join(", ", section.Status.ObsoletedBy)}.";
+
+            if (!relationNotes.Contains(obsMessage))
             {
-                string obsMessage = $"RFC {section.RfcNumber} is obsoleted by RFC {string.Join(", ", rel.ObsoletedBy)}.";
-
-                if (!relationNotes.Contains(obsMessage))
+                relationNotes.Add(obsMessage);
+                warnings.Add(new EvidenceWarning
                 {
-                    relationNotes.Add(obsMessage);
-                    warnings.Add(new EvidenceWarning
-                    {
-                        Type = WarningTypeObsoletedRfc,
-                        Message = obsMessage,
-                        EvidenceId = $"{section.RfcNumber}#*",
-                    });
-                }
-
-                sections[i] = section with { RelationNote = obsMessage };
+                    Type = WarningTypeObsoletedRfc,
+                    Message = obsMessage,
+                    EvidenceId = $"{section.RfcNumber}#*",
+                });
             }
+
+            sections[i] = section with { RelationNote = obsMessage };
         }
 
         // Batch-fetch normative occurrences for all sections

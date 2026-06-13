@@ -186,7 +186,10 @@ public sealed class CliCommandTests
             [
                 new SearchResult(Guid.NewGuid(), 9110, "HTTP Semantics", "9.3.1",
                     "GET", "The GET method...", "/rfc9110.txt",
-                    "https://www.rfc-editor.org/rfc/rfc9110", 0.95),
+                    "https://www.rfc-editor.org/rfc/rfc9110", 0.95)
+                {
+                    Status = new RfcStatusBlock { Category = RfcStatusCategory.Obsoleted, ObsoletedBy = [9112] },
+                },
             ],
             SectionMap = new Dictionary<(int, string), RfcSection>
             {
@@ -197,14 +200,6 @@ public sealed class CliCommandTests
                 ["9"] = "Methods",
                 ["9.3"] = "Request Methods",
                 ["9.3.1"] = "GET",
-            },
-            RelationsBatch = new Dictionary<int, RfcRelationsBatch>
-            {
-                [9110] = new RfcRelationsBatch
-                {
-                    RfcNumber = 9110,
-                    ObsoletedBy = [9112],
-                },
             },
         };
 

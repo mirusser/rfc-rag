@@ -52,7 +52,7 @@ internal sealed class CliCommand(ISearchService searchService, ContextAssembler 
         string query = args[1];
         int limit = CliArgParser.ParseIntFlag(args, "--limit", 10);
 
-        var results = await searchService.SearchAsync(query, limit, normativeKeyword: null, cancellationToken)
+        var results = await searchService.SearchAsync(query, limit, normativeKeyword: null, includeObsolete: false, cancellationToken)
             .ConfigureAwait(false);
 
         await output.WriteLineAsync(JsonSerializer.Serialize(results, jsonOptions)).ConfigureAwait(false);
@@ -132,10 +132,10 @@ internal sealed class CliCommand(ISearchService searchService, ContextAssembler 
         int budget = CliArgParser.ParseIntFlag(args, "--budget", 10000);
 
         var results = await searchService.SearchAsync(
-            query, limit, normativeKeyword: null, cancellationToken).ConfigureAwait(false);
+            query, limit, normativeKeyword: null, includeObsolete: false, cancellationToken).ConfigureAwait(false);
 
         var pack = await contextAssembler.AssembleAsync(
-            query, results, budget, cancellationToken).ConfigureAwait(false);
+            query, results, budget, includeObsolete: false, cancellationToken).ConfigureAwait(false);
 
         await output.WriteLineAsync(JsonSerializer.Serialize(pack, jsonOptions)).ConfigureAwait(false);
         return 0;
@@ -160,7 +160,7 @@ internal sealed class CliCommand(ISearchService searchService, ContextAssembler 
         string? keyword = CliArgParser.ParseStringFlag(args, "--keyword");
         int? effectiveLimit = limit > 0 ? limit : null;
 
-        var answer = await askService.AskAsync(question, effectiveLimit, keyword, cancellationToken).ConfigureAwait(false);
+        var answer = await askService.AskAsync(question, effectiveLimit, keyword, includeObsolete: false, cancellationToken).ConfigureAwait(false);
 
         await output.WriteLineAsync(JsonSerializer.Serialize(answer, jsonOptions)).ConfigureAwait(false);
         return 0;

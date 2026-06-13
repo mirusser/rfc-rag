@@ -10,11 +10,20 @@ ABNF grammar extraction, normative keyword indexing, MCP tool exposure
 ## MCP Tools
 
 ### `search_rfc`
-Hybrid search combining vector similarity and full-text lexical search with reciprocal rank fusion. Supports normative keyword filtering via the `normative_keyword` parameter (applied inside the SQL, no in-memory post-filter).
+Hybrid search combining vector similarity and full-text lexical search with reciprocal rank fusion. Supports normative keyword filtering via the `normative_keyword` parameter (applied inside the SQL, no in-memory post-filter). Obsoleted RFCs receive a −0.10 score penalty by default; pass `include_obsolete: true` to suppress the penalty and status warnings.
 
 ```
-Parameters: query (string), limit (int, default=10), normative_keyword (string?, optional, e.g. "MUST NOT", "SHOULD")
-Returns: JSON array of { rfcNumber, title, section, heading, excerpt, sourcePath, url, score }
+Parameters: query (string), limit (int, default=10), normative_keyword (string?, optional, e.g. "MUST NOT", "SHOULD"), include_obsolete (bool, default=false)
+Returns: JSON array of { rfcNumber, title, section, heading, excerpt, sourcePath, url, score, status? }
+  status: { category: "current"|"updated"|"obsoleted", obsoletedBy: int[], updatedBy: int[] } — present when RFC has relation metadata
+```
+
+### `ask_rfc`
+Ask a natural-language question about RFCs. Runs hybrid search, assembles an evidence pack, and generates a cited answer using a language model. Obsoleted RFCs are demoted and flagged by default; pass `include_obsolete: true` to include them without penalty or warning.
+
+```
+Parameters: question (string), limit (int?, default=20), normative_keyword (string?, optional), include_obsolete (bool, default=false)
+Returns: JSON object with { answer, citations: [{rfcNumber, section}], confidence, warnings }
 ```
 
 ### `get_rfc`

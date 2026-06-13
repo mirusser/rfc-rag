@@ -8,7 +8,8 @@ internal sealed record class GoldenQuestion(
     int[] MustCite,
     int[] ShouldNotCite,
     string AnswerType,
-    string Corpus);
+    string Corpus,
+    bool IncludeObsolete = false);
 
 internal sealed record class RetrievalQueryResult(
     string Id,

@@ -4,11 +4,11 @@ Pass `--cli <verb> [args]` to run a one-shot query against an indexed database i
 
 | Verb | Args | Description |
 |---|---|---|
-| `search` | `<query> [--limit N]` | Hybrid semantic + full-text search (default limit: 10) |
+| `search` | `<query> [--limit N] [--include-obsolete]` | Hybrid semantic + full-text search (default limit: 10); obsoleted RFCs demoted by −0.10 unless `--include-obsolete` is set |
 | `section` | `<rfcNumber> <sectionId>` | Retrieve a single section by RFC number and section identifier |
 | `normative` | `<keyword> [--rfc N]` | Find sections containing a normative keyword (MUST, SHOULD, …) |
 | `evidence` | `<query> [--limit N] [--budget N]` | Assemble an Evidence Pack from search results (default limit: 10, default budget: 10,000 chars) |
-| `ask` | `<question> [--limit N] [--keyword KW]` | Ask a question and get a cited LLM-generated answer (default limit: 20; optional `--keyword` to filter search by normative keyword) |
+| `ask` | `<question> [--limit N] [--keyword KW] [--include-obsolete]` | Ask a question and get a cited LLM-generated answer (default limit: 20; optional `--keyword` to filter search by normative keyword; `--include-obsolete` includes obsoleted RFCs without penalty or warning) |
 | `stats` | *(none)* | Print indexed corpus statistics as JSON |
 
 Pass `--eval <golden-questions-file> [--corpus testdata|full|all] [--limit N]` (top-level flag, not under `--cli`) to run the retrieval evaluation harness.

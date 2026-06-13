@@ -59,7 +59,7 @@ internal sealed partial class AnswerGenerator(IChatClient chatClient, IOptions<R
 
         var messages = new List<ChatMessage>
         {
-            new(ChatRole.System, BuildSystemPrompt()),
+            new(ChatRole.System, BuildSystemPrompt(pack)),
             new(ChatRole.User, BuildUserPrompt(pack, question)),
         };
 
@@ -97,12 +97,13 @@ internal sealed partial class AnswerGenerator(IChatClient chatClient, IOptions<R
     }
 
     /// <summary>
-    /// Builds the fixed system prompt that defines the assistant's role and constraints.
-    /// This is entirely static — no user-controlled text is interpolated into it (injection resistance).
+    /// Builds the system prompt. When the evidence pack contains obsoleted-RFC notes,
+    /// adds a generic preference rule for current-spec compliance (rule #7).
+    /// No user-controlled content is interpolated (injection resistance).
     /// </summary>
-    private static string BuildSystemPrompt()
+    private static string BuildSystemPrompt(EvidencePack pack)
     {
-        return """
+        var sb = new StringBuilder("""
 You are an RFC expert. Your role is to answer questions about RFCs (Request for Comments)
 based SOLELY on the evidence provided below.
 
@@ -116,6 +117,18 @@ RULES:
 4. Cite evidence inline using the format [evidence_id], where evidence_id is like "9110#9.3.1".
 5. EVERY factual claim MUST be supported by at least one inline citation.
 6. Be precise — include section numbers and RFC numbers where relevant.
+""");
+
+        if (pack.RelationNotes.Count > 0)
+        {
+            sb.AppendLine(
+                "7. The evidence includes sections from obsoleted RFCs (see the NOTE annotations " +
+                "in the evidence header). For compliance and current-behavior questions, PREFER " +
+                "citing the successor RFC. For historical questions (\"what did RFC X originally say\"), " +
+                "you may cite the obsoleted RFC directly.");
+        }
+
+        sb.Append("""
 
 RESPOND IN VALID JSON ONLY, using this exact schema:
 {
@@ -127,7 +140,9 @@ RESPOND IN VALID JSON ONLY, using this exact schema:
     }
   ]
 }
-""";
+""");
+
+        return sb.ToString();
     }
 
     /// <summary>
@@ -150,6 +165,15 @@ RESPOND IN VALID JSON ONLY, using this exact schema:
         {
             builder.AppendLine();
             builder.AppendLine("<evidence>");
+
+            if (pack.RelationNotes.Count > 0)
+            {
+                foreach (var note in pack.RelationNotes)
+                {
+                    builder.AppendLine(CultureInfo.InvariantCulture, $"NOTE: {note}");
+                }
+                builder.AppendLine();
+            }
 
             foreach (var section in pack.Sections)
             {

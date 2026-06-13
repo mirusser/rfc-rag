@@ -2,7 +2,6 @@ using System.ComponentModel;
 using System.Text.Json;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
-using RfcRag.Answering;
 
 namespace RfcRag.Tools;
 
@@ -23,9 +22,10 @@ public static class RfcAskTools
         [Description("The question to ask about RFCs.")] string question,
         [Description("Optional: maximum number of search results to retrieve (default: 20).")] int? limit = null,
         [Description("Optional: RFC 2119 normative keyword to filter results (e.g., 'MUST', 'SHOULD', 'MAY', 'MUST NOT').")] string? normativeKeyword = null,
+        [Description("When true, includes obsoleted RFCs without penalty or warning. Default false demotes and flags obsoleted RFCs.")] bool include_obsolete = false,
         CancellationToken cancellationToken = default)
     {
-        GeneratedAnswer answer = await askService.AskAsync(question, limit, normativeKeyword, cancellationToken)
+        GeneratedAnswer answer = await askService.AskAsync(question, limit, normativeKeyword, include_obsolete, cancellationToken)
             .ConfigureAwait(false);
 
         return new CallToolResult

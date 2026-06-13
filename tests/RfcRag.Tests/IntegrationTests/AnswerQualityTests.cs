@@ -62,6 +62,7 @@ public sealed class AnswerQualityTests(RetrievalQualityFixture fixture) : IClass
                     question.Question,
                     limit: 10,
                     normativeKeyword: null,
+                    includeObsolete: false,
                     TestContext.Current.CancellationToken);
             }
             catch (Exception ex)
@@ -152,7 +153,7 @@ public sealed class AnswerQualityTests(RetrievalQualityFixture fixture) : IClass
         // Act
         var sw = Stopwatch.StartNew();
         GeneratedAnswer answer = await askService.AskAsync(
-            q001.Question, limit: 10, normativeKeyword: null, TestContext.Current.CancellationToken);
+            q001.Question, limit: 10, normativeKeyword: null, includeObsolete: false, TestContext.Current.CancellationToken);
         var result = AnswerEvaluationMetrics.Evaluate(
             q001, answer, sw.ElapsedMilliseconds);
 

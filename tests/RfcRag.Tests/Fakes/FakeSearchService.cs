@@ -31,11 +31,13 @@ internal sealed class FakeSearchService : ISearchService
     public Exception? SearchNormativeException { get; set; }
     public Exception? SearchAbnfException { get; set; }
     public string? LastNormativeKeyword { get; private set; }
+    public bool LastIncludeObsolete { get; private set; }
 
     public Task<IReadOnlyList<SearchResult>> SearchAsync(
-        string query, int limit, string? normativeKeyword, CancellationToken cancellationToken)
+        string query, int limit, string? normativeKeyword, bool includeObsolete, CancellationToken cancellationToken)
     {
         LastNormativeKeyword = normativeKeyword;
+        LastIncludeObsolete = includeObsolete;
         if (SearchException is not null)
             throw SearchException;
         return Task.FromResult((IReadOnlyList<SearchResult>)SearchResults.Take(limit).ToArray());
