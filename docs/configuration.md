@@ -66,6 +66,7 @@ docker run --rm -i --network host \
 | `RfcRag__EmbeddingProvider` | `OpenRouter` | `OpenRouter` or `Local` | Embedding provider: `OpenRouter` (default) or `Local` |
 | `RfcRag__LocalEmbeddingEndpoint` | `http://localhost:11434/v1` | Absolute `http`/`https` URI | Base URL of local embedding server — used when `EmbeddingProvider=Local` |
 | `RfcRag__RfcParserType` | `Text` | `Text` or `Xml` | Parser mode: `Text` (plain-text `.txt` files, default) or `Xml` (prefers `.txt`, uses `.xml` only for RFC numbers that have no `.txt` counterpart) |
+| `RfcRag__ErrataJsonPath` | *(not set)* | Local file path | Optional RFC Editor `errata.json` snapshot. When set, indexing ingests errata idempotently; when unset, errata ingestion is skipped |
 | `RfcRag__MaxIndexingParallelism` | `16` | ≥ 1 | Maximum number of RFC files indexed concurrently |
 | `RfcRag__MaxEmbeddingConcurrency` | `8` | ≥ 1 | Maximum number of concurrent embedding API requests across all in-flight files |
 | `RfcRag__ChatModel` | *(not set)* | OpenAI-compatible model ID (e.g., `openai/gpt-4o-mini`) | Chat model for answer generation. When unset, `ask_rfc` is disabled and the server remains retrieval-only |

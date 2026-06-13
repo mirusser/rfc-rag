@@ -41,4 +41,10 @@ public interface ISearchService
 
     Task<IReadOnlyDictionary<Guid, IReadOnlyList<NormativeOccurrenceData>>> GetNormativeOccurrencesBatchAsync(
         IReadOnlyList<Guid> sectionIds, CancellationToken cancellationToken);
+
+
+    Task<IReadOnlyDictionary<string, IReadOnlyList<RfcErratum>>> GetErrataBatchAsync(
+        IReadOnlyList<int> rfcNumbers,
+        IReadOnlyCollection<string> statuses,
+        CancellationToken cancellationToken);
 }

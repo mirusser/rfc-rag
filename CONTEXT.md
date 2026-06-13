@@ -34,6 +34,10 @@ One of the BCP 14 requirement words (MUST, MUST NOT, SHOULD, SHALL, MAY, …), r
 A lexical match of a Normative Keyword inside a Section — a high-precision heuristic, *not* a claim that the RFC formally adopts BCP 14 (pre-2119 RFCs like 793 count too).
 _Avoid_: binding requirement (overclaims), requirement keyword hit
 
+**Erratum**:
+
+An RFC Editor correction or report loaded from a local `errata.json` snapshot. Errata are optional evidence enrichments keyed by RFC number and Section, filtered by status (`verified`, `held_for_document_update`, or `reported`). Verified errata produce evidence and answer warnings only when errata are explicitly included.
+
 **Hybrid Search**:
 Retrieval that fuses the semantic (vector) and lexical (full-text) rankings of Sections into one result list.
 _Avoid_: semantic search (that is only one arm of it)
@@ -51,7 +55,7 @@ The assembled, deduplicated, budget-enforced collection of evidence Sections and
 _Avoid_: context window, prompt payload, chunk bundle
 
 **Evidence Section**:
-A Section packaged as a unit of evidence, carrying its full text, parent-heading chain, score, and a stable citation id (`{RfcNumber}#{Section}`, e.g. "9110#9.3.1"). Evidence Sections are the building blocks of an Evidence Pack and the targets of citations.
+A Section packaged as a unit of evidence, carrying its full text, parent-heading chain, score, optional Errata, and a stable citation id (`{RfcNumber}#{Section}`, e.g. "9110#9.3.1"). Evidence Sections are the building blocks of an Evidence Pack and the targets of citations.
 _Avoid_: evidence chunk, context snippet
 
 **Citation**:

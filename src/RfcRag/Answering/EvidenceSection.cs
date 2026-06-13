@@ -7,8 +7,22 @@ namespace RfcRag.Answering;
 /// </summary>
 internal sealed record class EvidenceSection
 {
+    /// <summary>Separator between RFC number and section in an evidence ID: <c>9110#9.3.1</c>.</summary>
+    internal const char Separator = '#';
+
+    /// <summary>Wildcard used for RFC-level warnings instead of a specific section: <c>#*</c>.</summary>
+    internal const string RfcWildcard = "*";
+
     /// <summary>RFC number (e.g., 9110).</summary>
     public int RfcNumber { get; init; }
+
+    /// <summary>
+    /// Builds a stable evidence ID from an RFC number and section identifier.
+    /// Examples: <c>CreateEvidenceId(9110, "9.3.1")</c> → <c>"9110#9.3.1"</c>.
+    /// For RFC-level identifiers, pass <c>RfcWildcard</c> as the section.
+    /// </summary>
+    internal static string CreateEvidenceId(int rfcNumber, string section) =>
+        $"{rfcNumber}{Separator}{section}";
 
     /// <summary>Section identifier (e.g., "9.3.1").</summary>
     public string Section { get; init; } = string.Empty;
@@ -37,6 +51,9 @@ internal sealed record class EvidenceSection
 
     /// <summary>Normative Occurrences found in this section (populated during enrichment).</summary>
     public IReadOnlyList<Models.NormativeOccurrenceData> NormativeOccurrences { get; init; } = [];
+
+    /// <summary>RFC Editor errata attached during evidence enrichment.</summary>
+    public IReadOnlyList<RfcErratum> Errata { get; init; } = [];
 
     /// <summary>Relation note for this section's RFC (e.g., obsoletion warning). Populated during enrichment.</summary>
     public string? RelationNote { get; init; }

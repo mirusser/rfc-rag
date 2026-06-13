@@ -222,6 +222,50 @@ internal sealed class IndexingRepository(NpgsqlDataSource dataSource)
         }
     }
 
+    public async Task UpsertErrataAsync(IReadOnlyList<RfcErratum> errata, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(errata);
+
+        if (errata.Count == 0)
+        {
+            return;
+        }
+
+        var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using (connection.ConfigureAwait(false))
+        {
+            var parameters = errata.Select(erratum => new
+            {
+                erratum.ErrataId,
+                erratum.RfcNumber,
+                erratum.Section,
+                erratum.Status,
+                erratum.OriginalText,
+                erratum.CorrectedText,
+                ReportedDate = erratum.ReportedDate is { } reportedDate
+                    ? reportedDate.ToDateTime(TimeOnly.MinValue)
+                    : (DateTime?)null,
+            }).ToArray();
+
+            await connection.ExecuteAsync(new CommandDefinition(
+                """
+                insert into rfc_rag.rfc_errata
+                    (errata_id, rfc_number, section, status, original_text, corrected_text, reported_date)
+                values
+                    (@ErrataId, @RfcNumber, @Section, @Status, @OriginalText, @CorrectedText, @ReportedDate)
+                on conflict (errata_id) do update set
+                    rfc_number = excluded.rfc_number,
+                    section = excluded.section,
+                    status = excluded.status,
+                    original_text = excluded.original_text,
+                    corrected_text = excluded.corrected_text,
+                    reported_date = excluded.reported_date
+                """,
+                parameters,
+                cancellationToken: cancellationToken)).ConfigureAwait(false);
+        }
+    }
+
     /// <summary>
     /// Gets the stored SHA256 hash for a single indexed RFC.
     /// Used by IndexSingleAsync for per-file incremental detection.

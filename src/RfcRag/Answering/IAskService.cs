@@ -11,5 +11,12 @@ public interface IAskService
     /// <param name="normativeKeyword">Optional normative keyword to filter search results by (e.g., "MUST NOT", "SHOULD").</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Structured answer with inline citations.</returns>
-    Task<GeneratedAnswer> AskAsync(string question, int? limit = null, string? normativeKeyword = null, bool includeObsolete = false, CancellationToken cancellationToken = default);
+    Task<GeneratedAnswer> AskAsync(
+        string question,
+        int? limit = null,
+        string? normativeKeyword = null,
+        bool includeObsolete = false,
+        bool includeErrata = false,
+        string? errataStatus = null,
+        CancellationToken cancellationToken = default);
 }

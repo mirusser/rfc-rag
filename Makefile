@@ -1,6 +1,7 @@
-.PHONY: help quickstart quickstart-down quickstart-logs build test eval eval-answers docker-build smoke-test pull tool-install tool-update
+.PHONY: help quickstart quickstart-down quickstart-logs build test eval eval-answers fetch-errata docker-build smoke-test pull tool-install tool-update
 
 TAG ?= latest
+ERRATA_JSON_PATH ?= errata.json
 
 help:  ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
@@ -25,6 +26,9 @@ eval:  ## Run retrieval eval against the indexed RFC mirror (requires indexed DB
 
 eval-answers:  ## Run real-model answer evaluation over golden questions
 	dotnet run --project src/RfcRag/ -- --eval docs/eval/golden_questions.json --answers --corpus all
+
+fetch-errata: ## Download RFC Editor errata snapshot
+	curl -L https://www.rfc-editor.org/errata.json -o $(ERRATA_JSON_PATH)
 
 docker-build:  ## Build the Docker image locally
 	docker build -t rfc-rag:$(TAG) .

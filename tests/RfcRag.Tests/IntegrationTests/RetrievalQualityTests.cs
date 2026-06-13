@@ -25,6 +25,10 @@ public sealed class RetrievalQualityFixture : IAsyncLifetime
 
     public ISearchService SearchService { get; private set; } = null!;
 
+
+    public NpgsqlDataSource DataSource =>
+        dataSource ?? throw new InvalidOperationException("Fixture is not initialized.");
+
     public async ValueTask InitializeAsync()
     {
         container = new PostgreSqlBuilder(PostgresImage).Build();

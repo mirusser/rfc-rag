@@ -178,6 +178,8 @@ public sealed class EvalCommandTests : IAsyncLifetime
             int? limit = null,
             string? normativeKeyword = null,
             bool includeObsolete = false,
+            bool includeErrata = false,
+            string? errataStatus = null,
             CancellationToken cancellationToken = default)
         {
             LastLimit = limit;

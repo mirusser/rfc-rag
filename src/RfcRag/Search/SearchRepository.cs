@@ -475,6 +475,57 @@ internal sealed class SearchRepository(NpgsqlDataSource dataSource)
         }
     }
 
+
+    public async Task<IReadOnlyDictionary<string, IReadOnlyList<RfcErratum>>> GetErrataBatchAsync(
+        IReadOnlyList<int> rfcNumbers,
+        IReadOnlyCollection<string> statuses,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(rfcNumbers);
+        ArgumentNullException.ThrowIfNull(statuses);
+
+        int[] distinctRfcNumbers = rfcNumbers.Distinct().ToArray();
+        string[] distinctStatuses = statuses
+            .Where(status => !string.IsNullOrWhiteSpace(status))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (distinctRfcNumbers.Length == 0 || distinctStatuses.Length == 0)
+        {
+            return new Dictionary<string, IReadOnlyList<RfcErratum>>(StringComparer.Ordinal);
+        }
+
+        var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using (connection.ConfigureAwait(false))
+        {
+            var rows = await connection.QueryAsync<RfcErratum>(new CommandDefinition(
+                """
+                select
+                    errata_id as "ErrataId",
+                    rfc_number as "RfcNumber",
+                    section as "Section",
+                    status as "Status",
+                    original_text as "OriginalText",
+                    corrected_text as "CorrectedText",
+                    reported_date as "ReportedDate"
+                from rfc_rag.rfc_errata
+                where rfc_number = any(@RfcNumbers)
+                  and status = any(@Statuses)
+                order by errata_id
+                """,
+                new { RfcNumbers = distinctRfcNumbers, Statuses = distinctStatuses },
+                cancellationToken: cancellationToken)).ConfigureAwait(false);
+
+            return rows
+                .Where(erratum => !string.IsNullOrWhiteSpace(erratum.Section))
+                .GroupBy(erratum => $"{erratum.RfcNumber}#{erratum.Section}", StringComparer.Ordinal)
+                .ToDictionary(
+                    group => group.Key,
+                    group => (IReadOnlyList<RfcErratum>)group.ToArray(),
+                    StringComparer.Ordinal);
+        }
+    }
+
     /// <summary>Retrieves the table of contents for an RFC as a section→heading map.</summary>
     public async Task<IReadOnlyDictionary<string, string?>> GetTocAsync(
         int rfcNumber,

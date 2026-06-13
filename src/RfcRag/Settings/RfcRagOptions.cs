@@ -67,6 +67,9 @@ public sealed record class RfcRagOptions
     /// </summary>
     public RfcParserType RfcParserType { get; init; } = RfcParserType.Text;
 
+    /// <summary>Optional local RFC Editor errata JSON snapshot path. Unset disables errata ingestion.</summary>
+    public string? ErrataJsonPath { get; init; }
+
     /// <summary>
     /// Chat model identifier for answer generation (e.g., "openai/gpt-4o-mini").
     /// When <see langword="null"/> or empty, answer generation is disabled — the server

@@ -9,7 +9,9 @@ internal sealed record class GoldenQuestion(
     int[] ShouldNotCite,
     string AnswerType,
     string Corpus,
-    bool IncludeObsolete = false);
+    bool IncludeObsolete = false,
+    bool IncludeErrata = false,
+    string? ErrataStatus = null);
 
 internal sealed record class RetrievalQueryResult(
     string Id,

@@ -21,6 +21,8 @@ internal sealed class AskService(
         int? limit = null,
         string? normativeKeyword = null,
         bool includeObsolete = false,
+        bool includeErrata = false,
+        string? errataStatus = null,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -39,7 +41,13 @@ internal sealed class AskService(
 
         // Phase 2: Evidence assembly
         EvidencePack pack = await contextAssembler.AssembleAsync(
-            question, results, opts.EvidenceBudgetChars, includeObsolete, cancellationToken)
+            question,
+            results,
+            opts.EvidenceBudgetChars,
+            includeObsolete,
+            includeErrata: includeErrata,
+            errataStatus: errataStatus,
+            cancellationToken: cancellationToken)
             .ConfigureAwait(false);
 
         // Phase 3: Answer generation
@@ -49,18 +57,30 @@ internal sealed class AskService(
 
         return answer with
         {
-            Retrieval = CreateRetrievalInfo(opts.QueryPlannerEnabled, queryPlan, effectiveNormativeKeyword),
+            Retrieval = CreateRetrievalInfo(
+                opts.QueryPlannerEnabled,
+                queryPlan,
+                effectiveNormativeKeyword,
+                includeErrata,
+                errataStatus),
         };
     }
 
     private static RetrievalInfo CreateRetrievalInfo(
         bool queryPlannerEnabled,
         QueryPlan? queryPlan,
-        string? normativeKeyword) =>
+        string? normativeKeyword,
+        bool includeErrata,
+        string? errataStatus) =>
         new()
         {
             Strategy = queryPlannerEnabled ? QueryPlannerStrategy : HybridSearchStrategy,
-            Filters = new RetrievalFilters { NormativeKeyword = normativeKeyword },
+            Filters = new RetrievalFilters
+            {
+                NormativeKeyword = normativeKeyword,
+                IncludeErrata = includeErrata,
+                ErrataStatus = errataStatus,
+            },
             Plan = queryPlan is null ? null : CreateRetrievalPlanInfo(queryPlan),
         };
 

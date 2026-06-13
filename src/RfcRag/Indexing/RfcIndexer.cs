@@ -50,6 +50,8 @@ internal sealed class RfcIndexer(
                 await IndexFileAsync(sourceFile, mirrorPath, force: false, indexedHashes, ct).ConfigureAwait(false);
             }).ConfigureAwait(false);
 
+        await IngestErrataAsync(cancellationToken).ConfigureAwait(false);
+
         int rfcCount = await repository.GetIndexedCountAsync(cancellationToken).ConfigureAwait(false);
         int sectionCount = await repository.GetIndexedSectionCountAsync(cancellationToken).ConfigureAwait(false);
 
@@ -95,6 +97,8 @@ internal sealed class RfcIndexer(
 
         await IndexFileAsync(sourceFile.Value, mirrorPath, force, cachedHashes: null, cancellationToken).ConfigureAwait(false);
 
+        await IngestErrataAsync(cancellationToken).ConfigureAwait(false);
+
         int rfcCount = await repository.GetIndexedCountAsync(cancellationToken).ConfigureAwait(false);
         int sectionCount = await repository.GetIndexedSectionCountAsync(cancellationToken).ConfigureAwait(false);
 
@@ -118,6 +122,21 @@ internal sealed class RfcIndexer(
 
     public Task<int> GetIndexedCountAsync(CancellationToken cancellationToken) =>
         repository.GetIndexedCountAsync(cancellationToken);
+
+
+    private async Task IngestErrataAsync(CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(options.ErrataJsonPath))
+        {
+            return;
+        }
+
+        IReadOnlyList<RfcErratum> errata = await ErrataLoader
+            .LoadAsync(options.ErrataJsonPath, logger, cancellationToken)
+            .ConfigureAwait(false);
+
+        await repository.UpsertErrataAsync(errata, cancellationToken).ConfigureAwait(false);
+    }
 
     private async Task IndexFileAsync(
         RfcSourceResolver.RfcSourceFile sourceFile,

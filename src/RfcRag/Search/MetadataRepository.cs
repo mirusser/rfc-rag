@@ -173,7 +173,8 @@ internal sealed class MetadataRepository(NpgsqlDataSource dataSource)
                     'indexedRfcs', (select count(*) from rfc_rag.indexed_rfcs),
                     'sections', (select count(*) from rfc_rag.rfc_sections),
                     'abnfBlocks', (select count(*) from rfc_rag.rfc_abnf_blocks),
-                    'normativeOccurrences', (select count(*) from rfc_rag.normative_occurrences),
+                'normativeOccurrences', (select count(*) from rfc_rag.normative_occurrences),
+                'errata', (select count(*) from rfc_rag.rfc_errata),
                     'lastIndexedAtUtc', (select max(indexed_at_utc) from rfc_rag.indexed_rfcs),
                     'manifest', (
                         select row_to_json(m)

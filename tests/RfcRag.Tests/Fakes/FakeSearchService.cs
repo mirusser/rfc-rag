@@ -27,6 +27,9 @@ internal sealed class FakeSearchService : ISearchService
         new Dictionary<int, RfcRelationsBatch>();
     public IReadOnlyDictionary<Guid, IReadOnlyList<NormativeOccurrenceData>> NormativeOccurrencesBatch { get; set; } =
         new Dictionary<Guid, IReadOnlyList<NormativeOccurrenceData>>();
+    public IReadOnlyDictionary<string, IReadOnlyList<RfcErratum>> ErrataBatch { get; set; } =
+        new Dictionary<string, IReadOnlyList<RfcErratum>>();
+    public IReadOnlyList<string> LastErrataStatuses { get; private set; } = [];
     public Exception? SearchException { get; set; }
     public Exception? SearchNormativeException { get; set; }
     public Exception? SearchAbnfException { get; set; }
@@ -109,4 +112,13 @@ internal sealed class FakeSearchService : ISearchService
     public Task<IReadOnlyDictionary<Guid, IReadOnlyList<NormativeOccurrenceData>>> GetNormativeOccurrencesBatchAsync(
         IReadOnlyList<Guid> sectionIds, CancellationToken cancellationToken) =>
         Task.FromResult(NormativeOccurrencesBatch);
+
+    public Task<IReadOnlyDictionary<string, IReadOnlyList<RfcErratum>>> GetErrataBatchAsync(
+        IReadOnlyList<int> rfcNumbers,
+        IReadOnlyCollection<string> statuses,
+        CancellationToken cancellationToken)
+    {
+        LastErrataStatuses = statuses.ToArray();
+        return Task.FromResult(ErrataBatch);
+    }
 }

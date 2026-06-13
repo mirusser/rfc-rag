@@ -1,8 +1,10 @@
 using System.Diagnostics;
 using System.Text.Json;
+using Dapper;
 using Microsoft.Extensions.Options;
 using RfcRag.Answering;
 using RfcRag.Evaluation;
+using RfcRag.Models;
 using RfcRag.Search;
 using RfcRag.Settings;
 using RfcRag.Tests.Fakes;
@@ -62,8 +64,10 @@ public sealed class AnswerQualityTests(RetrievalQualityFixture fixture) : IClass
                     question.Question,
                     limit: 10,
                     normativeKeyword: null,
-                    includeObsolete: false,
-                    TestContext.Current.CancellationToken);
+                    includeObsolete: question.IncludeObsolete,
+                    includeErrata: question.IncludeErrata,
+                    errataStatus: question.ErrataStatus,
+                    cancellationToken: TestContext.Current.CancellationToken);
             }
             catch (Exception ex)
             {
@@ -153,7 +157,8 @@ public sealed class AnswerQualityTests(RetrievalQualityFixture fixture) : IClass
         // Act
         var sw = Stopwatch.StartNew();
         GeneratedAnswer answer = await askService.AskAsync(
-            q001.Question, limit: 10, normativeKeyword: null, includeObsolete: false, TestContext.Current.CancellationToken);
+            q001.Question, limit: 10, normativeKeyword: null, includeObsolete: false,
+                cancellationToken: TestContext.Current.CancellationToken);
         var result = AnswerEvaluationMetrics.Evaluate(
             q001, answer, sw.ElapsedMilliseconds);
 
@@ -169,5 +174,79 @@ public sealed class AnswerQualityTests(RetrievalQualityFixture fixture) : IClass
 
         // q001 answer type is "normative_explanation" → CorrectNoAnswer is null (N/A)
         Assert.Null(result.CorrectNoAnswer);
+    }
+
+
+    [Fact]
+    public async Task GenerateAsync_IncludeErrata_VerifiedErratumAppearsInAnswerWarnings()
+    {
+        await using var connection = await fixture.DataSource
+            .OpenConnectionAsync(TestContext.Current.CancellationToken);
+        await connection.ExecuteAsync(new CommandDefinition(
+            """
+            insert into rfc_rag.rfc_errata
+                (errata_id, rfc_number, section, status, original_text, corrected_text, reported_date)
+            values
+                (900003, 2119, '1', 'verified', 'old requirement text', 'corrected requirement text', date '2026-01-02')
+            on conflict (errata_id) do update set
+                rfc_number = excluded.rfc_number,
+                section = excluded.section,
+                status = excluded.status,
+                original_text = excluded.original_text,
+                corrected_text = excluded.corrected_text,
+                reported_date = excluded.reported_date
+            """,
+            cancellationToken: TestContext.Current.CancellationToken));
+
+        string response =
+            """
+            {
+              "answer": "RFC 2119 defines the keyword MUST.",
+              "citations": [
+                { "evidenceId": "2119#1", "relevantText": "MUST" }
+              ],
+              "noAnswer": false
+            }
+            """;
+        var fakeClient = new FakeChatClient(response);
+        var options = Options.Create(new RfcRagOptions
+        {
+            RfcMirrorPath = "",
+            PostgresConnectionString = "",
+            ChatModel = "test-model",
+            MaxIndexingParallelism = 1,
+        });
+        var assembler = new ContextAssembler(fixture.SearchService);
+        var generator = new AnswerGenerator(fakeClient, options);
+
+        RfcSection section = await fixture.SearchService.GetSectionAsync(
+            2119,
+            "1",
+            TestContext.Current.CancellationToken) ?? throw new InvalidOperationException("RFC 2119 section 1 is not indexed.");
+        var result = new SearchResult(
+            section.Id,
+            section.RfcNumber,
+            section.Title,
+            section.Section,
+            section.Heading,
+            section.Text,
+            section.SourcePath,
+            section.Url,
+            1.0);
+        EvidencePack pack = await assembler.AssembleAsync(
+            "What does RFC 2119 define for the keyword MUST?",
+            [result],
+            options.Value.EvidenceBudgetChars,
+            includeObsolete: false,
+            includeErrata: true,
+            cancellationToken: TestContext.Current.CancellationToken);
+        GeneratedAnswer answer = await generator.GenerateAsync(
+            pack,
+            "What does RFC 2119 define for the keyword MUST?",
+            TestContext.Current.CancellationToken);
+
+        var warning = Assert.Single(answer.Warnings, warning => warning.Type == "verified_erratum");
+        Assert.Equal("2119#1", warning.EvidenceId);
+        Assert.Contains("900003", warning.Message, StringComparison.Ordinal);
     }
 }

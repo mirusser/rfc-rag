@@ -266,6 +266,29 @@ RESPOND IN VALID JSON ONLY, using this exact schema:
             Citations = verifiedCitations,
             Model = response.ModelId,
             FinishReason = response.FinishReason?.ToString(),
+            Warnings = CreateAnswerWarnings(pack, verifiedCitations),
         });
+    }
+
+
+    private static IReadOnlyList<AnswerWarning> CreateAnswerWarnings(
+        EvidencePack pack,
+        IReadOnlyList<Citation> verifiedCitations)
+    {
+        var citedEvidenceIds = verifiedCitations
+            .Select(citation => citation.EvidenceId)
+            .ToHashSet(StringComparer.Ordinal);
+
+        return pack.Warnings
+            .Where(warning => string.Equals(warning.Type, EvidenceWarning.VerifiedErratum, StringComparison.Ordinal)
+                && warning.EvidenceId is not null
+                && citedEvidenceIds.Contains(warning.EvidenceId))
+            .Select(warning => new AnswerWarning
+            {
+                Type = warning.Type,
+                Message = warning.Message,
+                EvidenceId = warning.EvidenceId,
+            })
+            .ToArray();
     }
 }

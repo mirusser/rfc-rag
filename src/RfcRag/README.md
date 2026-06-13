@@ -19,10 +19,10 @@ Returns: JSON array of { rfcNumber, title, section, heading, excerpt, sourcePath
 ```
 
 ### `ask_rfc`
-Ask a natural-language question about RFCs. Runs hybrid search, assembles an evidence pack, and generates a cited answer using a language model. Obsoleted RFCs are demoted and flagged by default; pass `include_obsolete: true` to include them without penalty or warning.
+Ask a natural-language question about RFCs. Runs hybrid search, assembles an evidence pack, and generates a cited answer using a language model. Obsoleted RFCs are demoted and flagged by default; pass `include_obsolete: true` to include them without penalty or warning. Pass `include_errata: true` to attach matching errata from the configured local snapshot; `errata_status` defaults to `verified`.
 
 ```
-Parameters: question (string), limit (int?, default=20), normative_keyword (string?, optional), include_obsolete (bool, default=false)
+Parameters: question (string), limit (int?, default=20), normative_keyword (string?, optional), include_obsolete (bool, default=false), include_errata (bool, default=false), errata_status (string?, default="verified")
 Returns: JSON object with { answer, citations: [{rfcNumber, section}], confidence, warnings }
 ```
 

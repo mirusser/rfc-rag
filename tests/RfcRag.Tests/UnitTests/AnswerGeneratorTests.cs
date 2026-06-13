@@ -95,6 +95,31 @@ public sealed class AnswerGeneratorTests
     }
 
     [Fact]
+    public async Task GenerateAsync_VerifiedErratumWarning_PropagatesAnswerWarning()
+    {
+        var pack = PackWithSections((9110, "9.3.1", "GET method text")) with
+        {
+            Warnings =
+            [
+                new EvidenceWarning
+                {
+                    Type = "verified_erratum",
+                    EvidenceId = "9110#9.3.1",
+                    Message = "RFC 9110 §9.3.1 has verified erratum 900001.",
+                },
+            ],
+        };
+        var fakeClient = new FakeChatClient(ValidJsonResponse);
+        var generator = CreateGenerator(fakeClient);
+
+        var result = await generator.GenerateAsync(pack, "test question", CancellationToken.None);
+
+        var warning = Assert.Single(result.Warnings);
+        Assert.Equal("verified_erratum", warning.Type);
+        Assert.Equal("9110#9.3.1", warning.EvidenceId);
+    }
+
+    [Fact]
     public async Task GenerateAsync_MalformedThenValid_RepairsAndReturnsAnswer()
     {
         var pack = PackWithSections((9110, "9.3.1", "GET method text"));

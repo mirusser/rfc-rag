@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using Dapper;
 using RfcRag.Indexing;
 using RfcRag.Models;
@@ -20,6 +21,7 @@ public sealed class RfcRagIntegrationTests : IClassFixture<MediumCorpusFixture>
         "indexed_rfcs",
         "normative_occurrences",
         "rfc_abnf_blocks",
+        "rfc_errata",
         "rfc_sections",
         "schema_migrations"
     ];
@@ -156,6 +158,88 @@ public sealed class RfcRagIntegrationTests : IClassFixture<MediumCorpusFixture>
 
             Assert.True(originalCount > 0);
             Assert.Equal(originalCount, incrementalCount);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task IndexAllAsync_ErrataJsonPathSet_IngestsErrataIdempotently()
+    {
+        string tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            string sourceFile = Path.Combine(
+                Directory.GetCurrentDirectory(), "TestData", "rfc2119.txt");
+            File.Copy(sourceFile, Path.Combine(tempDir, "rfc2119.txt"));
+
+            string errataPath = Path.Combine(tempDir, "errata.json");
+            await File.WriteAllTextAsync(
+                errataPath,
+                """
+                [
+                  {
+                    "errata_id": "900001",
+                    "doc-id": "RFC2119",
+                    "errata_status_code": "Verified",
+                    "section": "1",
+                    "orig_text": "old requirement text",
+                    "correct_text": "corrected requirement text",
+                    "submit_date": "2026-01-02"
+                  },
+                  {
+                    "errata_id": "",
+                    "doc-id": "RFC2119",
+                    "errata_status_code": "Verified",
+                    "section": "1",
+                    "orig_text": "malformed entry",
+                    "correct_text": "must be skipped"
+                  }
+                ]
+                """,
+                TestContext.Current.CancellationToken);
+
+            var indexingRepository = new IndexingRepository(fixture.DataSource);
+            var embeddingService = CreateEmbeddingService();
+            var options = Options.Create(new RfcRagOptions
+            {
+                RfcMirrorPath = tempDir,
+                PostgresConnectionString = fixture.ConnectionString,
+                EmbeddingProvider = EmbeddingProvider.Local,
+                ErrataJsonPath = errataPath,
+            });
+
+            var indexer = new RfcIndexer(
+                fixture.DataSource,
+                indexingRepository,
+                new RfcParser(),
+                new RfcXmlParser(),
+                embeddingService,
+                options,
+                NullLogger<RfcIndexer>.Instance);
+
+            await indexer.IndexAllAsync(TestContext.Current.CancellationToken);
+            await indexer.IndexAllAsync(TestContext.Current.CancellationToken);
+
+            await using var connection = await fixture.DataSource
+                .OpenConnectionAsync(TestContext.Current.CancellationToken);
+            int errataCount = await connection.QuerySingleAsync<int>(
+                """
+                select count(*)
+                from rfc_rag.rfc_errata
+                where errata_id = 900001
+                """);
+
+            string stats = await new MetadataRepository(fixture.DataSource)
+                .GetStatsAsync(TestContext.Current.CancellationToken);
+            using var statsJson = JsonDocument.Parse(stats);
+
+            Assert.Equal(1, errataCount);
+            Assert.Equal(1, statsJson.RootElement.GetProperty("errata").GetInt32());
         }
         finally
         {

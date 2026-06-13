@@ -11,11 +11,8 @@ internal sealed class ContextAssembler(ISearchService searchService)
     private const int CharsPerToken = 4;
     private const int MaxSectionsPerRfc = 5;
 
-    // Warning type constants — stable values consumed by callers inspecting EvidenceWarning.Type.
-    private const string WarningTypeBudgetExceeded = "budget_exceeded";
-    private const string WarningTypeOverlapCollapsed = "overlap_collapsed";
-    private const string WarningTypeOmittedSection = "omitted_section";
-    private const string WarningTypeObsoletedRfc = "obsoleted_rfc";
+    // Warning type constants — delegated to EvidenceWarning for shared access.
+
 
     /// <summary>Assembles an Evidence Pack from ranked search results.</summary>
     /// <param name="query">The original search query.</param>
@@ -29,7 +26,9 @@ internal sealed class ContextAssembler(ISearchService searchService)
         IReadOnlyList<SearchResult> results,
         int budgetChars,
         bool includeObsolete,
-        CancellationToken cancellationToken)
+        bool includeErrata = false,
+        string? errataStatus = null,
+        CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -100,7 +99,7 @@ internal sealed class ContextAssembler(ISearchService searchService)
                 ParentHeadings = parentHeadings,
                 Text = section.Text,
                 Score = result.Score,
-                EvidenceId = $"{result.RfcNumber}#{result.Section}",
+                EvidenceId = EvidenceSection.CreateEvidenceId(result.RfcNumber, result.Section),
                 Status = result.Status,
             });
 
@@ -114,13 +113,19 @@ internal sealed class ContextAssembler(ISearchService searchService)
             relationNotes = await EnrichAsync(
                 evidenceSections, sectionIds, warnings, includeObsolete, cancellationToken)
                 .ConfigureAwait(false);
+
+            if (includeErrata)
+            {
+                await AttachErrataAsync(evidenceSections, warnings, errataStatus, cancellationToken)
+                    .ConfigureAwait(false);
+            }
         }
 
         if (budgetExceeded)
         {
             warnings.Add(new EvidenceWarning
             {
-                Type = WarningTypeBudgetExceeded,
+                Type = EvidenceWarning.BudgetExceeded,
                 Message = $"Evidence truncated to fit {budgetChars}-character budget. " +
                           $"{evidenceSections.Count} sections included.",
             });
@@ -184,10 +189,10 @@ internal sealed class ContextAssembler(ISearchService searchService)
                     isAncestor = true;
                     warnings.Add(new EvidenceWarning
                     {
-                        Type = WarningTypeOverlapCollapsed,
+                        Type = EvidenceWarning.OverlapCollapsed,
                         Message = $"Section {result.RfcNumber}#{result.Section} omitted in favor of " +
                                   $"more specific subsection {existing.RfcNumber}#{existing.Section}.",
-                        EvidenceId = $"{result.RfcNumber}#{result.Section}",
+                        EvidenceId = EvidenceSection.CreateEvidenceId(result.RfcNumber, result.Section),
                     });
                     break;
                 }
@@ -197,9 +202,6 @@ internal sealed class ContextAssembler(ISearchService searchService)
                 continue;
 
             // Check if any already-included result is an ancestor of this one
-            string thisSectionPrefix = result.Section + ".";
-            bool childReplacesParent = false;
-
             for (int i = collapsed.Count - 1; i >= 0; i--)
             {
                 var existing = collapsed[i];
@@ -208,25 +210,18 @@ internal sealed class ContextAssembler(ISearchService searchService)
                 {
                     // This is a child of an already-included parent — replace parent with child
                     collapsed.RemoveAt(i);
-                    childReplacesParent = true;
                     warnings.Add(new EvidenceWarning
                     {
-                        Type = WarningTypeOverlapCollapsed,
+                        Type = EvidenceWarning.OverlapCollapsed,
                         Message = $"Section {existing.RfcNumber}#{existing.Section} omitted in favor of " +
                                   $"more specific subsection {result.RfcNumber}#{result.Section}.",
-                        EvidenceId = $"{existing.RfcNumber}#{existing.Section}",
+                        EvidenceId = EvidenceSection.CreateEvidenceId(existing.RfcNumber, existing.Section),
                     });
                     break;
                 }
             }
 
             collapsed.Add(result);
-
-            // If we replaced a parent, re-check for other sibling overlaps
-            if (childReplacesParent)
-            {
-                // No additional handling needed — the parent is removed
-            }
         }
 
         return collapsed;
@@ -257,10 +252,10 @@ internal sealed class ContextAssembler(ISearchService searchService)
             {
                 warnings.Add(new EvidenceWarning
                 {
-                    Type = WarningTypeOmittedSection,
+                    Type = EvidenceWarning.OmittedSection,
                     Message = $"RFC {rfcNumber}: capped at {MaxSectionsPerRfc} sections " +
                               $"({rfcResults.Count - MaxSectionsPerRfc} omitted).",
-                    EvidenceId = $"{rfcNumber}#*",
+                    EvidenceId = EvidenceSection.CreateEvidenceId(rfcNumber, EvidenceSection.RfcWildcard),
                 });
             }
 
@@ -322,9 +317,9 @@ internal sealed class ContextAssembler(ISearchService searchService)
                 relationNotes.Add(obsMessage);
                 warnings.Add(new EvidenceWarning
                 {
-                    Type = WarningTypeObsoletedRfc,
+                    Type = EvidenceWarning.ObsoletedRfc,
                     Message = obsMessage,
-                    EvidenceId = $"{section.RfcNumber}#*",
+                    EvidenceId = EvidenceSection.CreateEvidenceId(section.RfcNumber, EvidenceSection.RfcWildcard),
                 });
             }
 
@@ -344,5 +339,79 @@ internal sealed class ContextAssembler(ISearchService searchService)
         }
 
         return relationNotes;
+    }
+
+
+    private async Task AttachErrataAsync(
+        List<EvidenceSection> sections,
+        List<EvidenceWarning> warnings,
+        string? errataStatus,
+        CancellationToken cancellationToken)
+    {
+        string[] statuses = NormalizeErrataStatuses(errataStatus);
+        int[] rfcNumbers = sections.Select(section => section.RfcNumber).Distinct().ToArray();
+        IReadOnlyDictionary<string, IReadOnlyList<RfcErratum>> errataByEvidenceId = await searchService
+            .GetErrataBatchAsync(rfcNumbers, statuses, cancellationToken)
+            .ConfigureAwait(false);
+
+        for (int i = 0; i < sections.Count; i++)
+        {
+            EvidenceSection section = sections[i];
+            if (!errataByEvidenceId.TryGetValue(section.EvidenceId, out IReadOnlyList<RfcErratum>? errata)
+                || errata.Count == 0)
+            {
+                continue;
+            }
+
+            RfcErratum[] matchingErrata = errata
+                .Where(erratum => statuses.Contains(erratum.Status, StringComparer.OrdinalIgnoreCase))
+                .ToArray();
+            if (matchingErrata.Length == 0)
+            {
+                continue;
+            }
+
+            sections[i] = section with { Errata = matchingErrata };
+
+            foreach (RfcErratum erratum in matchingErrata.Where(erratum =>
+                string.Equals(erratum.Status, RfcErratum.VerifiedStatus, StringComparison.OrdinalIgnoreCase)))
+            {
+                warnings.Add(new EvidenceWarning
+                {
+                    Type = EvidenceWarning.VerifiedErratum,
+                    EvidenceId = section.EvidenceId,
+                    Message = CreateVerifiedErratumWarning(section, erratum),
+                });
+            }
+        }
+    }
+
+    private static string[] NormalizeErrataStatuses(string? errataStatus)
+    {
+        if (string.IsNullOrWhiteSpace(errataStatus))
+        {
+            return [RfcErratum.VerifiedStatus];
+        }
+
+        return errataStatus
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(NormalizeErrataStatus)
+            .Where(status => !string.IsNullOrWhiteSpace(status))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private static string NormalizeErrataStatus(string status) =>
+        RfcErratum.NormalizeStatus(status) ?? status;
+
+    private static string CreateVerifiedErratumWarning(EvidenceSection section, RfcErratum erratum)
+    {
+        string message = $"RFC {section.RfcNumber} section {section.Section} has verified erratum {erratum.ErrataId}.";
+        if (!string.IsNullOrWhiteSpace(erratum.CorrectedText))
+        {
+            message += $" Corrected text: {erratum.CorrectedText}";
+        }
+
+        return message;
     }
 }

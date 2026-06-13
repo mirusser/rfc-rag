@@ -22,8 +22,21 @@ public sealed record class GeneratedAnswer
     /// <summary>When <see langword="true"/>, the question could not be answered from the available evidence.</summary>
     public bool NoAnswer { get; init; }
 
+    /// <summary>Structured warnings produced while generating the answer.</summary>
+    public IReadOnlyList<AnswerWarning> Warnings { get; init; } = [];
+
     /// <summary>Retrieval strategy and filters used to assemble the evidence.</summary>
     public RetrievalInfo? Retrieval { get; init; }
+}
+
+
+public sealed record class AnswerWarning
+{
+    public string Type { get; init; } = string.Empty;
+
+    public string Message { get; init; } = string.Empty;
+
+    public string? EvidenceId { get; init; }
 }
 
 /// <summary>Metadata describing how evidence retrieval was planned.</summary>
@@ -40,6 +53,11 @@ public sealed record class RetrievalInfo
 public sealed record class RetrievalFilters
 {
     public string? NormativeKeyword { get; init; }
+
+
+    public bool IncludeErrata { get; init; }
+
+    public string? ErrataStatus { get; init; }
 }
 
 /// <summary>Deterministic query plan reported for traceability.</summary>

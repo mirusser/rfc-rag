@@ -20,6 +20,18 @@
     "corpus": "testdata"
   },
   {
+    "id": "q_errata_001",
+    "question": "What errata affect RFC 2119 section 1?",
+    "expectedRfcs": [2119],
+    "expectedSections": ["1"],
+    "mustCite": [2119],
+    "shouldNotCite": [],
+    "answerType": "factual",
+    "corpus": "testdata",
+    "includeErrata": true,
+    "errataStatus": "verified"
+  },
+  {
     "id": "q003",
     "question": "How does TLS 1.3 perform the handshake ClientHello?",
     "expectedRfcs": [8446],

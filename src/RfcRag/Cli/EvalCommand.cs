@@ -244,7 +244,7 @@ internal sealed class EvalCommand(
         try
         {
             IReadOnlyList<SearchResult> results = await searchService
-                .SearchAsync(question.Question, topK, normativeKeyword: null, includeObsolete: false, cancellationToken)
+                .SearchAsync(question.Question, topK, normativeKeyword: null, includeObsolete: false, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
 
             timer.Stop();
@@ -316,7 +316,13 @@ internal sealed class EvalCommand(
         try
         {
             GeneratedAnswer answer = await askService!
-                .AskAsync(question.Question, limit: topK, cancellationToken: cancellationToken)
+                .AskAsync(
+                    question.Question,
+                    limit: topK,
+                    includeObsolete: question.IncludeObsolete,
+                    includeErrata: question.IncludeErrata,
+                    errataStatus: question.ErrataStatus,
+                    cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
 
             timer.Stop();

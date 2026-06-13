@@ -226,6 +226,13 @@ internal sealed class SearchService(
         IReadOnlyList<Guid> sectionIds, CancellationToken cancellationToken) =>
         searchRepository.GetNormativeOccurrencesBatchAsync(sectionIds, cancellationToken);
 
+
+    public Task<IReadOnlyDictionary<string, IReadOnlyList<RfcErratum>>> GetErrataBatchAsync(
+        IReadOnlyList<int> rfcNumbers,
+        IReadOnlyCollection<string> statuses,
+        CancellationToken cancellationToken) =>
+        searchRepository.GetErrataBatchAsync(rfcNumbers, statuses, cancellationToken);
+
     internal static List<string> ExtractPascalCaseTypeNames(string sectionText, string? sectionHeading)
     {
         var typeNames = new HashSet<string>(StringComparer.Ordinal);
