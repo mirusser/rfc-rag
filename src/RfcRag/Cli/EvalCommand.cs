@@ -354,7 +354,8 @@ internal sealed class EvalCommand(
                 CorrectNoAnswer: null,
                 ExpectedAnswerType: question.AnswerType,
                 LatencyMs: timer.ElapsedMilliseconds,
-                Error: ex.Message);
+                Error: ex.Message,
+                ClaimSupportRate: 0.0);
         }
     }
 }

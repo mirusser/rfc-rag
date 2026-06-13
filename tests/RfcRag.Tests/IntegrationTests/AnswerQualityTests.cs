@@ -37,7 +37,7 @@ public sealed class AnswerQualityTests(RetrievalQualityFixture fixture) : IClass
 
         var assembler = new ContextAssembler(fixture.SearchService);
         var generator = new AnswerGenerator(fakeClient, options);
-        var askService = new AskService(fixture.SearchService, assembler, generator, options);
+        var askService = new AskService(fixture.SearchService, assembler, generator, options, new FakeTraceWriter());
 
         string fixturePath = Path.Combine("eval", "golden_questions.json");
         string json = await File.ReadAllTextAsync(fixturePath, TestContext.Current.CancellationToken);
@@ -142,7 +142,7 @@ public sealed class AnswerQualityTests(RetrievalQualityFixture fixture) : IClass
 
         var assembler = new ContextAssembler(fixture.SearchService);
         var generator = new AnswerGenerator(fakeClient, options);
-        var askService = new AskService(fixture.SearchService, assembler, generator, options);
+        var askService = new AskService(fixture.SearchService, assembler, generator, options, new FakeTraceWriter());
 
         string fixturePath = Path.Combine("eval", "golden_questions.json");
         string json = await File.ReadAllTextAsync(fixturePath, TestContext.Current.CancellationToken);

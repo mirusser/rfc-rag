@@ -23,7 +23,7 @@ Ask a natural-language question about RFCs. Runs hybrid search, assembles an evi
 
 ```
 Parameters: question (string), limit (int?, default=20), normative_keyword (string?, optional), include_obsolete (bool, default=false), include_errata (bool, default=false), errata_status (string?, default="verified")
-Returns: JSON object with { answer, citations: [{rfcNumber, section}], confidence, warnings }
+Returns: JSON object with { answer, citations: [{evidenceId, rfcNumber, section, relevantText?}], model?, finishReason?, noAnswer, warnings: [{type, message, evidenceId?}], retrieval: { strategy, filters: { normativeKeyword?, includeErrata, errataStatus? }, plan? }, verification: { claims: [{claim, status, citationEvidenceIds?}], claimSupportRate, verificationWarnings: [{type, message, evidenceId?}] } }
 ```
 
 ### `get_rfc`

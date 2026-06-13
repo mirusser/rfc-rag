@@ -27,6 +27,8 @@ internal static class ServiceCollectionExtensions
             });
         }
 
+        services.TryAddSingleton<QueryTraceWriter>();
+
         return services
             .AddRfcRagParsing()
             .AddRfcRagSearch()

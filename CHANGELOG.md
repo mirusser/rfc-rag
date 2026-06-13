@@ -16,6 +16,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Standalone Dockerfile for containerized stdio MCP server.
 - Grammar-style detection: `grammarStyle` field classifies RFCs as `abnf`, `tls-presentation-lang`, `cddl`, `asn.1`, or `none`.
 - `get_rfc_section` supports `depth` (child-section expansion) and `expand` (type-reference resolution).
+- Citation verifier with deterministic claim segmentation and support checking.
+- `ClaimSupportRate` golden evaluation metric for answer citation quality.
+- ADRs 0006 (optional answering), 0008 (golden eval gates), 0009 (errata snapshot).
 
 ### Changed
 

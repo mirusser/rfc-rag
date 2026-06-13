@@ -61,7 +61,8 @@ internal sealed record class AnswerEvaluationResult(
     long LatencyMs,
     string? Error,
     double QuoteFaithfulness = 0.0,
-    double ObsoleteCitationRate = 0.0);
+    double ObsoleteCitationRate = 0.0,
+    double ClaimSupportRate = 0.0);
 
 internal sealed record class AnswerAggregateMetrics(
     double AvgCitationPrecision,
@@ -72,7 +73,8 @@ internal sealed record class AnswerAggregateMetrics(
     int TotalQuestions,
     int QuestionsWithCitations,
     double AvgQuoteFaithfulness = 0.0,
-    double AvgObsoleteCitationRate = 0.0);
+    double AvgObsoleteCitationRate = 0.0,
+    double AvgClaimSupportRate = 0.0);
 
 internal sealed record class AnswerEvalReport(
     DateTimeOffset GeneratedAt,

@@ -27,6 +27,9 @@ public sealed record class GeneratedAnswer
 
     /// <summary>Retrieval strategy and filters used to assemble the evidence.</summary>
     public RetrievalInfo? Retrieval { get; init; }
+
+    /// <summary>Per-claim verification result, populated after answer generation.</summary>
+    public ClaimVerificationResult? Verification { get; init; }
 }
 
 
@@ -108,4 +111,32 @@ public sealed record class Citation
     /// <summary>Optional excerpt from the evidence that supports the claim.</summary>
     [JsonPropertyName("relevantText")]
     public string? RelevantText { get; init; }
+}
+
+/// <summary>Per-claim verification result produced by <c>CitationVerifier</c>.</summary>
+public sealed record class ClaimVerificationResult
+{
+    /// <summary>Individual claim verification entries.</summary>
+    public IReadOnlyList<ClaimVerification> Claims { get; init; } = [];
+
+    /// <summary>Fraction of claims that are "supported" (0.0 when no claims exist).</summary>
+    public double ClaimSupportRate { get; init; }
+
+    /// <summary>Derived warnings for unsupported or uncited claims.</summary>
+    public IReadOnlyList<AnswerWarning> VerificationWarnings { get; init; } = [];
+}
+
+/// <summary>Verification status for a single claim extracted from the answer text.</summary>
+public sealed record class ClaimVerification
+{
+    /// <summary>The claim text (a sentence from the answer).</summary>
+    public string Claim { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Verification status: <c>"supported"</c>, <c>"unsupported"</c>, or <c>"uncited"</c>.
+    /// </summary>
+    public string Status { get; init; } = string.Empty;
+
+    /// <summary>Evidence IDs cited in the claim, or <see langword="null"/> when no citations were found.</summary>
+    public IReadOnlyList<string>? CitationEvidenceIds { get; init; }
 }

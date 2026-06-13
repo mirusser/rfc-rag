@@ -109,6 +109,18 @@ internal static class AnswerEvaluationMetrics
     }
 
     /// <summary>
+    /// Returns the claim-support rate from a <see cref="ClaimVerificationResult"/>,
+    /// or 0.0 if no verification data is available.
+    /// </summary>
+    public static double ComputeClaimSupportRate(ClaimVerificationResult? verification)
+    {
+        if (verification is null)
+            return 0.0;
+
+        return verification.ClaimSupportRate;
+    }
+
+    /// <summary>
     /// Evaluates a single <see cref="GeneratedAnswer"/> against the expectations
     /// defined in a <see cref="GoldenQuestion"/>.
     /// </summary>
@@ -138,6 +150,7 @@ internal static class AnswerEvaluationMetrics
             ? ComputeQuoteFaithfulness(answer.Citations)
             : ComputeQuoteFaithfulness(answer.Citations, evidencePack);
         double obsoleteCitationRate = ComputeObsoleteCitationRate(citedRfcs, obsoleteRfcs ?? []);
+        double claimSupportRate = ComputeClaimSupportRate(answer.Verification);
 
         return new AnswerEvaluationResult(
             question.Id,
@@ -155,7 +168,8 @@ internal static class AnswerEvaluationMetrics
             latencyMs,
             null,
             quoteFaithfulness,
-            obsoleteCitationRate);
+            obsoleteCitationRate,
+            claimSupportRate);
     }
 
     /// <summary>
@@ -165,7 +179,7 @@ internal static class AnswerEvaluationMetrics
     {
         if (results.Count == 0)
         {
-            return new AnswerAggregateMetrics(0.0, 0.0, 0.0, null, 0.0, 0, 0);
+            return new AnswerAggregateMetrics(0.0, 0.0, 0.0, null, 0.0, 0, 0, AvgClaimSupportRate: 0.0);
         }
 
         double avgPrecision = results.Average(r => r.CitationPrecision);
@@ -186,6 +200,7 @@ internal static class AnswerEvaluationMetrics
 
         double avgQuoteFaithfulness = results.Average(r => r.QuoteFaithfulness);
         double avgObsoleteCitationRate = results.Average(r => r.ObsoleteCitationRate);
+        double avgClaimSupportRate = results.Average(r => r.ClaimSupportRate);
 
         return new AnswerAggregateMetrics(
             avgPrecision,
@@ -196,6 +211,7 @@ internal static class AnswerEvaluationMetrics
             results.Count,
             questionsWithCitations,
             avgQuoteFaithfulness,
-            avgObsoleteCitationRate);
+            avgObsoleteCitationRate,
+            avgClaimSupportRate);
     }
 }

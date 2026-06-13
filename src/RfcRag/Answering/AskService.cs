@@ -1,14 +1,18 @@
+using RfcRag.Infrastructure;
+
 namespace RfcRag.Answering;
 
 /// <summary>
 /// Orchestrates the full ask-RFC pipeline: hybrid search → evidence assembly → answer generation.
-/// Each method call runs a complete search + assemble + generate cycle.
+/// Each method call runs a complete search + assemble + generate cycle, capturing per-query
+/// timing traces when tracing is enabled.
 /// </summary>
 internal sealed class AskService(
     ISearchService searchService,
     ContextAssembler contextAssembler,
     AnswerGenerator answerGenerator,
-    IOptions<RfcRagOptions> options) : IAskService
+    IOptions<RfcRagOptions> options,
+    QueryTraceWriter traceWriter) : IAskService
 {
     /// <summary>Default number of search results to retrieve from hybrid search.</summary>
     private const int DefaultSearchLimit = 20;
@@ -27,6 +31,8 @@ internal sealed class AskService(
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        var traceId = Guid.NewGuid().ToString("D");
+
         var opts = options.Value;
         int effectiveLimit = limit ?? DefaultSearchLimit;
         QueryPlan? queryPlan = opts.QueryPlannerEnabled ? QueryPlanner.Plan(question) : null;
@@ -35,11 +41,13 @@ internal sealed class AskService(
             : normativeKeyword;
 
         // Phase 1: Hybrid search
+        DateTime searchStart = DateTime.UtcNow;
         IReadOnlyList<SearchResult> results = await searchService.SearchAsync(
             question, effectiveLimit, effectiveNormativeKeyword, includeObsolete, cancellationToken)
             .ConfigureAwait(false);
 
         // Phase 2: Evidence assembly
+        DateTime assembleStart = DateTime.UtcNow;
         EvidencePack pack = await contextAssembler.AssembleAsync(
             question,
             results,
@@ -51,9 +59,37 @@ internal sealed class AskService(
             .ConfigureAwait(false);
 
         // Phase 3: Answer generation
+        DateTime generateStart = DateTime.UtcNow;
         GeneratedAnswer answer = await answerGenerator.GenerateAsync(
             pack, question, cancellationToken)
             .ConfigureAwait(false);
+        DateTime generateEnd = DateTime.UtcNow;
+
+        // Phase 4: Citation verification
+        ClaimVerificationResult verification = CitationVerifier.Verify(answer, pack);
+        answer = answer with
+        {
+            Verification = verification,
+            Warnings = [..answer.Warnings, ..verification.VerificationWarnings],
+        };
+
+        var trace = new QueryTrace
+        {
+            TraceId = traceId,
+            Question = question,
+            TimestampUtc = DateTime.UtcNow,
+            Stages =
+            [
+                new TraceStage { Name = "search", StartedAtUtc = searchStart, CompletedAtUtc = assembleStart },
+                new TraceStage { Name = "assemble", StartedAtUtc = assembleStart, CompletedAtUtc = generateStart },
+                new TraceStage { Name = "generate", StartedAtUtc = generateStart, CompletedAtUtc = generateEnd },
+            ],
+            CandidateRfcNumbers = results.Select(r => r.RfcNumber).Distinct().ToArray(),
+            AnswerGenerated = true,
+            WarningCount = answer.Warnings.Count,
+        };
+
+        _ = traceWriter.WriteAsync(trace, cancellationToken);
 
         return answer with
         {

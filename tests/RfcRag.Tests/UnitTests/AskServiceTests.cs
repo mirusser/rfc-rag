@@ -56,16 +56,18 @@ public sealed class AskServiceTests
 
     private static AskService CreateAskService(
         FakeSearchService? searchService = null,
-        FakeChatClient? chatClient = null)
+        FakeChatClient? chatClient = null,
+        FakeTraceWriter? traceWriter = null)
     {
         searchService ??= new FakeSearchService();
         chatClient ??= new FakeChatClient(ValidJsonResponse);
+        traceWriter ??= new FakeTraceWriter();
 
         var options = Options.Create(DefaultOptions);
         var assembler = new ContextAssembler(searchService);
         var generator = new AnswerGenerator(chatClient, options);
 
-        return new AskService(searchService, assembler, generator, options);
+        return new AskService(searchService, assembler, generator, options, traceWriter);
     }
 
     [Fact]
@@ -169,7 +171,7 @@ public sealed class AskServiceTests
         var options = Options.Create(DefaultOptions);
         var assembler = new ContextAssembler(searchService);
         var generator = new AnswerGenerator(failingChat, options);
-        var askService = new AskService(searchService, assembler, generator, options);
+        var askService = new AskService(searchService, assembler, generator, options, new FakeTraceWriter());
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             askService.AskAsync("How does HTTP work?", cancellationToken: CancellationToken.None));
@@ -197,5 +199,78 @@ public sealed class AskServiceTests
             ChatOptions? options = null,
             CancellationToken cancellationToken = default)
             => throw _exception;
+    }
+
+    [Fact]
+    public async Task AskAsync_TraceCaptured_HasAllStages()
+    {
+        var section = MakeSection(9110, "9.3.1", "GET", "GET method text for HTTP.");
+        var result = MakeResult(9110, "9.3.1", "GET", "GET method...", 0.95);
+        var toc = new Dictionary<string, string?> { ["9.3.1"] = "GET" };
+
+        var searchService = new FakeSearchService
+        {
+            SearchResults = [result],
+            SingleSection = section,
+            TocMap = toc,
+        };
+        var traceWriter = new FakeTraceWriter();
+        var askService = CreateAskService(searchService, traceWriter: traceWriter);
+
+        var answer = await askService.AskAsync("How does HTTP work?", cancellationToken: CancellationToken.None);
+
+        Assert.NotNull(traceWriter.LastTrace);
+        Assert.Equal("How does HTTP work?", traceWriter.LastTrace.Question);
+        Assert.True(traceWriter.LastTrace.AnswerGenerated);
+        Assert.NotEmpty(traceWriter.LastTrace.Stages);
+        Assert.Contains(9110, traceWriter.LastTrace.CandidateRfcNumbers);
+
+        Assert.Equal(3, traceWriter.LastTrace.Stages.Count);
+        Assert.Equal("search", traceWriter.LastTrace.Stages[0].Name);
+        Assert.Equal("assemble", traceWriter.LastTrace.Stages[1].Name);
+        Assert.Equal("generate", traceWriter.LastTrace.Stages[2].Name);
+
+        Assert.True(traceWriter.LastTrace.Stages[0].CompletedAtUtc >= traceWriter.LastTrace.Stages[0].StartedAtUtc);
+        Assert.True(traceWriter.LastTrace.Stages[1].CompletedAtUtc >= traceWriter.LastTrace.Stages[1].StartedAtUtc);
+        Assert.True(traceWriter.LastTrace.Stages[2].CompletedAtUtc >= traceWriter.LastTrace.Stages[2].StartedAtUtc);
+    }
+
+    [Fact]
+    public async Task AskAsync_TraceCaptured_HasTimestampAndTraceId()
+    {
+        var section = MakeSection(9110, "9.3.1", "GET", "GET method text for HTTP.");
+        var result = MakeResult(9110, "9.3.1", "GET", "GET method...", 0.95);
+        var toc = new Dictionary<string, string?> { ["9.3.1"] = "GET" };
+
+        var searchService = new FakeSearchService
+        {
+            SearchResults = [result],
+            SingleSection = section,
+            TocMap = toc,
+        };
+        var traceWriter = new FakeTraceWriter();
+        var askService = CreateAskService(searchService, traceWriter: traceWriter);
+
+        await askService.AskAsync("test", cancellationToken: CancellationToken.None);
+
+        Assert.NotNull(traceWriter.LastTrace);
+        Assert.NotNull(traceWriter.LastTrace.TraceId);
+        Assert.NotEmpty(traceWriter.LastTrace.TraceId);
+        // TimestampUtc should be close to now
+        var age = DateTime.UtcNow - traceWriter.LastTrace.TimestampUtc;
+        Assert.True(age < TimeSpan.FromMinutes(1), "Trace timestamp should be recent");
+    }
+
+    [Fact]
+    public async Task AskAsync_NoResults_TraceCapturedWithEmptyCandidates()
+    {
+        var traceWriter = new FakeTraceWriter();
+        var askService = CreateAskService(traceWriter: traceWriter);
+
+        var answer = await askService.AskAsync("Unknown topic", cancellationToken: CancellationToken.None);
+
+        Assert.NotNull(traceWriter.LastTrace);
+        Assert.Empty(traceWriter.LastTrace.CandidateRfcNumbers);
+        Assert.True(answer.NoAnswer);
     }
 }

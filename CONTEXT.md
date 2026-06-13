@@ -46,6 +46,10 @@ _Avoid_: semantic search (that is only one arm of it)
 A deterministic, pure interpretation of a user query that records detected RFC numbers, explicit RFC section references, protocol seed RFCs, strong normative-intent filters, ABNF/grammar intent, historical intent, and the rationale for each detection. Retrieval may use it for direct section routing and effective filters; answer output reports it for traceability.
 _Avoid_: LLM query rewrite, ranking model, hidden prompt analysis
 
+**Query Trace**:
+A per-query record written as one JSONL line when `RfcRag__TraceDirectory` is configured. Each trace captures the question, timed pipeline stages (search → assemble → generate → verify), candidate RFC numbers, answer and warning counts, and retrieval metadata. The trace writer is fail-open — I/O failures produce a logged warning and the query succeeds. Traces are daily-rotated files under the configured directory.
+_Avoid_: audit log, telemetry event (implies streaming), query log (too generic)
+
 **Index Manifest**:
 A row written at the end of every successful indexing run that records provenance: mirror path, parser type and version, embedding provider/model/dimensions, batch parameters, counts, and creation timestamp. Every eval report and trace carries the manifest id so results are comparable across runs.
 _Avoid_: index metadata (too generic), indexing log

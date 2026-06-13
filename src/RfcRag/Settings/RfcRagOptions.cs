@@ -105,4 +105,11 @@ public sealed record class RfcRagOptions
     /// obsolete penalty). Disable for A/B comparison against baseline hybrid search.
     /// </summary>
     public bool RerankerEnabled { get; init; } = true;
+
+    /// <summary>
+    /// Optional directory for per-query JSONL trace files. When set, each call to
+    /// <c>ask_rfc</c> produces a trace line with stage timestamps, candidate RFC numbers,
+    /// and retrieval metadata. When unset, tracing is disabled.
+    /// </summary>
+    public string? TraceDirectory { get; init; }
 }
