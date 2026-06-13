@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Time.Testing;
 using RfcRag.Infrastructure;
 using RfcRag.Settings;
 
@@ -35,7 +36,7 @@ public sealed class QueryTraceWriterTests
         try
         {
             var options = Options.Create(OptionsWithTrace with { TraceDirectory = tempDir });
-            var writer = new QueryTraceWriter(options, NullLogger<QueryTraceWriter>.Instance);
+            var writer = new QueryTraceWriter(options, NullLogger<QueryTraceWriter>.Instance, TimeProvider.System);
 
             var trace = new QueryTrace
             {
@@ -80,7 +81,7 @@ public sealed class QueryTraceWriterTests
     public async Task WriteAsync_TraceDirectoryNull_DoesNotCreateFile()
     {
         var options = Options.Create(OptionsWithoutTrace);
-        var writer = new QueryTraceWriter(options, NullLogger<QueryTraceWriter>.Instance);
+        var writer = new QueryTraceWriter(options, NullLogger<QueryTraceWriter>.Instance, TimeProvider.System);
 
         var trace = new QueryTrace
         {
@@ -98,7 +99,7 @@ public sealed class QueryTraceWriterTests
     public async Task WriteAsync_TraceDirectoryEmpty_DoesNotCreateFile()
     {
         var options = Options.Create(OptionsWithTrace with { TraceDirectory = "" });
-        var writer = new QueryTraceWriter(options, NullLogger<QueryTraceWriter>.Instance);
+        var writer = new QueryTraceWriter(options, NullLogger<QueryTraceWriter>.Instance, TimeProvider.System);
 
         var trace = new QueryTrace
         {
@@ -118,7 +119,7 @@ public sealed class QueryTraceWriterTests
         {
             TraceDirectory = "/dev/null/nope",
         });
-        var writer = new QueryTraceWriter(options, NullLogger<QueryTraceWriter>.Instance);
+        var writer = new QueryTraceWriter(options, NullLogger<QueryTraceWriter>.Instance, TimeProvider.System);
 
         var trace = new QueryTrace
         {
@@ -139,7 +140,7 @@ public sealed class QueryTraceWriterTests
         try
         {
             var options = Options.Create(OptionsWithTrace with { TraceDirectory = tempDir });
-            var writer = new QueryTraceWriter(options, NullLogger<QueryTraceWriter>.Instance);
+            var writer = new QueryTraceWriter(options, NullLogger<QueryTraceWriter>.Instance, TimeProvider.System);
 
             var trace1 = new QueryTrace
             {
@@ -164,6 +165,39 @@ public sealed class QueryTraceWriterTests
 
             string[] lines = content.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
             Assert.Equal(2, lines.Length);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task WriteAsync_UsesTimeProviderForDateRotation_FileNameReflectsFakeDate()
+    {
+        string tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        try
+        {
+            var fakeTime = new FakeTimeProvider();
+            fakeTime.SetUtcNow(new DateTimeOffset(2025, 1, 15, 0, 0, 0, TimeSpan.Zero));
+
+            var options = Options.Create(OptionsWithTrace with { TraceDirectory = tempDir });
+            var writer = new QueryTraceWriter(options, NullLogger<QueryTraceWriter>.Instance, fakeTime);
+
+            var trace = new QueryTrace
+            {
+                TraceId = "date-test",
+                Question = "Does the filename use the injected date?",
+                TimestampUtc = DateTime.UtcNow,
+            };
+
+            await writer.WriteAsync(trace, TestContext.Current.CancellationToken);
+
+            string expectedDate = "2025-01-15";
+            string expectedFile = Path.Combine(tempDir, $"rfc-rag-trace-{expectedDate}.jsonl");
+            Assert.True(File.Exists(expectedFile),
+                $"Expected trace file for {expectedDate} but it was not created.");
         }
         finally
         {

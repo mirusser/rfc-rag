@@ -70,7 +70,7 @@ internal sealed class AskService(
         answer = answer with
         {
             Verification = verification,
-            Warnings = [..answer.Warnings, ..verification.VerificationWarnings],
+            Warnings = [.. answer.Warnings, .. verification.VerificationWarnings],
         };
 
         var trace = new QueryTrace

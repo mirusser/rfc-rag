@@ -11,7 +11,7 @@ namespace RfcRag.Infrastructure;
 /// daily-rotated files. No-op when <c>RfcRag__TraceDirectory</c> is not set.
 /// Fail-open: warnings are logged but the writer never throws.
 /// </summary>
-internal class QueryTraceWriter
+internal sealed class QueryTraceWriter
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -21,13 +21,15 @@ internal class QueryTraceWriter
 
     private readonly string? _traceDirectory;
     private readonly ILogger<QueryTraceWriter> _logger;
+    private readonly TimeProvider _timeProvider;
 
-    public QueryTraceWriter(IOptions<RfcRagOptions> options, ILogger<QueryTraceWriter> logger)
+    public QueryTraceWriter(IOptions<RfcRagOptions> options, ILogger<QueryTraceWriter> logger, TimeProvider timeProvider)
     {
         _traceDirectory = string.IsNullOrWhiteSpace(options.Value.TraceDirectory)
             ? null
             : options.Value.TraceDirectory;
         _logger = logger;
+        _timeProvider = timeProvider;
     }
 
     /// <summary>Trace directory configured, or <see langword="null"/> when tracing is disabled.</summary>
@@ -38,7 +40,7 @@ internal class QueryTraceWriter
     /// When <see cref="TraceDirectory"/> is not configured, this is a no-op.
     /// On I/O failure, a warning is logged and the exception is swallowed.
     /// </summary>
-    public virtual async Task WriteAsync(QueryTrace trace, CancellationToken cancellationToken = default)
+    public async Task WriteAsync(QueryTrace trace, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(_traceDirectory))
             return;
@@ -64,7 +66,7 @@ internal class QueryTraceWriter
 
     private string GetFilePath()
     {
-        string date = DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        string date = _timeProvider.GetUtcNow().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         return Path.Combine(_traceDirectory!, $"rfc-rag-trace-{date}.jsonl");
     }
 }

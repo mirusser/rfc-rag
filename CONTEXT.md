@@ -75,6 +75,10 @@ The fraction of citations in a generated answer that are grounded (i.e. the cite
 **Citation Recall**:
 The fraction of required RFCs (the Golden Question's `mustCite` field) that are correctly cited. NaN or 1.0 when there are no must-cite requirements.
 
+**Cited Answer**:
+The structured output of `ask_rfc` containing an `answer` string, a `citations` list (each with an evidence id, RFC number, section, and verbatim `relevantText` quote from the section), a `verification` block (citation precision, recall, and quote faithfulness scores), and a `warnings` list. A Cited Answer's citations reference Evidence Sections by their evidence id (`{RfcNumber}#{Section}`). The output is serialised to JSON by the `ask_rfc` MCP tool.
+_Avoid_: grounded response, cited response, LLM answer (implies the model answered without RFC grounding)
+
 **Golden Question**:
 A curated question-answer expectation tuple in `golden_questions.json` with fields for expected RFCs, expected sections, must-cite/should-not-cite RFCs, answer type, and corpus marker. Golden questions are the ground truth for both retrieval and answer evaluation.
 
