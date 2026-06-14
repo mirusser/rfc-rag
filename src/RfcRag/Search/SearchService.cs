@@ -105,11 +105,9 @@ internal sealed class SearchService(
         var seen = new HashSet<(int RfcNumber, string Section)>();
         var mergedResults = new List<SearchResult>(sectionReferences.Count + searchResults.Count);
 
-        foreach (QuerySectionReference sectionReference in sectionReferences)
+        foreach (QuerySectionReference sectionReference in sectionReferences.Where(sectionReference =>
+                     seen.Add((sectionReference.RfcNumber, sectionReference.Section))))
         {
-            if (!seen.Add((sectionReference.RfcNumber, sectionReference.Section)))
-                continue;
-
             RfcSection? section = await searchRepository
                 .GetSectionAsync(sectionReference.RfcNumber, sectionReference.Section, cancellationToken)
                 .ConfigureAwait(false);
@@ -136,11 +134,7 @@ internal sealed class SearchService(
             });
         }
 
-        foreach (SearchResult searchResult in searchResults)
-        {
-            if (seen.Add((searchResult.RfcNumber, searchResult.Section)))
-                mergedResults.Add(searchResult);
-        }
+        mergedResults.AddRange(searchResults.Where(searchResult => seen.Add((searchResult.RfcNumber, searchResult.Section))));
 
         int effectiveLimit = limit > 0 ? limit : searchResults.Count;
         return effectiveLimit > 0

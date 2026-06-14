@@ -43,9 +43,8 @@ internal static class CitationVerifier
         List<ClaimVerification> claims = [];
         List<AnswerWarning> warnings = [];
 
-        foreach (string rawClaim in rawClaims)
+        foreach (string claim in rawClaims.Select(rawClaim => rawClaim.Trim()))
         {
-            string claim = rawClaim.Trim();
             if (claim.Length == 0)
                 continue;
 

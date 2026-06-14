@@ -86,6 +86,7 @@ internal static class RfcRagMigrationRunner
         var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using (transaction.ConfigureAwait(false))
         {
+            bool committed = false;
             try
             {
                 await connection.ExecuteAsync(new CommandDefinition(
@@ -107,11 +108,12 @@ internal static class RfcRagMigrationRunner
                     cancellationToken: cancellationToken)).ConfigureAwait(false);
 
                 await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                committed = true;
             }
-            catch (Exception)
+            finally
             {
-                await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
-                throw;
+                if (!committed)
+                    await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
             }
         }
     }
@@ -185,7 +187,7 @@ internal static class RfcRagMigrationRunner
         {
             throw;
         }
-        catch (Exception ex)
+        catch (NpgsqlException ex)
         {
             logger.LogWarning(ex,
                 "Could not validate RFC RAG embedding dimensions. " +

@@ -253,7 +253,7 @@ public sealed class CliCommandTests
         {
             SearchResults = results.ToArray(),
             SectionMap = sections,
-            TocMap = results.ToDictionary(r => r.Section, r => (string?)r.Heading),
+            TocMap = results.ToDictionary(r => r.Section, r => r.Heading),
         };
         var command = new CliCommand(fakeService, new ContextAssembler(fakeService),
             NullLogger<CliCommand>.Instance);
@@ -292,7 +292,7 @@ public sealed class CliCommandTests
         {
             SearchResults = results.ToArray(),
             SectionMap = sections,
-            TocMap = results.ToDictionary(r => r.Section, r => (string?)r.Heading),
+            TocMap = results.ToDictionary(r => r.Section, r => r.Heading),
         };
         var command = new CliCommand(fakeService, new ContextAssembler(fakeService),
             NullLogger<CliCommand>.Instance);

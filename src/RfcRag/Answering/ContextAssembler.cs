@@ -174,22 +174,20 @@ internal sealed class ContextAssembler(ISearchService searchService)
             bool isAncestor = false;
             string ancestorPrefix = result.Section + ".";
 
-            foreach (var existing in collapsed)
+            foreach (var existing in collapsed.Where(existing =>
+                         existing.RfcNumber == result.RfcNumber
+                         && existing.Section.StartsWith(ancestorPrefix, StringComparison.Ordinal)))
             {
-                if (existing.RfcNumber == result.RfcNumber &&
-                    existing.Section.StartsWith(ancestorPrefix, StringComparison.Ordinal))
+                // This result is an ancestor of an already-included child — skip it
+                isAncestor = true;
+                warnings.Add(new EvidenceWarning
                 {
-                    // This result is an ancestor of an already-included child — skip it
-                    isAncestor = true;
-                    warnings.Add(new EvidenceWarning
-                    {
-                        Type = EvidenceWarning.OverlapCollapsed,
-                        Message = $"Section {result.RfcNumber}#{result.Section} omitted in favor of " +
-                                  $"more specific subsection {existing.RfcNumber}#{existing.Section}.",
-                        EvidenceId = EvidenceSection.CreateEvidenceId(result.RfcNumber, result.Section),
-                    });
-                    break;
-                }
+                    Type = EvidenceWarning.OverlapCollapsed,
+                    Message = $"Section {result.RfcNumber}#{result.Section} omitted in favor of " +
+                              $"more specific subsection {existing.RfcNumber}#{existing.Section}.",
+                    EvidenceId = EvidenceSection.CreateEvidenceId(result.RfcNumber, result.Section),
+                });
+                break;
             }
 
             if (isAncestor)

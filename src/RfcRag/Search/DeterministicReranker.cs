@@ -31,17 +31,17 @@ internal static class DeterministicReranker
 
         var rfcNumberSet = queryPlan is not null
             ? queryPlan.RfcNumbers.ToHashSet()
-            : (HashSet<int>)[];
+            : new HashSet<int>();
 
         var sectionRefSet = queryPlan is not null
             ? queryPlan.SectionReferences
                 .Select(r => (r.RfcNumber, r.Section))
                 .ToHashSet()
-            : (HashSet<(int, string)>)[];
+            : new HashSet<(int, string)>();
 
         var protocolRfcSet = queryPlan is not null
             ? queryPlan.ProtocolRfcNumbers.ToHashSet()
-            : (HashSet<int>)[];
+            : new HashSet<int>();
 
         bool includeObsolete = queryPlan?.IncludeObsolete ?? false;
         HashSet<string> queryTerms = BuildQueryTermSet(query);
@@ -86,16 +86,11 @@ internal static class DeterministicReranker
         if (protocolRfcSet.Contains(candidate.RfcNumber))
             score += ProtocolRfcBonus;
 
-        if (candidate.Heading is not null && queryTerms.Count > 0)
+        if (candidate.Heading is not null
+            && queryTerms.Count > 0
+            && queryTerms.Any(term => candidate.Heading.Contains(term, StringComparison.OrdinalIgnoreCase)))
         {
-            foreach (string term in queryTerms)
-            {
-                if (candidate.Heading.Contains(term, StringComparison.OrdinalIgnoreCase))
-                {
-                    score += HeadingTermMatchBonus;
-                    break;
-                }
-            }
+            score += HeadingTermMatchBonus;
         }
 
         if (rfcStatuses.TryGetValue(candidate.RfcNumber, out var status))
@@ -116,12 +111,9 @@ internal static class DeterministicReranker
 
     private static HashSet<string> BuildQueryTermSet(string query)
     {
-        var terms = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (string word in query.Split(queryTermSeparators, StringSplitOptions.RemoveEmptyEntries))
-        {
-            if (word.Length >= MinQueryTermLength)
-                terms.Add(word);
-        }
-        return terms;
+        return query
+            .Split(queryTermSeparators, StringSplitOptions.RemoveEmptyEntries)
+            .Where(word => word.Length >= MinQueryTermLength)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 }

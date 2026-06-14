@@ -393,9 +393,8 @@ public sealed class RfcParserTests
         RfcDocument doc = await parser.ParseAsync(Path.Join("TestData", "rfc5234.txt"), CancellationToken.None);
 
         // Section 4 defines many rules contiguously; no rule name should appear twice in a block's RuleNames.
-        foreach (var block in doc.AbnfBlocks)
+        foreach (var names in doc.AbnfBlocks.Select(block => block.RuleNames.ToList()))
         {
-            var names = block.RuleNames.ToList();
             Assert.Equal(names.Count, names.Distinct(StringComparer.Ordinal).Count());
         }
     }

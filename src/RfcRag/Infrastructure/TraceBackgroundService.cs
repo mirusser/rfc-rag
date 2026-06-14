@@ -37,7 +37,11 @@ internal sealed class TraceBackgroundService : BackgroundService
             {
                 break;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is IOException
+                or UnauthorizedAccessException
+                or System.Text.Json.JsonException
+                or NotSupportedException
+                or InvalidOperationException)
             {
                 _logger.LogWarning(ex, "Failed to write query trace {TraceId}", trace.TraceId);
             }

@@ -594,16 +594,14 @@ public sealed class RfcRagIntegrationTests : IClassFixture<MediumCorpusFixture>
             await indexer.IndexAllAsync(CancellationToken.None);
 
             await using var connection = await fixture.DataSource.OpenConnectionAsync(CancellationToken.None);
-            var indexedRows = (await connection.QueryAsync<dynamic>(
-                "select rfc_number, source_path from rfc_rag.indexed_rfcs where rfc_number = 9999"))
+            var indexedRows = (await connection.QueryAsync<(int RfcNumber, string SourcePath)>(
+                    "select rfc_number, source_path from rfc_rag.indexed_rfcs where rfc_number = 9999"))
                 .ToList();
 
             var row = Assert.Single(indexedRows);
-            int rfcNumber = (int)row.rfc_number;
-            string sourcePath = (string)row.source_path;
 
-            Assert.Equal(9999, rfcNumber);
-            Assert.EndsWith(".txt", sourcePath, StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(9999, row.RfcNumber);
+            Assert.EndsWith(".txt", row.SourcePath, StringComparison.OrdinalIgnoreCase);
         }
         finally
         {

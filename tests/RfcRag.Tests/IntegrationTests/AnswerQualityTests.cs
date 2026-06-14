@@ -69,7 +69,7 @@ public sealed class AnswerQualityTests(RetrievalQualityFixture fixture) : IClass
                     errataStatus: question.ErrataStatus,
                     cancellationToken: TestContext.Current.CancellationToken);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (IsAnswerQualityFailure(ex))
             {
                 results.Add(new AnswerEvaluationResult(
                     question.Id,
@@ -109,6 +109,12 @@ public sealed class AnswerQualityTests(RetrievalQualityFixture fixture) : IClass
         Assert.True(agg.AvgCitationF1 >= 0.0, "F1 should be computable.");
         Assert.True(overallSw.ElapsedMilliseconds > 0, "Pipeline ran in measurable time.");
     }
+
+    private static bool IsAnswerQualityFailure(Exception ex) =>
+        ex is InvalidOperationException
+            or JsonException
+            or TimeoutException
+            or Npgsql.NpgsqlException;
 
     /// <summary>
     ///     Scripts a single golden question (q001, expecting RFC 2119) through the

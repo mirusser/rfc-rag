@@ -26,26 +26,26 @@ internal sealed class IndexingRepository(NpgsqlDataSource dataSource)
 
         using var batch = new NpgsqlBatch(connection, transaction);
         foreach (RfcSection section in sections)
-            {
-                var cmd = new NpgsqlBatchCommand(
-                    """
+        {
+            var cmd = new NpgsqlBatchCommand(
+                """
                     insert into rfc_rag.rfc_sections
                         (id, rfc_number, title, section, heading, text, source_path, url, source_sha256, embedding)
                     values
                         (@Id, @RfcNumber, @Title, @Section, @Heading, @Text, @SourcePath, @Url, @SourceSha256, cast(@Embedding as vector))
                     """);
-                cmd.Parameters.AddWithValue("Id", section.Id);
-                cmd.Parameters.AddWithValue("RfcNumber", section.RfcNumber);
-                cmd.Parameters.AddWithValue("Title", section.Title);
-                cmd.Parameters.AddWithValue("Section", section.Section);
-                cmd.Parameters.AddWithValue("Heading", (object?)section.Heading ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("Text", section.Text);
-                cmd.Parameters.AddWithValue("SourcePath", section.SourcePath);
-                cmd.Parameters.AddWithValue("Url", section.Url);
-                cmd.Parameters.AddWithValue("SourceSha256", section.SourceSha256);
-                cmd.Parameters.Add(new NpgsqlParameter("Embedding", NpgsqlDbType.Array | NpgsqlDbType.Real) { Value = (object?)section.Embedding ?? DBNull.Value }); // NOSONAR: bitwise OR is the documented Npgsql pattern for typed array parameters
-                batch.BatchCommands.Add(cmd);
-            }
+            cmd.Parameters.AddWithValue("Id", section.Id);
+            cmd.Parameters.AddWithValue("RfcNumber", section.RfcNumber);
+            cmd.Parameters.AddWithValue("Title", section.Title);
+            cmd.Parameters.AddWithValue("Section", section.Section);
+            cmd.Parameters.AddWithValue("Heading", (object?)section.Heading ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("Text", section.Text);
+            cmd.Parameters.AddWithValue("SourcePath", section.SourcePath);
+            cmd.Parameters.AddWithValue("Url", section.Url);
+            cmd.Parameters.AddWithValue("SourceSha256", section.SourceSha256);
+            cmd.Parameters.Add(new NpgsqlParameter("Embedding", NpgsqlDbType.Array | NpgsqlDbType.Real) { Value = (object?)section.Embedding ?? DBNull.Value }); // NOSONAR: bitwise OR is the documented Npgsql pattern for typed array parameters
+            batch.BatchCommands.Add(cmd);
+        }
 
         await batch.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -67,22 +67,22 @@ internal sealed class IndexingRepository(NpgsqlDataSource dataSource)
 
         using var batch = new NpgsqlBatch(connection, transaction);
         foreach (RfcAbnfBlock block in blocks)
-            {
-                var cmd = new NpgsqlBatchCommand(
-                    """
+        {
+            var cmd = new NpgsqlBatchCommand(
+                """
                     insert into rfc_rag.rfc_abnf_blocks
                         (id, section_id, rfc_number, section, abnf_text, rule_names)
                     values
                         (@Id, @SectionId, @RfcNumber, @Section, @AbnfText, @RuleNames)
                     """);
-                cmd.Parameters.AddWithValue("Id", block.Id);
-                cmd.Parameters.AddWithValue("SectionId", block.SectionId);
-                cmd.Parameters.AddWithValue("RfcNumber", block.RfcNumber);
-                cmd.Parameters.AddWithValue("Section", block.Section);
-                cmd.Parameters.AddWithValue("AbnfText", block.AbnfText);
-                cmd.Parameters.AddWithValue("RuleNames", block.RuleNames);
-                batch.BatchCommands.Add(cmd);
-            }
+            cmd.Parameters.AddWithValue("Id", block.Id);
+            cmd.Parameters.AddWithValue("SectionId", block.SectionId);
+            cmd.Parameters.AddWithValue("RfcNumber", block.RfcNumber);
+            cmd.Parameters.AddWithValue("Section", block.Section);
+            cmd.Parameters.AddWithValue("AbnfText", block.AbnfText);
+            cmd.Parameters.AddWithValue("RuleNames", block.RuleNames);
+            batch.BatchCommands.Add(cmd);
+        }
 
         await batch.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -104,21 +104,21 @@ internal sealed class IndexingRepository(NpgsqlDataSource dataSource)
 
         using var batch = new NpgsqlBatch(connection, transaction);
         foreach (NormativeOccurrence occurrence in occurrences)
-            {
-                var cmd = new NpgsqlBatchCommand(
-                    """
+        {
+            var cmd = new NpgsqlBatchCommand(
+                """
                     insert into rfc_rag.normative_occurrences
                         (id, section_id, rfc_number, keyword, line_offset)
                     values
                         (@Id, @SectionId, @RfcNumber, @Keyword, @LineOffset)
                     """);
-                cmd.Parameters.AddWithValue("Id", occurrence.Id);
-                cmd.Parameters.AddWithValue("SectionId", occurrence.SectionId);
-                cmd.Parameters.AddWithValue("RfcNumber", occurrence.RfcNumber);
-                cmd.Parameters.AddWithValue("Keyword", occurrence.Keyword);
-                cmd.Parameters.AddWithValue("LineOffset", occurrence.LineOffset);
-                batch.BatchCommands.Add(cmd);
-            }
+            cmd.Parameters.AddWithValue("Id", occurrence.Id);
+            cmd.Parameters.AddWithValue("SectionId", occurrence.SectionId);
+            cmd.Parameters.AddWithValue("RfcNumber", occurrence.RfcNumber);
+            cmd.Parameters.AddWithValue("Keyword", occurrence.Keyword);
+            cmd.Parameters.AddWithValue("LineOffset", occurrence.LineOffset);
+            batch.BatchCommands.Add(cmd);
+        }
 
         await batch.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }

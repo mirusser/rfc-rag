@@ -66,7 +66,7 @@ internal sealed class BenchmarkCommand(ISearchService searchService, ILogger<Ben
             results = await searchService.SearchAsync(
                 query.Query, topK, normativeKeyword: null, includeObsolete: false, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (IsBenchmarkFailure(ex))
         {
             logger.LogError(ex, "Search failed for query: {Query}", query.Query);
             totalTimer.Stop();
@@ -91,6 +91,11 @@ internal sealed class BenchmarkCommand(ISearchService searchService, ILogger<Ben
             Hit: hit,
             Error: null);
     }
+
+    private static bool IsBenchmarkFailure(Exception ex) =>
+        ex is InvalidOperationException
+            or TimeoutException
+            or Npgsql.NpgsqlException;
 
     private sealed class BenchmarkQuery
     {

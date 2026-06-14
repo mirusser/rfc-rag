@@ -286,7 +286,7 @@ internal sealed class EvalCommand(
         {
             throw;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (IsRetrievalEvaluationFailure(ex))
         {
             timer.Stop();
             logger.LogError(ex, "Search failed for question {Id}: {Question}", question.Id, question.Question);
@@ -336,7 +336,7 @@ internal sealed class EvalCommand(
         {
             throw;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (IsAnswerEvaluationFailure(ex))
         {
             timer.Stop();
             logger.LogError(ex, "Answer generation failed for question {Id}: {Question}", question.Id, question.Question);
@@ -358,4 +358,16 @@ internal sealed class EvalCommand(
                 ClaimSupportRate: 0.0);
         }
     }
+
+    private static bool IsRetrievalEvaluationFailure(Exception ex) =>
+        ex is InvalidOperationException
+            or TimeoutException
+            or Npgsql.NpgsqlException;
+
+    private static bool IsAnswerEvaluationFailure(Exception ex) =>
+        ex is InvalidOperationException
+            or JsonException
+            or TimeoutException
+            or System.Net.Http.HttpRequestException
+            or Npgsql.NpgsqlException;
 }

@@ -230,13 +230,12 @@ RESPOND IN VALID JSON ONLY, using this exact schema:
         var citations = new List<Citation>();
         if (raw.Citations is not null)
         {
-            foreach (var rc in raw.Citations)
+            foreach (var rc in raw.Citations.Where(rc => !string.IsNullOrWhiteSpace(rc.EvidenceId)))
             {
-                if (string.IsNullOrWhiteSpace(rc.EvidenceId))
-                    continue;
+                string evidenceId = rc.EvidenceId!;
 
                 // Validate evidenceId format: RfcNumber#Section
-                string[] parts = rc.EvidenceId.Split('#');
+                string[] parts = evidenceId.Split('#');
                 int rfcNumber = 0;
                 string section = string.Empty;
 
@@ -245,12 +244,12 @@ RESPOND IN VALID JSON ONLY, using this exact schema:
                     section = parts[1];
                 }
 
-                if (!pack.Sections.Any(s => string.Equals(s.EvidenceId, rc.EvidenceId, StringComparison.Ordinal)))
+                if (!pack.Sections.Any(s => string.Equals(s.EvidenceId, evidenceId, StringComparison.Ordinal)))
                     continue;
 
                 citations.Add(new Citation
                 {
-                    EvidenceId = rc.EvidenceId,
+                    EvidenceId = evidenceId,
                     RfcNumber = rfcNumber,
                     Section = section,
                     RelevantText = rc.RelevantText,

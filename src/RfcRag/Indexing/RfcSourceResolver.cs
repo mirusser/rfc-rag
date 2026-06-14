@@ -33,14 +33,15 @@ internal static class RfcSourceResolver
         var result = new List<RfcSourceFile>(txtByNumber.Select(kv => new RfcSourceFile(kv.Value, kv.Key)));
 
         var xmlByNumber = new Dictionary<int, string>();
-        foreach (string path in Directory.EnumerateFiles(mirrorPath, "rfc*.xml", SearchOption.AllDirectories))
+        foreach (var source in Directory
+                     .EnumerateFiles(mirrorPath, "rfc*.xml", SearchOption.AllDirectories)
+                     .Select(path => (Path: path, HasNumber: TryParseRfcNumber(path, out int number), Number: number))
+                     .Where(source => source.HasNumber && !txtByNumber.ContainsKey(source.Number)))
         {
-            if (!TryParseRfcNumber(path, out int number)) continue;
-            if (txtByNumber.ContainsKey(number)) continue;
-            if (!xmlByNumber.TryGetValue(number, out string? existing) ||
-                StringComparer.Ordinal.Compare(path, existing) < 0)
+            if (!xmlByNumber.TryGetValue(source.Number, out string? existing) ||
+                StringComparer.Ordinal.Compare(source.Path, existing) < 0)
             {
-                xmlByNumber[number] = path;
+                xmlByNumber[source.Number] = source.Path;
             }
         }
 

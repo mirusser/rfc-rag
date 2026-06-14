@@ -273,7 +273,7 @@ public sealed class ContextAssemblerTests
             results.Add(MakeResult(9110, secNum, $"Section {i}", "excerpt", 1.0 - i * 0.01));
         }
 
-        var toc = Enumerable.Range(1, 6).ToDictionary(i => i.ToString(), i => (string?)$"Section {i}");
+        var toc = Enumerable.Range(1, 6).ToDictionary<int, string, string?>(i => i.ToString(), i => $"Section {i}");
 
         var fakeService = new FakeSearchService
         {

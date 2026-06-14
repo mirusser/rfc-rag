@@ -151,13 +151,12 @@ internal static class ErrataLoader
 
     private static bool TryGetProperty(JsonElement entry, out JsonElement value, params string[] names)
     {
-        foreach (JsonProperty property in entry.EnumerateObject())
+        foreach (JsonProperty property in entry
+                     .EnumerateObject()
+                     .Where(property => names.Contains(property.Name, StringComparer.OrdinalIgnoreCase)))
         {
-            if (names.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
-            {
-                value = property.Value;
-                return true;
-            }
+            value = property.Value;
+            return true;
         }
 
         value = default;

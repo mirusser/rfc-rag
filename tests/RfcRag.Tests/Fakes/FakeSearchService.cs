@@ -97,7 +97,7 @@ internal sealed class FakeSearchService : ISearchService
         int rfcNumber, string section, int depth, CancellationToken cancellationToken)
     {
         if (SectionWithChildren is null)
-            return Task.FromResult((RfcSection.Empty, (IReadOnlyList<RfcSection>)[]));
+            return Task.FromResult<(RfcSection Parent, IReadOnlyList<RfcSection> Children)>((RfcSection.Empty, []));
         return Task.FromResult((SectionWithChildren.Parent, SectionWithChildren.Children));
     }
 
