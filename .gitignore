@@ -17,6 +17,7 @@ tests/RfcRag.Tests/TestData/*
 !tests/RfcRag.Tests/TestData/rfc9000.txt
 !tests/RfcRag.Tests/TestData/rfc9052.txt
 !tests/RfcRag.Tests/TestData/rfc9110.txt
+!tests/RfcRag.Tests/TestData/rfc9998-injection.txt
 !tests/RfcRag.Tests/TestData/rfc9999.txt
 !tests/RfcRag.Tests/TestData/rfc793.txt
 !tests/RfcRag.Tests/TestData/rfc822.txt
