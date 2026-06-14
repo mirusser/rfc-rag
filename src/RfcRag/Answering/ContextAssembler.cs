@@ -168,14 +168,8 @@ internal sealed class ContextAssembler(ISearchService searchService)
 
         // Pass 2: collapse ancestor/descendant overlaps
         var collapsed = new List<SearchResult>();
-        var ancestorsToSkip = new HashSet<(int, string)>();
-
         foreach (var result in seen.Values.OrderByDescending(r => r.Score))
         {
-            var key = (result.RfcNumber, result.Section);
-            if (ancestorsToSkip.Contains(key))
-                continue;
-
             // Check if this result is an ancestor of any already-included result
             bool isAncestor = false;
             string ancestorPrefix = result.Section + ".";

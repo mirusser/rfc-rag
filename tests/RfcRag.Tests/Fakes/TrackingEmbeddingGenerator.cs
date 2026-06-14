@@ -40,7 +40,7 @@ internal sealed class TrackingEmbeddingGenerator : IEmbeddingGenerator<string, E
             byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(text));
             int seed = BitConverter.ToInt32(hash, 0);
             for (int j = 0; j < EmbeddingDimensions; j++)
-                vector[j] = (float)((seed * (j + 1) * 0.001) % 1.0);
+                vector[j] = (float)(((double)seed * (j + 1) * 0.001) % 1.0);
             results.Add(new Embedding<float>(vector));
         }
 

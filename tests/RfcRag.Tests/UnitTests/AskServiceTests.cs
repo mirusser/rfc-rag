@@ -217,7 +217,7 @@ public sealed class AskServiceTests
         var traceWriter = new FakeTraceWriter();
         var askService = CreateAskService(searchService, traceWriter: traceWriter);
 
-        var answer = await askService.AskAsync("How does HTTP work?", cancellationToken: CancellationToken.None);
+        await askService.AskAsync("How does HTTP work?", cancellationToken: CancellationToken.None);
 
         Assert.NotNull(traceWriter.LastTrace);
         Assert.Equal("How does HTTP work?", traceWriter.LastTrace.Question);

@@ -557,58 +557,79 @@ internal sealed partial class RfcParser
     // Longest-first alternation ensures "MUST NOT" is matched before "MUST" at the same position,
     // preventing "MUST NOT" from being counted as both "MUST NOT" and "MUST".
     // No IgnoreCase: only UPPERCASE keywords have normative meaning per RFC 8174.
-    [GeneratedRegex(@"\b(MUST NOT|MUST|REQUIRED|SHALL NOT|SHALL|SHOULD NOT|SHOULD|NOT RECOMMENDED|RECOMMENDED|MAY|OPTIONAL)\b",
-        RegexOptions.CultureInvariant, 1000)]
-    private static partial Regex NormativeKeywordsRegex();
+    private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(1000);
+    private static readonly Regex NormativeKeywordsRegexInstance = CreateRegex(
+        @"\b(MUST NOT|MUST|REQUIRED|SHALL NOT|SHALL|SHOULD NOT|SHOULD|NOT RECOMMENDED|RECOMMENDED|MAY|OPTIONAL)\b",
+        RegexOptions.CultureInvariant);
+    private static readonly Regex RfcNumberRegexInstance =
+        CreateRegex(@"rfc(\d+)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    private static readonly Regex FieldRegexInstance =
+        CreateRegex(@"([A-Za-z\s/]+):\s*(.*?)(?=\n[A-Za-z\s/]+:\s|\n{2,}|\Z)", RegexOptions.Singleline);
+    private static readonly Regex CategoryRegexInstance =
+        CreateRegex(@"Category:\s*(.+?)(?:\r?\n|$)", RegexOptions.Multiline);
+    private static readonly Regex RfcRefRegexInstance = CreateRegex(@"RFC\s*(\d+)", RegexOptions.IgnoreCase);
+    private static readonly Regex AuthorsRegexInstance =
+        CreateRegex(@"Authors?:\s*(.+?)(?:\r?\n\s)", RegexOptions.Singleline);
+    private static readonly Regex PageHeaderRegexInstance =
+        CreateRegex(@"(?m)^[^\S\r\n]*RFC\s+\d+\s+.*$", RegexOptions.None);
+    private static readonly Regex PageFooterRegexInstance =
+        CreateRegex(@"(?m)^[^\S\r\n]*\[Page\s+\d+\]$", RegexOptions.None);
+    private static readonly Regex PageArtifactRegexInstance =
+        CreateRegex(@"(?m)^[^\S\r\n]*\[Page\s+\d+\]", RegexOptions.None);
+    private static readonly Regex TocRegexInstance =
+        CreateRegex(@"Table of Contents\s*$.*?(?=^\d+\.\s)", RegexOptions.Singleline | RegexOptions.Multiline);
+    private static readonly Regex SectionHeadingRegexInstance =
+        CreateRegex(@"^(\d+(?:\.\d+)*|Appendix\s+[A-Z](?:\.\d+)*)\.\s+(.+?)$", RegexOptions.Multiline);
+    private static readonly Regex Asn1RegexInstance =
+        CreateRegex(@"^\w[\w-]*\s+(::=)|\s*DEFINITIONS\s+::", RegexOptions.Multiline | RegexOptions.CultureInvariant);
+    private static readonly Regex CddlGroupRegexInstance =
+        CreateRegex(@"^\s*\w[\w-]*\s*=\s*[\{\(]", RegexOptions.Multiline | RegexOptions.CultureInvariant);
+    private static readonly Regex CddlTypeRuleRegexInstance =
+        CreateRegex(@"^\s*\w[\w-]*\s*=\s*\w[\w-]*\s*(?:/|\()", RegexOptions.Multiline | RegexOptions.CultureInvariant);
+    private static readonly Regex TlsStructRegexInstance =
+        CreateRegex(@"^\s*struct\s*\{", RegexOptions.Multiline | RegexOptions.CultureInvariant);
+    private static readonly Regex TlsEnumRegexInstance =
+        CreateRegex(@"^\s*enum\s*\{", RegexOptions.Multiline | RegexOptions.CultureInvariant);
+    private static readonly Regex TlsSelectRegexInstance =
+        CreateRegex(@"^\s*select\s*\(", RegexOptions.Multiline | RegexOptions.CultureInvariant);
+    private static readonly Regex AbnfRuleRegexInstance =
+        CreateRegex(@"^\s*([a-zA-Z][a-zA-Z0-9-]*)\s*=\s*/?\s*", RegexOptions.Multiline);
 
-    [GeneratedRegex(@"rfc(\d+)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 1000)]
-    private static partial Regex RfcNumberRegex();
+    private static Regex CreateRegex(string pattern, RegexOptions options) => new(pattern, options, RegexTimeout);
 
-    [GeneratedRegex(@"([A-Za-z\s/]+):\s*(.*?)(?=\n[A-Za-z\s/]+:\s|\n{2,}|\Z)", RegexOptions.Singleline, 1000)]
-    private static partial Regex FieldRegex();
+    private static Regex NormativeKeywordsRegex() => NormativeKeywordsRegexInstance;
 
-    [GeneratedRegex(@"Category:\s*(.+?)(?:\r?\n|$)", RegexOptions.Multiline, 1000)]
-    private static partial Regex CategoryRegex();
+    private static Regex RfcNumberRegex() => RfcNumberRegexInstance;
 
-    [GeneratedRegex(@"RFC\s*(\d+)", RegexOptions.IgnoreCase, 1000)]
-    private static partial Regex RfcRefRegex();
+    private static Regex FieldRegex() => FieldRegexInstance;
 
-    [GeneratedRegex(@"Authors?:\s*(.+?)(?:\r?\n\s)", RegexOptions.Singleline, 1000)]
-    private static partial Regex AuthorsRegex();
+    private static Regex CategoryRegex() => CategoryRegexInstance;
 
-    [GeneratedRegex(@"(?m)^[^\S\r\n]*RFC\s+\d+\s+.*$", RegexOptions.None, 1000)]
-    private static partial Regex PageHeaderRegex();
+    private static Regex RfcRefRegex() => RfcRefRegexInstance;
 
-    [GeneratedRegex(@"(?m)^[^\S\r\n]*\[Page\s+\d+\]$", RegexOptions.None, 1000)]
-    private static partial Regex PageFooterRegex();
+    private static Regex AuthorsRegex() => AuthorsRegexInstance;
 
-    [GeneratedRegex(@"(?m)^[^\S\r\n]*\[Page\s+\d+\]", RegexOptions.None, 1000)]
-    private static partial Regex PageArtifactRegex();
+    private static Regex PageHeaderRegex() => PageHeaderRegexInstance;
 
-    [GeneratedRegex(@"Table of Contents\s*$.*?(?=^\d+\.\s)", RegexOptions.Singleline | RegexOptions.Multiline, 1000)]
-    private static partial Regex TocRegex();
+    private static Regex PageFooterRegex() => PageFooterRegexInstance;
 
-    [GeneratedRegex(@"^(\d+(?:\.\d+)*|Appendix\s+[A-Z](?:\.\d+)*)\.\s+(.+?)$", RegexOptions.Multiline, 1000)]
-    private static partial Regex SectionHeadingRegex();
+    private static Regex PageArtifactRegex() => PageArtifactRegexInstance;
 
-    [GeneratedRegex(@"^\w[\w-]*\s+(::=)|\s*DEFINITIONS\s+::", RegexOptions.Multiline | RegexOptions.CultureInvariant, 1000)]
-    private static partial Regex Asn1Regex();
+    private static Regex TocRegex() => TocRegexInstance;
 
-    [GeneratedRegex(@"^\s*\w[\w-]*\s*=\s*[\{\(]", RegexOptions.Multiline | RegexOptions.CultureInvariant, 1000)]
-    private static partial Regex CddlGroupRegex();
+    private static Regex SectionHeadingRegex() => SectionHeadingRegexInstance;
 
-    [GeneratedRegex(@"^\s*\w[\w-]*\s*=\s*\w[\w-]*\s*(?:/|\()", RegexOptions.Multiline | RegexOptions.CultureInvariant, 1000)]
-    private static partial Regex CddlTypeRuleRegex();
+    private static Regex Asn1Regex() => Asn1RegexInstance;
 
-    [GeneratedRegex(@"^\s*struct\s*\{", RegexOptions.Multiline | RegexOptions.CultureInvariant, 1000)]
-    private static partial Regex TlsStructRegex();
+    private static Regex CddlGroupRegex() => CddlGroupRegexInstance;
 
-    [GeneratedRegex(@"^\s*enum\s*\{", RegexOptions.Multiline | RegexOptions.CultureInvariant, 1000)]
-    private static partial Regex TlsEnumRegex();
+    private static Regex CddlTypeRuleRegex() => CddlTypeRuleRegexInstance;
 
-    [GeneratedRegex(@"^\s*select\s*\(", RegexOptions.Multiline | RegexOptions.CultureInvariant, 1000)]
-    private static partial Regex TlsSelectRegex();
+    private static Regex TlsStructRegex() => TlsStructRegexInstance;
 
-    [GeneratedRegex(@"^\s*([a-zA-Z][a-zA-Z0-9-]*)\s*=\s*/?\s*", RegexOptions.Multiline, 1000)]
-    private static partial Regex AbnfRuleRegex();
+    private static Regex TlsEnumRegex() => TlsEnumRegexInstance;
+
+    private static Regex TlsSelectRegex() => TlsSelectRegexInstance;
+
+    private static Regex AbnfRuleRegex() => AbnfRuleRegexInstance;
 }

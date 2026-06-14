@@ -36,7 +36,7 @@ internal sealed class FakeEmbeddingGenerator : IEmbeddingGenerator<string, Embed
             int seed = BitConverter.ToInt32(hashBytes, 0);
             for (int j = 0; j < embeddingDimensions; j++)
             {
-                vector[j] = (float)((seed * (j + 1) * 0.001) % 1.0);
+                vector[j] = (float)(((double)seed * (j + 1) * 0.001) % 1.0);
             }
 
             results.Add(new Embedding<float>(vector));

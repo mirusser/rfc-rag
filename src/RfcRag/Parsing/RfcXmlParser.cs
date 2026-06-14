@@ -162,6 +162,9 @@ internal sealed partial class RfcXmlParser
         return match.Success ? int.Parse(match.Groups[1].Value) : 0;
     }
 
-    [GeneratedRegex(@"rfc(\d+)\.(xml|txt)$", RegexOptions.IgnoreCase, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex RfcNumberRegex();
+    private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(1000);
+    private static readonly Regex RfcNumberRegexInstance =
+        new(@"rfc(\d+)\.(xml|txt)$", RegexOptions.IgnoreCase, RegexTimeout);
+
+    private static Regex RfcNumberRegex() => RfcNumberRegexInstance;
 }

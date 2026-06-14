@@ -95,59 +95,47 @@ internal static partial class QueryPlanner
             .ToArray();
     }
 
-    [GeneratedRegex(
-        @"\bRFC\s*(?<number>\d{3,5})\b",
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
-        matchTimeoutMilliseconds: 100)]
-    private static partial Regex RfcNumberRegex();
-
-    [GeneratedRegex(
+    private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(100);
+    private static readonly Regex RfcNumberRegexInstance =
+        CreateRegex(@"\bRFC\s*(?<number>\d{3,5})\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    private static readonly Regex RfcSectionReferenceRegexInstance = CreateRegex(
         @"\bRFC\s*(?<rfc>\d{3,5})\b.{0,80}?(?:\bsection\s+|§\s*)(?<section>\d+(?:\.\d+)*[A-Za-z]?)\b",
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Singleline,
-        matchTimeoutMilliseconds: 100)]
-    private static partial Regex RfcSectionReferenceRegex();
-
-    [GeneratedRegex(
-        @"\b(forbidden|must\s+not)\b",
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
-        matchTimeoutMilliseconds: 100)]
-    private static partial Regex MustNotIntentRegex();
-
-    [GeneratedRegex(
-        @"\b(must|required|compliant)\b",
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
-        matchTimeoutMilliseconds: 100)]
-    private static partial Regex MustIntentRegex();
-
-    [GeneratedRegex(
-        @"\ballowed\b",
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
-        matchTimeoutMilliseconds: 100)]
-    private static partial Regex AllowedIntentRegex();
-
-    [GeneratedRegex(
-        @"\b(HTTP|TLS|OAuth|JWT|DNS|SMTP|QUIC|URI|TCP)\b",
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
-        matchTimeoutMilliseconds: 100)]
-    private static partial Regex ProtocolHintRegex();
-
-    [GeneratedRegex(
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Singleline);
+    private static readonly Regex MustNotIntentRegexInstance =
+        CreateRegex(@"\b(forbidden|must\s+not)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    private static readonly Regex MustIntentRegexInstance =
+        CreateRegex(@"\b(must|required|compliant)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    private static readonly Regex AllowedIntentRegexInstance =
+        CreateRegex(@"\ballowed\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    private static readonly Regex ProtocolHintRegexInstance =
+        CreateRegex(@"\b(HTTP|TLS|OAuth|JWT|DNS|SMTP|QUIC|URI|TCP)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    private static readonly Regex UppercaseNormativeKeywordTopicRegexInstance = CreateRegex(
         @"\b(MUST NOT|MUST|REQUIRED|SHALL NOT|SHALL|SHOULD NOT|SHOULD|NOT RECOMMENDED|RECOMMENDED|MAY|OPTIONAL)\b",
-        RegexOptions.CultureInvariant,
-        matchTimeoutMilliseconds: 100)]
-    private static partial Regex UppercaseNormativeKeywordTopicRegex();
+        RegexOptions.CultureInvariant);
+    private static readonly Regex AbnfIntentRegexInstance =
+        CreateRegex(@"\b(ABNF|grammar|syntax|Augmented\s+BNF)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    private static readonly Regex HistoricalIntentRegexInstance =
+        CreateRegex(@"\b(old|obsolete|changed\s+from)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
-    [GeneratedRegex(
-        @"\b(ABNF|grammar|syntax|Augmented\s+BNF)\b",
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
-        matchTimeoutMilliseconds: 100)]
-    private static partial Regex AbnfIntentRegex();
+    private static Regex CreateRegex(string pattern, RegexOptions options) => new(pattern, options, RegexTimeout);
 
-    [GeneratedRegex(
-        @"\b(old|obsolete|changed\s+from)\b",
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
-        matchTimeoutMilliseconds: 100)]
-    private static partial Regex HistoricalIntentRegex();
+    private static Regex RfcNumberRegex() => RfcNumberRegexInstance;
+
+    private static Regex RfcSectionReferenceRegex() => RfcSectionReferenceRegexInstance;
+
+    private static Regex MustNotIntentRegex() => MustNotIntentRegexInstance;
+
+    private static Regex MustIntentRegex() => MustIntentRegexInstance;
+
+    private static Regex AllowedIntentRegex() => AllowedIntentRegexInstance;
+
+    private static Regex ProtocolHintRegex() => ProtocolHintRegexInstance;
+
+    private static Regex UppercaseNormativeKeywordTopicRegex() => UppercaseNormativeKeywordTopicRegexInstance;
+
+    private static Regex AbnfIntentRegex() => AbnfIntentRegexInstance;
+
+    private static Regex HistoricalIntentRegex() => HistoricalIntentRegexInstance;
 }
 
 internal static class QueryPlanRationale
