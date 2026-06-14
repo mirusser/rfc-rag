@@ -693,12 +693,11 @@ public sealed class RfcRagToolsTests
         return textBlock.Text;
     }
 
-    private static async Task<SearchService> CreateSearchServiceWithDisposedDataSourceAsync()
+    private static Task<SearchService> CreateSearchServiceWithDisposedDataSourceAsync()
     {
-        var dataSource = NpgsqlDataSource.Create("Host=localhost;Username=postgres;Password=postgres;Database=postgres");
-        await dataSource.DisposeAsync();
+        using var dataSource = NpgsqlDataSource.Create("Host=localhost;Username=postgres;Password=postgres;Database=postgres");
 
-        return new SearchService(
+        return Task.FromResult(new SearchService(
             new SearchRepository(dataSource),
             new MetadataRepository(dataSource),
             CreateEmbeddingService(),
@@ -706,7 +705,7 @@ public sealed class RfcRagToolsTests
             {
                 RfcMirrorPath = string.Empty,
                 PostgresConnectionString = string.Empty,
-            }));
+            })));
     }
 
     private static EmbeddingService CreateEmbeddingService() =>

@@ -144,7 +144,7 @@ public sealed class AskServiceTests
         var chatClient = new FakeChatClient(ValidJsonResponse);
         var askService = CreateAskService(searchService, chatClient);
 
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
 
         await Assert.ThrowsAsync<OperationCanceledException>(() =>

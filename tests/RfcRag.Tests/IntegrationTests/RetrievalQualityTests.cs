@@ -65,14 +65,14 @@ public sealed class RetrievalQualityFixture : IAsyncLifetime
 
     private static string CreateTempRfcDirectory()
     {
-        string tempDir = Path.Combine(Path.GetTempPath(), $"rfc-rag-quality-{Guid.NewGuid():N}");
+        string tempDir = Path.Join(Path.GetTempPath(), $"rfc-rag-quality-{Guid.NewGuid():N}");
         Directory.CreateDirectory(tempDir);
 
         foreach (int rfcNumber in TrackedRfcNumbers)
         {
-            string sourcePath = Path.Combine("TestData", $"rfc{rfcNumber}.txt");
+            string sourcePath = Path.Join("TestData", $"rfc{rfcNumber}.txt");
             if (File.Exists(sourcePath))
-                File.Copy(sourcePath, Path.Combine(tempDir, $"rfc{rfcNumber}.txt"));
+                File.Copy(sourcePath, Path.Join(tempDir, $"rfc{rfcNumber}.txt"));
         }
 
         return tempDir;
@@ -139,7 +139,7 @@ public sealed class RetrievalQualityTests(RetrievalQualityFixture fixture) : ICl
 
     public static IEnumerable<object[]> GetFixtureQueries()
     {
-        string fixturePath = Path.Combine("eval", "retrieval_queries.json");
+        string fixturePath = Path.Join("eval", "retrieval_queries.json");
         string json = File.ReadAllText(fixturePath);
         var queries = JsonSerializer.Deserialize<EvalQueryJson[]>(json, JsonOptions) ?? [];
 
@@ -155,7 +155,7 @@ public sealed class RetrievalQualityTests(RetrievalQualityFixture fixture) : ICl
     [Fact]
     public async Task GoldenQuestions_TestdataCorpus_MeetsBaselineThresholds()
     {
-        string fixturePath = Path.Combine("eval", "golden_questions.json");
+        string fixturePath = Path.Join("eval", "golden_questions.json");
         string json = await File.ReadAllTextAsync(fixturePath, CancellationToken.None);
         var allQuestions = JsonSerializer.Deserialize<GoldenQuestion[]>(json, JsonOptions) ?? [];
 

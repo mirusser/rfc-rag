@@ -11,7 +11,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_RealRfc2119_ExtractsCorrectMetadata()
     {
-        string fixturePath = Path.Combine("TestData", "rfc2119.txt");
+        string fixturePath = Path.Join("TestData", "rfc2119.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         Assert.NotNull(document);
@@ -24,7 +24,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_RealRfc2119_ExtractsSections()
     {
-        string fixturePath = Path.Combine("TestData", "rfc2119.txt");
+        string fixturePath = Path.Join("TestData", "rfc2119.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         Assert.NotEmpty(document.Sections);
@@ -38,7 +38,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_RealRfc2119_ExtractsNormativeKeywords()
     {
-        string fixturePath = Path.Combine("TestData", "rfc2119.txt");
+        string fixturePath = Path.Join("TestData", "rfc2119.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         var mustOccurrences = document.NormativeOccurrences
@@ -55,7 +55,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_RealRfc9110_ExtractsComplexSections()
     {
-        string fixturePath = Path.Combine("TestData", "rfc9110.txt");
+        string fixturePath = Path.Join("TestData", "rfc9110.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         Assert.Equal(9110, document.Metadata.Number);
@@ -69,7 +69,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_RealRfc8446_ExtractsMultipleSections()
     {
-        string fixturePath = Path.Combine("TestData", "rfc8446.txt");
+        string fixturePath = Path.Join("TestData", "rfc8446.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         Assert.Equal(8446, document.Metadata.Number);
@@ -80,7 +80,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_RealRfc9110_ExtractsAbnfBlocks()
     {
-        string fixturePath = Path.Combine("TestData", "rfc9110.txt");
+        string fixturePath = Path.Join("TestData", "rfc9110.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         Assert.NotEmpty(document.AbnfBlocks);
@@ -89,14 +89,14 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_InvalidFilename_ThrowsFormatException()
     {
-        string fixturePath = Path.Combine("TestData", "badfile.txt");
+        string fixturePath = Path.Join("TestData", "badfile.txt");
         await Assert.ThrowsAsync<FormatException>(() => parser.ParseAsync(fixturePath, CancellationToken.None));
     }
 
     [Fact]
     public async Task NormativeKeywords_Dedup_DoesNotDoubleCountMustNotAsMust()
     {
-        string fixturePath = Path.Combine("TestData", "rfc2119.txt");
+        string fixturePath = Path.Join("TestData", "rfc2119.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         var mustNot = document.NormativeOccurrences.Where(n => n.Keyword == "MUST NOT").ToList();
@@ -117,7 +117,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task AbnfBlocks_RealRfc9110_IncludesMultiLineDefinitions()
     {
-        string fixturePath = Path.Combine("TestData", "rfc9110.txt");
+        string fixturePath = Path.Join("TestData", "rfc9110.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         Assert.NotEmpty(document.AbnfBlocks);
@@ -129,7 +129,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_RealRfc3986_ExtractsUriGrammar()
     {
-        string fixturePath = Path.Combine("TestData", "rfc3986.txt");
+        string fixturePath = Path.Join("TestData", "rfc3986.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         Assert.Equal(3986, document.Metadata.Number);
@@ -145,7 +145,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_RealRfc9000_ExtractsQuicTransport()
     {
-        string fixturePath = Path.Combine("TestData", "rfc9000.txt");
+        string fixturePath = Path.Join("TestData", "rfc9000.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         Assert.Equal(9000, document.Metadata.Number);
@@ -158,7 +158,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task PageHeaders_FormFeed_StripsSubsequentPageHeaders()
     {
-        string fixturePath = Path.Combine("TestData", "rfc9999.txt");
+        string fixturePath = Path.Join("TestData", "rfc9999.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         Assert.Equal(9999, document.Metadata.Number);
@@ -175,7 +175,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_RealRfc8446_DetectsTlsPresentationLang()
     {
-        string fixturePath = Path.Combine("TestData", "rfc8446.txt");
+        string fixturePath = Path.Join("TestData", "rfc8446.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         Assert.Equal(GrammarStyleConstants.TlsPresentationLang, document.Metadata.GrammarStyle);
@@ -184,7 +184,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_RealRfc9110_DetectsAbnf()
     {
-        string fixturePath = Path.Combine("TestData", "rfc9110.txt");
+        string fixturePath = Path.Join("TestData", "rfc9110.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         Assert.Equal(GrammarStyleConstants.Abnf, document.Metadata.GrammarStyle);
@@ -193,7 +193,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_RealRfc2119_DetectsNone()
     {
-        string fixturePath = Path.Combine("TestData", "rfc2119.txt");
+        string fixturePath = Path.Join("TestData", "rfc2119.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         Assert.Equal(GrammarStyleConstants.None, document.Metadata.GrammarStyle);
@@ -202,7 +202,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_RealRfc9052_DetectsCddl()
     {
-        string fixturePath = Path.Combine("TestData", "rfc9052.txt");
+        string fixturePath = Path.Join("TestData", "rfc9052.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         Assert.Equal(GrammarStyleConstants.Cddl, document.Metadata.GrammarStyle);
@@ -327,14 +327,14 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_Rfc793_ExtractsCorrectNumber()
     {
-        RfcDocument doc = await parser.ParseAsync(Path.Combine("TestData", "rfc793.txt"), CancellationToken.None);
+        RfcDocument doc = await parser.ParseAsync(Path.Join("TestData", "rfc793.txt"), CancellationToken.None);
         Assert.Equal(793, doc.Metadata.Number);
     }
 
     [Fact]
     public async Task ParseAsync_Rfc793_ExtractsSections()
     {
-        RfcDocument doc = await parser.ParseAsync(Path.Combine("TestData", "rfc793.txt"), CancellationToken.None);
+        RfcDocument doc = await parser.ParseAsync(Path.Join("TestData", "rfc793.txt"), CancellationToken.None);
 
         Assert.NotEmpty(doc.Sections);
         // Old-style format: section headings like "1.1.  Motivation"
@@ -345,7 +345,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_Rfc793_ArabicPageMarkersStripped()
     {
-        RfcDocument doc = await parser.ParseAsync(Path.Combine("TestData", "rfc793.txt"), CancellationToken.None);
+        RfcDocument doc = await parser.ParseAsync(Path.Join("TestData", "rfc793.txt"), CancellationToken.None);
 
         string combined = string.Join("\n", doc.Sections.Select(s => s.Text));
         // Arabic-numeral page markers like "[Page 1]" must be stripped.
@@ -358,7 +358,7 @@ public sealed class RfcParserTests
     [Fact(Skip = "known-issue: SectionHeadingRegex does not match bare-letter appendix style (A. EXAMPLES); tracked as follow-up")]
     public async Task ParseAsync_Rfc822_AppendixSections_AreExtracted()
     {
-        RfcDocument doc = await parser.ParseAsync(Path.Combine("TestData", "rfc822.txt"), CancellationToken.None);
+        RfcDocument doc = await parser.ParseAsync(Path.Join("TestData", "rfc822.txt"), CancellationToken.None);
 
         // rfc-editor.org: RFC 822 appendices A through D
         Assert.Contains(doc.Sections, s => s.Section == "A");
@@ -370,7 +370,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_Rfc5234_ObsoletesMetadata_Contains4234()
     {
-        RfcDocument doc = await parser.ParseAsync(Path.Combine("TestData", "rfc5234.txt"), CancellationToken.None);
+        RfcDocument doc = await parser.ParseAsync(Path.Join("TestData", "rfc5234.txt"), CancellationToken.None);
         // rfc-editor.org: RFC 5234 Obsoletes: 4234
         Assert.Contains(4234, doc.Metadata.Obsoletes);
     }
@@ -378,7 +378,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_Rfc5234_ExtractsCoreRules()
     {
-        RfcDocument doc = await parser.ParseAsync(Path.Combine("TestData", "rfc5234.txt"), CancellationToken.None);
+        RfcDocument doc = await parser.ParseAsync(Path.Join("TestData", "rfc5234.txt"), CancellationToken.None);
 
         // Appendix B.1 core rules: ALPHA, DIGIT, SP must be present
         var allRuleNames = doc.AbnfBlocks.SelectMany(b => b.RuleNames).ToHashSet(StringComparer.Ordinal);
@@ -390,7 +390,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_Rfc5234_IncrementalRuleNames_Deduped()
     {
-        RfcDocument doc = await parser.ParseAsync(Path.Combine("TestData", "rfc5234.txt"), CancellationToken.None);
+        RfcDocument doc = await parser.ParseAsync(Path.Join("TestData", "rfc5234.txt"), CancellationToken.None);
 
         // Section 4 defines many rules contiguously; no rule name should appear twice in a block's RuleNames.
         foreach (var block in doc.AbnfBlocks)
@@ -404,7 +404,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_Rfc8174_UpdatesMetadata_Contains2119()
     {
-        RfcDocument doc = await parser.ParseAsync(Path.Combine("TestData", "rfc8174.txt"), CancellationToken.None);
+        RfcDocument doc = await parser.ParseAsync(Path.Join("TestData", "rfc8174.txt"), CancellationToken.None);
         // rfc-editor.org: RFC 8174 Updates: 2119
         Assert.Contains(2119, doc.Metadata.Updates);
     }
@@ -412,7 +412,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_Rfc8174_LowercaseKeywords_NotExtracted()
     {
-        RfcDocument doc = await parser.ParseAsync(Path.Combine("TestData", "rfc8174.txt"), CancellationToken.None);
+        RfcDocument doc = await parser.ParseAsync(Path.Join("TestData", "rfc8174.txt"), CancellationToken.None);
 
         // rfc8174 explicitly clarifies that only UPPERCASE keywords have normative meaning.
         // Lowercase "should", "may", "must" in prose must NOT produce NormativeOccurrences.
@@ -461,7 +461,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_Rfc9293_WrappedObsoletes_ExtractsAllNumbers()
     {
-        RfcDocument doc = await parser.ParseAsync(Path.Combine("TestData", "rfc9293.txt"), CancellationToken.None);
+        RfcDocument doc = await parser.ParseAsync(Path.Join("TestData", "rfc9293.txt"), CancellationToken.None);
 
         // rfc-editor.org: RFC 9293 Obsoletes: 793, 879, 2873, 6093, 6429, 6528, 6691
         int[] expected = [793, 879, 2873, 6093, 6429, 6528, 6691];
@@ -472,7 +472,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_Rfc9293_Updates_ExtractsAllNumbers()
     {
-        RfcDocument doc = await parser.ParseAsync(Path.Combine("TestData", "rfc9293.txt"), CancellationToken.None);
+        RfcDocument doc = await parser.ParseAsync(Path.Join("TestData", "rfc9293.txt"), CancellationToken.None);
 
         // rfc-editor.org: RFC 9293 Updates: 1011, 1122, 5961
         int[] expected = [1011, 1122, 5961];
@@ -484,7 +484,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_Rfc9110_AppendixA_ExtractedAsSection()
     {
-        string fixturePath = Path.Combine("TestData", "rfc9110.txt");
+        string fixturePath = Path.Join("TestData", "rfc9110.txt");
         RfcDocument doc = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         // rfc-editor.org: RFC 9110 Appendix A "Collected ABNF"
@@ -498,7 +498,7 @@ public sealed class RfcParserTests
     [Fact]
     public async Task ParseAsync_Rfc9110_AppendixA_HasAbnfBlocks()
     {
-        string fixturePath = Path.Combine("TestData", "rfc9110.txt");
+        string fixturePath = Path.Join("TestData", "rfc9110.txt");
         RfcDocument doc = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         RfcSection? appendixA = doc.Sections.FirstOrDefault(

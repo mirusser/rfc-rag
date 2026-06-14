@@ -106,7 +106,7 @@ public sealed class LiveApiFixture : IAsyncLifetime
 
         var rfcOptions = new RfcRagOptions
         {
-            RfcMirrorPath = Path.Combine(Directory.GetCurrentDirectory(), "TestData"),
+            RfcMirrorPath = Path.Join(Directory.GetCurrentDirectory(), "TestData"),
             PostgresConnectionString = container.GetConnectionString(),
             EmbeddingBatchSize = 20,
             MaxEmbeddingConcurrency = 4,

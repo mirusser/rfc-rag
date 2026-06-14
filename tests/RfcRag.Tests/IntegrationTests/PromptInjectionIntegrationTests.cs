@@ -34,12 +34,12 @@ public sealed class PromptInjectionFixture : IAsyncLifetime
         dataSource = NpgsqlDataSource.Create(container.GetConnectionString());
         await RfcRagMigrationRunner.ApplyAsync(dataSource, CancellationToken.None);
 
-        tempRfcDir = Path.Combine(Path.GetTempPath(), $"rfc-rag-injection-{Guid.NewGuid():N}");
+        tempRfcDir = Path.Join(Path.GetTempPath(), $"rfc-rag-injection-{Guid.NewGuid():N}");
         Directory.CreateDirectory(tempRfcDir);
 
         // RfcSourceResolver matches rfc<number>.txt; copy the fixture under its canonical name.
-        string injectionSource = Path.Combine("TestData", "rfc9998-injection.txt");
-        File.Copy(injectionSource, Path.Combine(tempRfcDir, "rfc9998.txt"));
+        string injectionSource = Path.Join("TestData", "rfc9998-injection.txt");
+        File.Copy(injectionSource, Path.Join(tempRfcDir, "rfc9998.txt"));
 
         var embeddingService = new EmbeddingService(
             new SemanticFakeEmbeddingGenerator(),

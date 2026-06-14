@@ -6,7 +6,7 @@ namespace RfcRag.Infrastructure;
 internal static class RfcRagMigrationRunner
 {
     public static string DefaultMigrationsDirectory =>
-        Path.Combine(AppContext.BaseDirectory, RfcRagConventions.MigrationsDirectoryName);
+        Path.Join(AppContext.BaseDirectory, RfcRagConventions.MigrationsDirectoryName);
 
     public static Task ApplyAsync(NpgsqlDataSource dataSource, CancellationToken cancellationToken) =>
         ApplyAsync(dataSource, DefaultMigrationsDirectory, cancellationToken);

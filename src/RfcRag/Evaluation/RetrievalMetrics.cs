@@ -35,7 +35,7 @@ internal static class RetrievalMetrics
         double dcg = ComputeDcg(rankedRfcs, expected, k);
         double idcg = ComputeIdealDcg(expectedRfcs.Length, k);
 
-        return idcg == 0.0 ? 0.0 : dcg / idcg;
+        return idcg <= double.Epsilon ? 0.0 : dcg / idcg;
     }
 
     public static bool HitAtK((int Rfc, string Section)[] ranked, int[] expectedRfcs, string[] expectedSections, int k)
@@ -78,7 +78,7 @@ internal static class RetrievalMetrics
         }
 
         double idcg = ComputeIdealDcg(expectedPairs.Count, k);
-        return idcg == 0.0 ? 0.0 : dcg / idcg;
+        return idcg <= double.Epsilon ? 0.0 : dcg / idcg;
     }
 
     public static RetrievalAggregateMetrics Aggregate(IReadOnlyList<RetrievalQueryResult> results)

@@ -82,7 +82,7 @@ public sealed class BenchmarkCommandTests
 
     private static string CreateTempQueriesFile(params object[] queries)
     {
-        string tempFile = Path.Combine(Path.GetTempPath(), $"bench-{Guid.NewGuid():N}.json");
+        string tempFile = Path.Join(Path.GetTempPath(), $"bench-{Guid.NewGuid():N}.json");
         File.WriteAllText(tempFile, JsonSerializer.Serialize(queries));
         return tempFile;
     }

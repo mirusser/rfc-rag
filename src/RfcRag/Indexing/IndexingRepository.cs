@@ -24,10 +24,8 @@ internal sealed class IndexingRepository(NpgsqlDataSource dataSource)
             return;
         }
 
-        var batch = new NpgsqlBatch(connection, transaction);
-        await using (batch.ConfigureAwait(false))
-        {
-            foreach (RfcSection section in sections)
+        using var batch = new NpgsqlBatch(connection, transaction);
+        foreach (RfcSection section in sections)
             {
                 var cmd = new NpgsqlBatchCommand(
                     """
@@ -49,8 +47,7 @@ internal sealed class IndexingRepository(NpgsqlDataSource dataSource)
                 batch.BatchCommands.Add(cmd);
             }
 
-            await batch.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        }
+        await batch.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public static async Task InsertAbnfBlocksAsync(
@@ -68,10 +65,8 @@ internal sealed class IndexingRepository(NpgsqlDataSource dataSource)
             return;
         }
 
-        var batch = new NpgsqlBatch(connection, transaction);
-        await using (batch.ConfigureAwait(false))
-        {
-            foreach (RfcAbnfBlock block in blocks)
+        using var batch = new NpgsqlBatch(connection, transaction);
+        foreach (RfcAbnfBlock block in blocks)
             {
                 var cmd = new NpgsqlBatchCommand(
                     """
@@ -89,8 +84,7 @@ internal sealed class IndexingRepository(NpgsqlDataSource dataSource)
                 batch.BatchCommands.Add(cmd);
             }
 
-            await batch.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        }
+        await batch.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public static async Task InsertNormativeOccurrencesAsync(
@@ -108,10 +102,8 @@ internal sealed class IndexingRepository(NpgsqlDataSource dataSource)
             return;
         }
 
-        var batch = new NpgsqlBatch(connection, transaction);
-        await using (batch.ConfigureAwait(false))
-        {
-            foreach (NormativeOccurrence occurrence in occurrences)
+        using var batch = new NpgsqlBatch(connection, transaction);
+        foreach (NormativeOccurrence occurrence in occurrences)
             {
                 var cmd = new NpgsqlBatchCommand(
                     """
@@ -128,8 +120,7 @@ internal sealed class IndexingRepository(NpgsqlDataSource dataSource)
                 batch.BatchCommands.Add(cmd);
             }
 
-            await batch.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        }
+        await batch.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async Task DeleteByRfcNumberAsync(

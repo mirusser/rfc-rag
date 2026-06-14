@@ -5,7 +5,7 @@ namespace RfcRag.Tests.UnitTests;
 
 public sealed class RfcSourceResolverTests : IDisposable
 {
-    private readonly string tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+    private readonly string tempDir = Path.Join(Path.GetTempPath(), Path.GetRandomFileName());
 
     public RfcSourceResolverTests()
     {
@@ -55,19 +55,19 @@ public sealed class RfcSourceResolverTests : IDisposable
     [Fact]
     public void Resolve_DuplicateTxtAcrossSubdirs_PicksDeterministically()
     {
-        string subA = Path.Combine(tempDir, "a");
-        string subB = Path.Combine(tempDir, "b");
+        string subA = Path.Join(tempDir, "a");
+        string subB = Path.Join(tempDir, "b");
         Directory.CreateDirectory(subA);
         Directory.CreateDirectory(subB);
-        File.WriteAllText(Path.Combine(subA, "rfc9000.txt"), "content");
-        File.WriteAllText(Path.Combine(subB, "rfc9000.txt"), "content");
+        File.WriteAllText(Path.Join(subA, "rfc9000.txt"), "content");
+        File.WriteAllText(Path.Join(subB, "rfc9000.txt"), "content");
 
         var sources = RfcSourceResolver.Resolve(tempDir, RfcParserType.Text);
         var source = Assert.Single(sources, s => s.RfcNumber == 9000);
 
         // Lexicographically smallest path wins
-        string pathA = Path.Combine(subA, "rfc9000.txt");
-        string pathB = Path.Combine(subB, "rfc9000.txt");
+        string pathA = Path.Join(subA, "rfc9000.txt");
+        string pathB = Path.Join(subB, "rfc9000.txt");
         string expected = StringComparer.Ordinal.Compare(pathA, pathB) < 0 ? pathA : pathB;
         Assert.Equal(expected, source.Path);
     }
@@ -96,5 +96,5 @@ public sealed class RfcSourceResolverTests : IDisposable
     }
 
     private void CreateFile(string name) =>
-        File.WriteAllText(Path.Combine(tempDir, name), "content");
+        File.WriteAllText(Path.Join(tempDir, name), "content");
 }

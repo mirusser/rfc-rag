@@ -67,6 +67,6 @@ internal sealed class QueryTraceWriter
     private string GetFilePath()
     {
         string date = _timeProvider.GetUtcNow().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        return Path.Combine(_traceDirectory!, $"rfc-rag-trace-{date}.jsonl");
+        return Path.Join(_traceDirectory!, $"rfc-rag-trace-{date}.jsonl");
     }
 }

@@ -102,7 +102,7 @@ public sealed class EvalCommandTests : IAsyncLifetime
                 ],
             });
 
-        string questionsFilePath = Path.Combine(Path.GetTempPath(), $"rfc-rag-eval-{Guid.NewGuid():N}.json");
+        string questionsFilePath = Path.Join(Path.GetTempPath(), $"rfc-rag-eval-{Guid.NewGuid():N}.json");
         await File.WriteAllTextAsync(
             questionsFilePath,
             """

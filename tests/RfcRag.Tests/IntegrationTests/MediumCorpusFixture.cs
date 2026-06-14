@@ -78,7 +78,7 @@ public sealed class MediumCorpusFixture : IAsyncLifetime
 
     public MediumCorpusFixture()
     {
-        rfcMirrorPath = Path.Combine(Directory.GetCurrentDirectory(), "TestData");
+        rfcMirrorPath = Path.Join(Directory.GetCurrentDirectory(), "TestData");
     }
 
     public NpgsqlDataSource DataSource { get; private set; } = null!;

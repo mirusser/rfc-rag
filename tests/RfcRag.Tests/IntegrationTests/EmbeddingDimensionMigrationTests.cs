@@ -104,7 +104,7 @@ public sealed class EmbeddingDimensionMigrationTests : IAsyncLifetime
     {
         var options = Options.Create(new RfcRagOptions
         {
-            RfcMirrorPath = Path.Combine(Directory.GetCurrentDirectory(), "TestData"),
+            RfcMirrorPath = Path.Join(Directory.GetCurrentDirectory(), "TestData"),
             PostgresConnectionString = container!.GetConnectionString(),
             EmbeddingDimensions = targetDimensions,
             RunMigrationsOnStartup = false

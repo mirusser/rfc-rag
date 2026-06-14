@@ -125,14 +125,14 @@ public sealed class RfcRagIntegrationTests : IClassFixture<MediumCorpusFixture>
     [Fact]
     public async Task IncrementalIndex_SkipsUnchangedRfcs()
     {
-        string tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        string tempDir = Path.Join(Path.GetTempPath(), Path.GetRandomFileName());
         Directory.CreateDirectory(tempDir);
         try
         {
             // Copy one existing RFC file into temp dir for the incremental index test
-            string sourceFile = Path.Combine(
+            string sourceFile = Path.Join(
                 Directory.GetCurrentDirectory(), "TestData", "rfc2119.txt");
-            string destFile = Path.Combine(tempDir, "rfc2119.txt");
+            string destFile = Path.Join(tempDir, "rfc2119.txt");
             File.Copy(sourceFile, destFile);
 
             // Create an indexer that only sees this temp dir
@@ -168,16 +168,16 @@ public sealed class RfcRagIntegrationTests : IClassFixture<MediumCorpusFixture>
     [Fact]
     public async Task IndexAllAsync_ErrataJsonPathSet_IngestsErrataIdempotently()
     {
-        string tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        string tempDir = Path.Join(Path.GetTempPath(), Path.GetRandomFileName());
         Directory.CreateDirectory(tempDir);
 
         try
         {
-            string sourceFile = Path.Combine(
+            string sourceFile = Path.Join(
                 Directory.GetCurrentDirectory(), "TestData", "rfc2119.txt");
-            File.Copy(sourceFile, Path.Combine(tempDir, "rfc2119.txt"));
+            File.Copy(sourceFile, Path.Join(tempDir, "rfc2119.txt"));
 
-            string errataPath = Path.Combine(tempDir, "errata.json");
+            string errataPath = Path.Join(tempDir, "errata.json");
             await File.WriteAllTextAsync(
                 errataPath,
                 """
@@ -548,11 +548,11 @@ public sealed class RfcRagIntegrationTests : IClassFixture<MediumCorpusFixture>
     [Fact]
     public async Task IndexAllAsync_TxtAndXmlSameNumber_XmlMode_IndexesOnlyTxt()
     {
-        string tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        string tempDir = Path.Join(Path.GetTempPath(), Path.GetRandomFileName());
         Directory.CreateDirectory(tempDir);
         try
         {
-            await File.WriteAllTextAsync(Path.Combine(tempDir, "rfc9999.txt"), """
+            await File.WriteAllTextAsync(Path.Join(tempDir, "rfc9999.txt"), """
                 Network Working Group
                 Request for Comments: 9999
 
@@ -563,7 +563,7 @@ public sealed class RfcRagIntegrationTests : IClassFixture<MediumCorpusFixture>
                    Test content for the txt-over-xml precedence integration test.
                 """, TestContext.Current.CancellationToken);
 
-            await File.WriteAllTextAsync(Path.Combine(tempDir, "rfc9999.xml"), """
+            await File.WriteAllTextAsync(Path.Join(tempDir, "rfc9999.xml"), """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <rfc xmlns="urn:ietf:params:xml:ns:rfcxml" number="9999">
                   <front><title>Test RFC</title></front>
@@ -627,7 +627,7 @@ public sealed class RfcRagIntegrationTests : IClassFixture<MediumCorpusFixture>
     {
         var repository = new IndexingRepository(fixture.DataSource);
 
-        string fixtureMirrorPath = Path.Combine(Directory.GetCurrentDirectory(), "TestData");
+        string fixtureMirrorPath = Path.Join(Directory.GetCurrentDirectory(), "TestData");
         IndexManifest? manifest = await repository.GetLatestManifestAsync(CancellationToken.None, fixtureMirrorPath);
 
         Assert.NotNull(manifest);
@@ -642,13 +642,13 @@ public sealed class RfcRagIntegrationTests : IClassFixture<MediumCorpusFixture>
     [Fact]
     public async Task IndexAllAsync_IncrementalRun_StillWritesManifest()
     {
-        string tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        string tempDir = Path.Join(Path.GetTempPath(), Path.GetRandomFileName());
         Directory.CreateDirectory(tempDir);
         try
         {
-            string sourceFile = Path.Combine(
+            string sourceFile = Path.Join(
                 Directory.GetCurrentDirectory(), "TestData", "rfc2119.txt");
-            string destFile = Path.Combine(tempDir, "rfc2119.txt");
+            string destFile = Path.Join(tempDir, "rfc2119.txt");
             File.Copy(sourceFile, destFile);
 
             var indexingRepository = new IndexingRepository(fixture.DataSource);

@@ -58,7 +58,7 @@ internal static class RfcSourceResolver
             return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
         if (mirrorPath.StartsWith("~/", StringComparison.Ordinal))
-            return Path.Combine(
+            return Path.Join(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 mirrorPath[2..]);
 

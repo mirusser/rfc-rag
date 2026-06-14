@@ -15,7 +15,7 @@ public sealed class PromptInjectionTests
     [Fact]
     public async Task Parse_InjectionFixture_ExtractsMetadataNormally()
     {
-        string fixturePath = Path.Combine("TestData", "rfc9998-injection.txt");
+        string fixturePath = Path.Join("TestData", "rfc9998-injection.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         Assert.NotNull(document);
@@ -28,7 +28,7 @@ public sealed class PromptInjectionTests
     [Fact]
     public async Task Parse_InjectionFixture_IgnoreInstructionsInSectionContent()
     {
-        string fixturePath = Path.Combine("TestData", "rfc9998-injection.txt");
+        string fixturePath = Path.Join("TestData", "rfc9998-injection.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         // Section 2 contains "IGNORE ALL PREVIOUS INSTRUCTIONS" — a classic
@@ -42,7 +42,7 @@ public sealed class PromptInjectionTests
     [Fact]
     public async Task Parse_InjectionFixture_SystemOverrideInSectionContent()
     {
-        string fixturePath = Path.Combine("TestData", "rfc9998-injection.txt");
+        string fixturePath = Path.Join("TestData", "rfc9998-injection.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         // Section 3 contains "[SYSTEM: ...]" patterns designed to override
@@ -56,7 +56,7 @@ public sealed class PromptInjectionTests
     [Fact]
     public async Task Parse_InjectionFixture_DelimiterTokensInSectionContent()
     {
-        string fixturePath = Path.Combine("TestData", "rfc9998-injection.txt");
+        string fixturePath = Path.Join("TestData", "rfc9998-injection.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         // Section 4 contains chat-role delimiters like "<|im_start|>user"
@@ -70,7 +70,7 @@ public sealed class PromptInjectionTests
     [Fact]
     public async Task Parse_InjectionFixture_JsonCodeBlockInSectionContent()
     {
-        string fixturePath = Path.Combine("TestData", "rfc9998-injection.txt");
+        string fixturePath = Path.Join("TestData", "rfc9998-injection.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         // Section 5 contains a fenced JSON block with injection fields.
@@ -83,7 +83,7 @@ public sealed class PromptInjectionTests
     [Fact]
     public async Task Parse_InjectionFixture_DialogContentInSectionContent()
     {
-        string fixturePath = Path.Combine("TestData", "rfc9998-injection.txt");
+        string fixturePath = Path.Join("TestData", "rfc9998-injection.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         // Section 6 embeds multi-turn dialog with role override attempts.
@@ -96,7 +96,7 @@ public sealed class PromptInjectionTests
     [Fact]
     public async Task Parse_InjectionFixture_HtmlTagsInSectionContent()
     {
-        string fixturePath = Path.Combine("TestData", "rfc9998-injection.txt");
+        string fixturePath = Path.Join("TestData", "rfc9998-injection.txt");
         RfcDocument document = await parser.ParseAsync(fixturePath, CancellationToken.None);
 
         // Section 7 contains HTML/script tags to test cross-format safety.

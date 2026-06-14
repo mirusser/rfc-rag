@@ -32,7 +32,7 @@ public sealed class QueryTraceWriterTests
     [Fact]
     public async Task WriteAsync_TraceDirectorySet_WritesJsonlFile()
     {
-        string tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        string tempDir = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
         try
         {
             var options = Options.Create(OptionsWithTrace with { TraceDirectory = tempDir });
@@ -54,7 +54,7 @@ public sealed class QueryTraceWriterTests
             await writer.WriteAsync(trace, TestContext.Current.CancellationToken);
 
             string date = DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-            string filePath = Path.Combine(tempDir, $"rfc-rag-trace-{date}.jsonl");
+            string filePath = Path.Join(tempDir, $"rfc-rag-trace-{date}.jsonl");
             Assert.True(File.Exists(filePath), "Trace file should exist");
 
             string content = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
@@ -136,7 +136,7 @@ public sealed class QueryTraceWriterTests
     [Fact]
     public async Task WriteAsync_AppendsToExistingFile()
     {
-        string tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        string tempDir = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
         try
         {
             var options = Options.Create(OptionsWithTrace with { TraceDirectory = tempDir });
@@ -160,7 +160,7 @@ public sealed class QueryTraceWriterTests
             await writer.WriteAsync(trace2, TestContext.Current.CancellationToken);
 
             string date = DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-            string filePath = Path.Combine(tempDir, $"rfc-rag-trace-{date}.jsonl");
+            string filePath = Path.Join(tempDir, $"rfc-rag-trace-{date}.jsonl");
             string content = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
 
             string[] lines = content.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
@@ -176,7 +176,7 @@ public sealed class QueryTraceWriterTests
     [Fact]
     public async Task WriteAsync_UsesTimeProviderForDateRotation_FileNameReflectsFakeDate()
     {
-        string tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        string tempDir = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
         try
         {
             var fakeTime = new FakeTimeProvider();
@@ -195,7 +195,7 @@ public sealed class QueryTraceWriterTests
             await writer.WriteAsync(trace, TestContext.Current.CancellationToken);
 
             string expectedDate = "2025-01-15";
-            string expectedFile = Path.Combine(tempDir, $"rfc-rag-trace-{expectedDate}.jsonl");
+            string expectedFile = Path.Join(tempDir, $"rfc-rag-trace-{expectedDate}.jsonl");
             Assert.True(File.Exists(expectedFile),
                 $"Expected trace file for {expectedDate} but it was not created.");
         }
