@@ -11,6 +11,16 @@ internal static class RetrievalMetrics
         return expectedRfcs.Any(top.Contains);
     }
 
+    public static bool HitAtK((int Rfc, string Section)[] ranked, int[] expectedRfcs, string[] expectedSections, int k)
+    {
+        if (expectedRfcs.Length == 0 || expectedSections.Length == 0)
+            return false;
+
+        var expectedPairs = BuildExpectedPairs(expectedRfcs, expectedSections);
+        var top = ranked.Take(k).ToHashSet();
+        return expectedPairs.Any(top.Contains);
+    }
+
     public static double ReciprocalRank(int[] rankedRfcs, int[] expectedRfcs)
     {
         if (expectedRfcs.Length == 0)
@@ -20,6 +30,21 @@ internal static class RetrievalMetrics
         for (int i = 0; i < rankedRfcs.Length; i++)
         {
             if (expected.Contains(rankedRfcs[i]))
+                return 1.0 / (i + 1);
+        }
+
+        return 0.0;
+    }
+
+    public static double ReciprocalRank((int Rfc, string Section)[] ranked, int[] expectedRfcs, string[] expectedSections)
+    {
+        if (expectedRfcs.Length == 0 || expectedSections.Length == 0)
+            return 0.0;
+
+        var expectedPairs = BuildExpectedPairs(expectedRfcs, expectedSections);
+        for (int i = 0; i < ranked.Length; i++)
+        {
+            if (expectedPairs.Contains(ranked[i]))
                 return 1.0 / (i + 1);
         }
 
@@ -36,31 +61,6 @@ internal static class RetrievalMetrics
         double idcg = ComputeIdealDcg(expectedRfcs.Length, k);
 
         return idcg <= double.Epsilon ? 0.0 : dcg / idcg;
-    }
-
-    public static bool HitAtK((int Rfc, string Section)[] ranked, int[] expectedRfcs, string[] expectedSections, int k)
-    {
-        if (expectedRfcs.Length == 0 || expectedSections.Length == 0)
-            return false;
-
-        var expectedPairs = BuildExpectedPairs(expectedRfcs, expectedSections);
-        var top = ranked.Take(k).ToHashSet();
-        return expectedPairs.Any(top.Contains);
-    }
-
-    public static double ReciprocalRank((int Rfc, string Section)[] ranked, int[] expectedRfcs, string[] expectedSections)
-    {
-        if (expectedRfcs.Length == 0 || expectedSections.Length == 0)
-            return 0.0;
-
-        var expectedPairs = BuildExpectedPairs(expectedRfcs, expectedSections);
-        for (int i = 0; i < ranked.Length; i++)
-        {
-            if (expectedPairs.Contains(ranked[i]))
-                return 1.0 / (i + 1);
-        }
-
-        return 0.0;
     }
 
     public static double NdcgAtK((int Rfc, string Section)[] ranked, int[] expectedRfcs, string[] expectedSections, int k)

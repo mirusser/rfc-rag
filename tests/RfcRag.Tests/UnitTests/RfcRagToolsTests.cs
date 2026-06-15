@@ -91,7 +91,7 @@ public sealed class RfcRagToolsTests
 
         CallToolResult result = await RfcRagTools.GetRfc(fake, 9999, CancellationToken.None);
 
-        Assert.True(result.IsError == true);
+        Assert.True(result.IsError);
     }
 
     [Fact]
@@ -143,7 +143,7 @@ public sealed class RfcRagToolsTests
 
         CallToolResult result = await RfcRagTools.GetRfcFull(fake, 9999, CancellationToken.None);
 
-        Assert.True(result.IsError == true);
+        Assert.True(result.IsError);
     }
 
     [Fact]
@@ -182,7 +182,7 @@ public sealed class RfcRagToolsTests
 
         CallToolResult result = await RfcRagTools.GetRfcSection(fake, 9999, "99", cancellationToken: CancellationToken.None);
 
-        Assert.True(result.IsError == true);
+        Assert.True(result.IsError);
     }
 
     [Fact]
@@ -268,7 +268,7 @@ public sealed class RfcRagToolsTests
 
         CallToolResult result = await RfcRagTools.FindUpdatesObsoletes(fake, 9999, CancellationToken.None);
 
-        Assert.True(result.IsError == true);
+        Assert.True(result.IsError);
     }
 
     [Fact]
@@ -324,7 +324,7 @@ public sealed class RfcRagToolsTests
 
         CallToolResult result = await RfcRagTools.GetRfcMetadata(fake, 9999, CancellationToken.None);
 
-        Assert.True(result.IsError == true);
+        Assert.True(result.IsError);
     }
 
     [Fact]
@@ -444,7 +444,7 @@ public sealed class RfcRagToolsTests
 
         CallToolResult result = await RfcRagTools.GetRfcToc(fake, 9999, CancellationToken.None);
 
-        Assert.True(result.IsError == true);
+        Assert.True(result.IsError);
     }
 
     [Fact]
@@ -688,7 +688,7 @@ public sealed class RfcRagToolsTests
     private static string JsonFrom(CallToolResult result)
     {
         Assert.NotNull(result);
-        Assert.False(result.IsError == true);
+        Assert.False(result.IsError);
         var textBlock = Assert.IsType<TextContentBlock>(Assert.Single(result.Content));
         return textBlock.Text;
     }

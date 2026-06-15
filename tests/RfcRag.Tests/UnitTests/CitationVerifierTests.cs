@@ -488,7 +488,8 @@ public sealed class CitationVerifierTests
         var result = CitationVerifier.Verify(answer, pack);
 
         Assert.Single(result.Claims);
-        var evidenceIds = Assert.IsAssignableFrom<IReadOnlyList<string>>(result.Claims[0].CitationEvidenceIds);
+        Assert.NotNull(result.Claims[0].CitationEvidenceIds);
+        var evidenceIds = result.Claims[0].CitationEvidenceIds!;
         Assert.Equal(2, evidenceIds.Count);
         Assert.Contains("9110#1", evidenceIds);
         Assert.Contains("8446#2", evidenceIds);

@@ -13,18 +13,14 @@ internal static class RfcSourceResolver
     {
         mirrorPath = ExpandPath(mirrorPath);
 
-        var txtByNumber = new Dictionary<int, string>();
-        foreach (var source in Directory
-                     .EnumerateFiles(mirrorPath, "rfc*.txt", SearchOption.AllDirectories)
-                     .Select(path => (Path: path, HasNumber: TryParseRfcNumber(path, out int number), Number: number))
-                     .Where(source => source.HasNumber))
-        {
-            if (!txtByNumber.TryGetValue(source.Number, out string? existing) ||
-                StringComparer.Ordinal.Compare(source.Path, existing) < 0)
-            {
-                txtByNumber[source.Number] = source.Path;
-            }
-        }
+        var txtByNumber = Directory
+            .EnumerateFiles(mirrorPath, "rfc*.txt", SearchOption.AllDirectories)
+            .Select(path => (Path: path, HasNumber: TryParseRfcNumber(path, out int number), Number: number))
+            .Where(source => source.HasNumber)
+            .GroupBy(source => source.Number)
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderBy(x => x.Path, StringComparer.Ordinal).First().Path);
 
         if (parserType == RfcParserType.Text)
         {
@@ -34,18 +30,14 @@ internal static class RfcSourceResolver
         // Xml mode: include .xml only for numbers that have no .txt
         var result = new List<RfcSourceFile>(txtByNumber.Select(kv => new RfcSourceFile(kv.Value, kv.Key)));
 
-        var xmlByNumber = new Dictionary<int, string>();
-        foreach (var source in Directory
-                     .EnumerateFiles(mirrorPath, "rfc*.xml", SearchOption.AllDirectories)
-                     .Select(path => (Path: path, HasNumber: TryParseRfcNumber(path, out int number), Number: number))
-                     .Where(source =>
-                         source.HasNumber &&
-                         !txtByNumber.ContainsKey(source.Number) &&
-                         (!xmlByNumber.TryGetValue(source.Number, out string? existing) ||
-                          StringComparer.Ordinal.Compare(source.Path, existing) < 0)))
-        {
-            xmlByNumber[source.Number] = source.Path;
-        }
+        var xmlByNumber = Directory
+            .EnumerateFiles(mirrorPath, "rfc*.xml", SearchOption.AllDirectories)
+            .Select(path => (Path: path, HasNumber: TryParseRfcNumber(path, out int number), Number: number))
+            .Where(source => source.HasNumber && !txtByNumber.ContainsKey(source.Number))
+            .GroupBy(source => source.Number)
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderBy(x => x.Path, StringComparer.Ordinal).First().Path);
 
         foreach (var kv in xmlByNumber)
             result.Add(new RfcSourceFile(kv.Value, kv.Key));

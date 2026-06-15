@@ -19,7 +19,6 @@ internal sealed partial class AnswerGenerator(IChatClient chatClient, IOptions<R
     private sealed record class RawResponse
     {
         public string? Answer { get; init; }
-        public bool NoAnswer { get; init; }
         public IReadOnlyList<RawCitation>? Citations { get; init; }
     }
 

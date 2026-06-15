@@ -15,7 +15,7 @@ internal sealed class EmbeddingRetryPolicy(TimeProvider timeProvider)
         Action<int, Exception, TimeSpan>? onRetrying,
         CancellationToken cancellationToken)
     {
-        for (int attempt = 0; ; attempt++)
+        for (int attempt = 0; attempt < MaxAttempts; attempt++)
         {
             try
             {
@@ -43,6 +43,8 @@ internal sealed class EmbeddingRetryPolicy(TimeProvider timeProvider)
                 await Task.Delay(delay, timeProvider, cancellationToken).ConfigureAwait(false);
             }
         }
+
+        throw new InvalidOperationException($"Operation failed after {MaxAttempts} retry attempts.");
     }
 
     internal static bool IsRetryable(Exception ex) => ex switch

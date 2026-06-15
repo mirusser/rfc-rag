@@ -20,11 +20,12 @@ public sealed record class RfcStatusBlock
 
     internal static RfcStatusBlock From(RfcRelationsBatch rel)
     {
-        string category = rel.ObsoletedBy.Count > 0
-            ? RfcStatusCategory.Obsoleted
-            : rel.UpdatedBy.Count > 0
-                ? RfcStatusCategory.Updated
-                : RfcStatusCategory.Current;
+        string category = rel switch
+        {
+            { ObsoletedBy.Count: > 0 } => RfcStatusCategory.Obsoleted,
+            { UpdatedBy.Count: > 0 } => RfcStatusCategory.Updated,
+            _ => RfcStatusCategory.Current,
+        };
 
         return new RfcStatusBlock
         {

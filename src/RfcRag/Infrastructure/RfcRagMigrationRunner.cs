@@ -183,10 +183,6 @@ internal static class RfcRagMigrationRunner
                 }
             }
         }
-        catch (InvalidOperationException)
-        {
-            throw;
-        }
         catch (NpgsqlException ex)
         {
             logger.LogWarning(ex,

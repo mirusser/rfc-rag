@@ -355,7 +355,7 @@ public sealed class RfcParserTests
     }
 
     // rfc822 - appendix A.1.1-style numbering
-    [Fact(Skip = "known-issue: SectionHeadingRegex does not match bare-letter appendix style (A. EXAMPLES); tracked as follow-up")]
+    [Fact(Skip = "known-issue: SectionHeadingRegex does not match bare-letter appendix style")]
     public async Task ParseAsync_Rfc822_AppendixSections_AreExtracted()
     {
         RfcDocument doc = await parser.ParseAsync(Path.Join("TestData", "rfc822.txt"), CancellationToken.None);

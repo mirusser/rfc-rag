@@ -110,13 +110,14 @@ internal sealed class CliCommand(ISearchService searchService, ContextAssembler 
 
     private void PrintUsage()
     {
-        logger.LogInformation("Usage: --cli <verb> [args]");
-        logger.LogInformation("  search <query> [--limit N]");
-        logger.LogInformation("  section <rfcNumber> <sectionId>");
-        logger.LogInformation("  normative <keyword> [--rfc N]");
-        logger.LogInformation("  evidence <query> [--limit N] [--budget N]");
-        logger.LogInformation("  ask <question> [--limit N] [--keyword KW]");
-        logger.LogInformation("  stats");
+        logger.LogInformation(
+            "Usage: --cli <verb> [args]\n" +
+            "  search <query> [--limit N]\n" +
+            "  section <rfcNumber> <sectionId>\n" +
+            "  normative <keyword> [--rfc N]\n" +
+            "  evidence <query> [--limit N] [--budget N]\n" +
+            "  ask <question> [--limit N] [--keyword KW]\n" +
+            "  stats");
     }
 
     private async Task<int> RunEvidenceAsync(string[] args, TextWriter output, CancellationToken cancellationToken)
