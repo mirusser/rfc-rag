@@ -217,7 +217,7 @@ public static class RfcRagTools
         CancellationToken cancellationToken = default)
     {
         string json = await search.GetStatsAsync(cancellationToken).ConfigureAwait(false);
-        return new CallToolResult { Content = [new TextContentBlock { Text = json }] };
+        return new CallToolResult { IsError = false, Content = [new TextContentBlock { Text = json }] };
     }
 
     [McpServerTool(Name = "get_rfc_toc", ReadOnly = true, OpenWorld = false)]
@@ -238,6 +238,7 @@ public static class RfcRagTools
 
     private static CallToolResult JsonResult<T>(T value) => new()
     {
+        IsError = false,
         Content = [new TextContentBlock { Text = JsonSerializer.Serialize(value, jsonOptions) }]
     };
 

@@ -38,6 +38,7 @@ public static class RfcAskTools
 
         return new CallToolResult
         {
+            IsError = false,
             Content = [new TextContentBlock { Text = JsonSerializer.Serialize(answer, JsonOptions) }],
         };
     }
