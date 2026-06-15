@@ -50,6 +50,7 @@ internal sealed class EmbeddingRetryPolicy(TimeProvider timeProvider)
     internal static bool IsRetryable(Exception ex) => ex switch
     {
         ClientResultException cre => IsRetryableStatus(cre.Status),
+        EmbeddingProviderBatchMismatchException => true,
         HttpRequestException => true,
         IOException => true,
         TaskCanceledException => true,

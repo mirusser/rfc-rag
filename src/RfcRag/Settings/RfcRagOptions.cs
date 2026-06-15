@@ -22,7 +22,7 @@ public sealed record class RfcRagOptions
     public string EmbeddingModel { get; init; } = "openai/text-embedding-3-small";
 
     /// <summary>Batch size for embedding generation. Limited by OpenRouter API constraints.</summary>
-    public int EmbeddingBatchSize { get; init; } = 20;
+    public int EmbeddingBatchSize { get; init; } = 10;
 
     /// <summary>Whether to run schema migrations on startup.</summary>
     public bool RunMigrationsOnStartup { get; init; } = true;
@@ -46,7 +46,7 @@ public sealed record class RfcRagOptions
     /// Maximum number of concurrent embedding API requests across all in-flight files.
     /// Caps burst traffic to the embedding provider while allowing intra-file batch parallelism.
     /// </summary>
-    public int MaxEmbeddingConcurrency { get; init; } = 8;
+    public int MaxEmbeddingConcurrency { get; init; } = 2;
 
     /// <summary>
     /// Selects the embedding provider. Defaults to <see cref="EmbeddingProvider.OpenRouter"/>.

@@ -59,7 +59,7 @@ docker run --rm -i --network host \
 | `RfcRag__RfcMirrorPath` | `~/OtherRepos/rfc-mirror/` | Path to local RFC mirror |
 | `RfcRag__PostgresConnectionString` | *(required)* | PostgreSQL connection string |
 | `RfcRag__EmbeddingModel` | `openai/text-embedding-3-small` | OpenRouter embedding model |
-| `RfcRag__EmbeddingBatchSize` | `20` | 1–2048 | Batch size for embedding API calls |
+| `RfcRag__EmbeddingBatchSize` | `10` | 1–2048 | Batch size for embedding API calls |
 | `RfcRag__EmbeddingDimensions` | `1536` | 1–16000 | Embedding vector dimensions |
 | `RfcRag__OpenRouterEmbeddingEndpoint` | `https://openrouter.ai/api/v1` | Absolute `http`/`https` URI | OpenRouter API base URL |
 | `RfcRag__RunMigrationsOnStartup` | `true` | `true` / `false` | Auto-apply SQL schema migrations |
@@ -68,7 +68,7 @@ docker run --rm -i --network host \
 | `RfcRag__RfcParserType` | `Text` | `Text` or `Xml` | Parser mode: `Text` (plain-text `.txt` files, default) or `Xml` (prefers `.txt`, uses `.xml` only for RFC numbers that have no `.txt` counterpart) |
 | `RfcRag__ErrataJsonPath` | *(not set)* | Local file path | Optional RFC Editor `errata.json` snapshot. When set, indexing ingests errata idempotently; when unset, errata ingestion is skipped |
 | `RfcRag__MaxIndexingParallelism` | `16` | ≥ 1 | Maximum number of RFC files indexed concurrently |
-| `RfcRag__MaxEmbeddingConcurrency` | `8` | ≥ 1 | Maximum number of concurrent embedding API requests across all in-flight files |
+| `RfcRag__MaxEmbeddingConcurrency` | `2` | ≥ 1 | Maximum number of concurrent embedding API requests across all in-flight files |
 | `RfcRag__ChatModel` | *(not set)* | OpenAI-compatible model ID (e.g., `openai/gpt-4o-mini`) | Chat model for answer generation. When unset, `ask_rfc` is disabled and the server remains retrieval-only |
 | `RfcRag__ChatProvider` | `OpenRouter` | `OpenRouter` or `Local` | Chat provider for answer generation — used when `ChatModel` is set |
 | `RfcRag__MaxAnswerTokens` | `1024` | ≥ 1 | Maximum tokens in generated answers |

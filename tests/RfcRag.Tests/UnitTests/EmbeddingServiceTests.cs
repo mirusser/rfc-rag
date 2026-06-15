@@ -1,5 +1,6 @@
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Time.Testing;
 using RfcRag.Indexing;
 using RfcRag.Tests.Fakes;
 
@@ -113,13 +114,109 @@ public sealed class EmbeddingServiceTests
     // --- Validation tests ---
 
     [Fact]
-    public async Task GenerateEmbeddingsAsync_WrongCount_ThrowsInvalidOperationException()
+    public async Task GenerateEmbeddingsAsync_WrongCount_ThrowsEmbeddingProviderBatchMismatchException()
     {
-        // Generator returns 0 embeddings for any batch — wrong count.
-        var service = MakeService(new MisbehavingEmbeddingGenerator(wrongCount: 0));
+        // Positive wrong counts cannot be safely mapped back to inputs.
+        var timeProvider = new FakeTimeProvider();
+        var service = new EmbeddingService(
+            new MisbehavingEmbeddingGenerator(wrongCount: 2),
+            new EmbeddingRetryPolicy(timeProvider),
+            batchSize: 1,
+            embeddingDimensions: 1536,
+            maxConcurrency: 1,
+            NullLogger<EmbeddingService>.Instance);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.GenerateEmbeddingsAsync(["text"], CancellationToken.None));
+        Task<IReadOnlyList<float[]>> task = service.GenerateEmbeddingsAsync(["text"], CancellationToken.None);
+
+        for (int i = 0; i < EmbeddingRetryPolicy.MaxAttempts - 1; i++)
+        {
+            await Task.Yield();
+            timeProvider.Advance(TimeSpan.FromSeconds(30));
+        }
+
+        await Assert.ThrowsAsync<EmbeddingProviderBatchMismatchException>(
+            async () => await task);
+    }
+
+    [Fact]
+    public async Task GenerateEmbeddingsAsync_SingleInputEmptyAfterRetries_ReturnsZeroVector()
+    {
+        var timeProvider = new FakeTimeProvider();
+        var service = new EmbeddingService(
+            new MisbehavingEmbeddingGenerator(wrongCount: 0),
+            new EmbeddingRetryPolicy(timeProvider),
+            batchSize: 1,
+            embeddingDimensions: 1536,
+            maxConcurrency: 1,
+            NullLogger<EmbeddingService>.Instance);
+
+        Task<IReadOnlyList<float[]>> task = service.GenerateEmbeddingsAsync(["text"], CancellationToken.None);
+
+        for (int i = 0; i < EmbeddingRetryPolicy.MaxAttempts - 1; i++)
+        {
+            await Task.Yield();
+            timeProvider.Advance(TimeSpan.FromSeconds(30));
+        }
+
+        IReadOnlyList<float[]> embeddings = await task;
+
+        float[] embedding = Assert.Single(embeddings);
+        Assert.Equal(1536, embedding.Length);
+        Assert.All(embedding, value => Assert.Equal(0, value));
+    }
+
+    [Fact]
+    public async Task GenerateEmbeddingsAsync_TransientEmptyBatch_RetriesAndReturnsEmbeddings()
+    {
+        var timeProvider = new FakeTimeProvider();
+        var generator = new TransientEmptyEmbeddingGenerator();
+        var service = new EmbeddingService(
+            generator,
+            new EmbeddingRetryPolicy(timeProvider),
+            batchSize: 2,
+            embeddingDimensions: 1536,
+            maxConcurrency: 1,
+            NullLogger<EmbeddingService>.Instance);
+
+        Task<IReadOnlyList<float[]>> task = service.GenerateEmbeddingsAsync(["text"], CancellationToken.None);
+
+        await Task.Yield();
+        timeProvider.Advance(TimeSpan.FromSeconds(30));
+        IReadOnlyList<float[]> embeddings = await task;
+
+        Assert.Equal(2, generator.CallCount);
+        float[] embedding = Assert.Single(embeddings);
+        Assert.Equal(1536, embedding.Length);
+    }
+
+    [Fact]
+    public async Task GenerateEmbeddingsAsync_BatchCountMismatchForMultipleInputs_FallsBackToSingleInputs()
+    {
+        var timeProvider = new FakeTimeProvider();
+        var generator = new BatchEmptyEmbeddingGenerator();
+        var service = new EmbeddingService(
+            generator,
+            new EmbeddingRetryPolicy(timeProvider),
+            batchSize: 10,
+            embeddingDimensions: 1536,
+            maxConcurrency: 1,
+            NullLogger<EmbeddingService>.Instance);
+
+        Task<IReadOnlyList<float[]>> task = service.GenerateEmbeddingsAsync(
+            ["alpha", "beta", "gamma"],
+            CancellationToken.None);
+
+        for (int i = 0; i < EmbeddingRetryPolicy.MaxAttempts - 1; i++)
+        {
+            await Task.Yield();
+            timeProvider.Advance(TimeSpan.FromSeconds(30));
+        }
+
+        IReadOnlyList<float[]> embeddings = await task;
+
+        Assert.Equal(3, embeddings.Count);
+        Assert.All(embeddings, embedding => Assert.Equal(1536, embedding.Length));
+        Assert.Equal([3, 3, 3, 1, 1, 1], generator.BatchSizes);
     }
 
     [Fact]

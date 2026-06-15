@@ -92,15 +92,34 @@ internal sealed partial class EmbeddingService(
         try
         {
             LogBatchStart(logger, batchIndex, batchCount, batch.Length);
-            return await retryPolicy.ExecuteAsync(
-                ct => GenerateAndValidateAsync(batch, ct),
-                (attempt, ex, delay) =>
-                {
-                    LogBatchRetry(logger, batchIndex, attempt, EmbeddingRetryPolicy.MaxAttempts, delay.TotalSeconds, ex);
-                    string reason = GetRetryReason(ex);
-                    retryCounter.Add(1, new KeyValuePair<string, object?>(TagReason, reason));
-                },
-                cancellationToken).ConfigureAwait(false);
+            return await SendBatchWithRetryAsync(batchIndex, batch, cancellationToken).ConfigureAwait(false);
+        }
+        catch (EmbeddingProviderBatchMismatchException ex) when (ex.ActualCount == 0 && batch.Length > 1)
+        {
+            LogBatchFallback(logger, batchIndex, batch.Length, ex);
+            try
+            {
+                return await SendSingleInputFallbackAsync(batchIndex, batch, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception fallbackException)
+            {
+                batchCounter.Add(1, new KeyValuePair<string, object?>(TagOutcome, OutcomeFailed));
+                LogBatchFailed(logger, batchIndex, fallbackException);
+                throw;
+            }
+        }
+        catch (EmbeddingProviderBatchMismatchException ex) when (ex.ActualCount == 0 && batch.Length == 1)
+        {
+            LogSingleInputZeroVectorFallback(logger, batchIndex, ex);
+            return CreateZeroVectorResult();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -114,6 +133,72 @@ internal sealed partial class EmbeddingService(
         }
     }
 
+    private Task<GeneratedEmbeddings<Embedding<float>>> SendBatchWithRetryAsync(
+        int batchIndex,
+        string[] batch,
+        CancellationToken cancellationToken) =>
+        retryPolicy.ExecuteAsync(
+            ct => GenerateAndValidateAsync(batch, ct),
+            (attempt, ex, delay) =>
+            {
+                if (ex is EmbeddingProviderBatchMismatchException { ActualCount: 0 })
+                {
+                    LogEmptyBatchRetry(logger, batchIndex, attempt, EmbeddingRetryPolicy.MaxAttempts, delay.TotalSeconds, ex);
+                }
+                else
+                {
+                    LogBatchRetry(logger, batchIndex, attempt, EmbeddingRetryPolicy.MaxAttempts, delay.TotalSeconds, ex);
+                }
+
+                string reason = GetRetryReason(ex);
+                retryCounter.Add(1, new KeyValuePair<string, object?>(TagReason, reason));
+            },
+            cancellationToken);
+
+    private async Task<GeneratedEmbeddings<Embedding<float>>> SendSingleInputFallbackAsync(
+        int batchIndex,
+        string[] batch,
+        CancellationToken cancellationToken)
+    {
+        var results = new List<Embedding<float>>(batch.Length);
+        foreach (string text in batch)
+        {
+            GeneratedEmbeddings<Embedding<float>> singleResult = await SendSingleInputWithRecoveryAsync(
+                batchIndex,
+                text,
+                cancellationToken).ConfigureAwait(false);
+
+            foreach (Embedding<float> embedding in singleResult)
+            {
+                results.Add(embedding);
+            }
+        }
+
+        return new GeneratedEmbeddings<Embedding<float>>(results);
+    }
+
+    private async Task<GeneratedEmbeddings<Embedding<float>>> SendSingleInputWithRecoveryAsync(
+        int batchIndex,
+        string text,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await SendBatchWithRetryAsync(batchIndex, [text], cancellationToken).ConfigureAwait(false);
+        }
+        catch (EmbeddingProviderBatchMismatchException ex) when (ex.ActualCount == 0)
+        {
+            LogSingleInputZeroVectorFallback(logger, batchIndex, ex);
+            return CreateZeroVectorResult();
+        }
+    }
+
+    private GeneratedEmbeddings<Embedding<float>> CreateZeroVectorResult()
+    {
+        batchCounter.Add(1, new KeyValuePair<string, object?>(TagOutcome, OutcomeOk));
+        return new GeneratedEmbeddings<Embedding<float>>([new Embedding<float>(new float[embeddingDimensions])]);
+    }
+
     private async Task<GeneratedEmbeddings<Embedding<float>>> GenerateAndValidateAsync(
         string[] batch,
         CancellationToken cancellationToken)
@@ -122,8 +207,7 @@ internal sealed partial class EmbeddingService(
 
         if (result.Count != batch.Length)
         {
-            throw new InvalidOperationException(
-                $"Embedding provider returned {result.Count} embeddings for a batch of {batch.Length} inputs.");
+            throw new EmbeddingProviderBatchMismatchException(result.Count, batch.Length);
         }
 
         foreach (var embedding in result.Where(embedding => embedding.Vector.Length != embeddingDimensions))
@@ -151,6 +235,19 @@ internal sealed partial class EmbeddingService(
         Message = "Embedding batch {BatchIndex} failed on attempt {Attempt}/{MaxAttempts}, retrying in {DelaySeconds:F1}s")]
     private static partial void LogBatchRetry(
         ILogger logger, int batchIndex, int attempt, int maxAttempts, double delaySeconds, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Debug,
+        Message = "Embedding batch {BatchIndex} returned 0 embeddings on attempt {Attempt}/{MaxAttempts}, retrying in {DelaySeconds:F1}s")]
+    private static partial void LogEmptyBatchRetry(
+        ILogger logger, int batchIndex, int attempt, int maxAttempts, double delaySeconds, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning,
+        Message = "Embedding batch {BatchIndex} returned an invalid embedding count for {BatchSize} texts after retries; retrying texts individually")]
+    private static partial void LogBatchFallback(ILogger logger, int batchIndex, int batchSize, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning,
+        Message = "Embedding batch {BatchIndex} returned 0 embeddings for a single text after retries; using zero-vector fallback")]
+    private static partial void LogSingleInputZeroVectorFallback(ILogger logger, int batchIndex, Exception exception);
 
     [LoggerMessage(Level = LogLevel.Error,
         Message = "Embedding batch {BatchIndex} failed after all retry attempts")]
