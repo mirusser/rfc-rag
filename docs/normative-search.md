@@ -1,13 +1,13 @@
 # Normative Search — How It Works
 
-Normative keywords are the RFC 2119/8174 requirement-level words (MUST, MUST NOT, SHOULD,
-SHOULD NOT, MAY, REQUIRED, RECOMMENDED, SHALL, SHALL NOT, OPTIONAL) that define protocol
-behavior in IETF standards documents. They carry specific, binding meaning — "MUST" is an
-absolute requirement, "MUST NOT" an absolute prohibition, "MAY" a true permission.
+Normative keywords are uppercase RFC 2119/8174 requirement-level words (MUST, MUST NOT,
+SHOULD, SHOULD NOT, MAY, REQUIRED, RECOMMENDED, SHALL, SHALL NOT, OPTIONAL). The index
+stores lexical keyword occurrences; it does not prove that the RFC formally adopts BCP 14,
+though the signal is strong for modern standards-track RFCs.
 
 This repo indexes every occurrence of every normative keyword in every RFC section so you
 can intersect two independent dimensions: semantic search finds the *topic*, normative
-filtering adds the *requirement level*.
+filtering adds exact keyword evidence.
 
 ## Phase 1 — Indexing (One-Time)
 
@@ -57,7 +57,7 @@ The pipeline:
    candidate pools, then the outer query trims to the requested limit.
 
 The normative table is just an indexed lookup — it's not the primary search. Semantic
-search finds the *topic*, the normative filter adds the *requirement level*. This is
+search finds the *topic*, the normative filter adds the exact keyword match. This is
 fundamentally different from simple keyword search: you're intersecting two independent
 dimensions of meaning.
 
@@ -85,9 +85,9 @@ When a coding agent needs to answer "find RFCs that prohibit unencrypted communi
 
 1. `search_rfc(query="unencrypted communication", normative_keyword="MUST NOT")`
 2. Returns precise, citeable sections
-3. Agent quotes the exact RFC, section, and requirement level
+3. Agent quotes the exact RFC, section, and matched keyword
 4. No hallucination — it's retrieval, not generation
 
 Without normative search, the agent either greps for "MUST NOT" (too broad, 682K results)
-or does semantic-only search (misses the normative dimension). Combined, you get both
-precision and authority.
+or does semantic-only search (misses the keyword dimension). Combined, you get both
+topical precision and exact keyword evidence.

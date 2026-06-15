@@ -1,7 +1,7 @@
 # Query Trace Schema
 
-Per-query trace records written as JSONL when `RfcRag__TraceDirectory` is configured.
-One JSON object per line, one line per query. Files are daily-rotated:
+Answer-generation trace records written as JSONL when `RfcRag__TraceDirectory` is configured.
+One JSON object per line, one line per `ask_rfc` request or CLI `ask` command. Files are daily-rotated:
 
 ```
 {dir}/rfc-rag-trace-{yyyy-MM-dd}.jsonl

@@ -19,7 +19,7 @@ Returns: JSON array of { id, rfcNumber, title, section, heading, excerpt, source
 ```
 
 ### `ask_rfc`
-Ask a natural-language question about RFCs. Runs hybrid search, assembles an evidence pack, and generates a cited answer using a language model. Obsoleted RFCs are demoted and flagged by default; pass `include_obsolete: true` to include them without penalty or warning. Pass `include_errata: true` to attach matching errata from the configured local snapshot; `errata_status` defaults to `verified`.
+Ask a natural-language question about RFCs. Registered only when `RfcRag__ChatModel` and a valid `RfcRag__ChatProvider` are configured. Runs hybrid search, assembles an evidence pack, and generates a cited answer using a language model. Obsoleted RFCs are demoted and flagged by default; pass `include_obsolete: true` to include them without penalty or warning. Pass `include_errata: true` to attach matching errata from the configured local snapshot; `errata_status` defaults to `verified`.
 
 ```
 Parameters: question (string), limit (int?, default=20), normative_keyword (string?, optional), include_obsolete (bool, default=false), include_errata (bool, default=false), errata_status (string?, default="verified")
@@ -152,4 +152,3 @@ dotnet test tests/RfcRag.Tests/ --filter "Category!=Integration"
 # Integration tests (requires Docker)
 dotnet test tests/RfcRag.Tests/ --filter "Category=Integration"
 ```
-

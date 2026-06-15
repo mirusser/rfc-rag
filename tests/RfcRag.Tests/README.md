@@ -4,6 +4,8 @@ Unit and integration tests for `RfcRag`.
 
 ## Structure
 
+Selected files and directories:
+
 ```text
 UnitTests/
   RfcParserTests.cs

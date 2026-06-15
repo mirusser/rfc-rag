@@ -12,7 +12,7 @@ This file owns the release process for RFC RAG. Releases are marked **pre-releas
    git tag -a vX.Y.Z -m "vX.Y.Z"
    git push origin vX.Y.Z
    ```
-5. Confirm CI `pack-publish` job succeeds — NuGet package published to GitHub Packages, GitHub Release created.
+5. Confirm `release.yml` succeeds — NuGet package published to nuget.org and GitHub Packages.
 6. Confirm `publish.yml` succeeds — GHCR image pushed (`ghcr.io/mirusser/rfc-rag:X.Y.Z`), Trivy scan passes, GitHub Release created.
 7. Confirm the GHCR package is set to **public** (Settings → Packages → rfc-rag → Change visibility).
 8. Confirm the GitHub Release includes correct image name and tag in its notes.

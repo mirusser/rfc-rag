@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-The project is experimental. Security fixes apply to the latest commit on `main`.
+The project is experimental. Security fixes apply to the latest commit on `master`.
 
 ## Reporting a Vulnerability
 
@@ -19,9 +19,9 @@ This project depends on:
 
 ## MCP Server Security
 
-The RFC RAG MCP server is a read-only tool server. It does not:
+The RFC RAG MCP tool surface is read-only. It does not:
 
 - Execute arbitrary commands or shell scripts
-- Write to the filesystem (except SQL migrations on startup)
+- Write to the filesystem, except configured query trace JSONL files when `RfcRag__TraceDirectory` is set
 - Accept network connections (stdio transport only)
 - Expose secrets in tool responses

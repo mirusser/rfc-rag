@@ -47,7 +47,7 @@ A deterministic, pure interpretation of a user query that records detected RFC n
 _Avoid_: LLM query rewrite, ranking model, hidden prompt analysis
 
 **Query Trace**:
-A per-query record written as one JSONL line when `RfcRag__TraceDirectory` is configured. Each trace captures the question, timed pipeline stages (search → assemble → generate), candidate RFC numbers, answer and warning counts, and retrieval metadata. The trace writer is fail-open — I/O failures produce a logged warning and the query succeeds. Traces are daily-rotated files under the configured directory.
+An answer-generation record written as one JSONL line when `RfcRag__TraceDirectory` is configured. Each trace captures the question, timed pipeline stages (search → assemble → generate), candidate RFC numbers, answer and warning counts, and retrieval metadata for an `ask_rfc` request or CLI `ask` command. The trace writer is fail-open — I/O failures produce a logged warning and the query succeeds. Traces are daily-rotated files under the configured directory.
 _Avoid_: audit log, telemetry event (implies streaming), query log (too generic)
 
 **Index Manifest**:
@@ -67,7 +67,7 @@ A reference from a generated answer to an Evidence Section, consisting of the ev
 _Avoid_: reference (ambiguous with RFC bibliographic references), footnote
 
 **Answer Evaluation Metric**:
-A computed score that measures the quality of a generated answer against a Golden Question: citation precision, citation recall, citation F1, and a boolean flag for correct no-answer classification. Metrics are computed by `AnswerEvaluationMetrics.Evaluate` per question and aggregated by `AnswerEvaluationMetrics.Aggregate`.
+A computed score that measures the quality of a generated answer against a Golden Question: citation precision, citation recall, citation F1, quote faithfulness, obsolete citation rate, no-answer accuracy, and claim support rate. Metrics are computed by `AnswerEvaluationMetrics.Evaluate` per question and aggregated by `AnswerEvaluationMetrics.Aggregate`.
 
 **Citation Precision**:
 The fraction of citations in a generated answer that are grounded (i.e. the cited evidence id exists in the Evidence Pack and the quoted text is a substring of the section text). Equivalent to the standard information-retrieval precision applied to citations: `|grounded citations| / |total citations|`. NaN or 1.0 when there are zero citations.
@@ -76,7 +76,7 @@ The fraction of citations in a generated answer that are grounded (i.e. the cite
 The fraction of required RFCs (the Golden Question's `mustCite` field) that are correctly cited. NaN or 1.0 when there are no must-cite requirements.
 
 **Cited Answer**:
-The structured output of `ask_rfc` containing an `answer` string, a `citations` list (each with an evidence id, RFC number, section, and verbatim `relevantText` quote from the section), a `verification` block (citation precision, recall, and quote faithfulness scores), and a `warnings` list. A Cited Answer's citations reference Evidence Sections by their evidence id (`{RfcNumber}#{Section}`). The output is serialised to JSON by the `ask_rfc` MCP tool.
+The structured output of `ask_rfc` containing an `answer` string, a `citations` list (each with an evidence id, RFC number, section, and verbatim `relevantText` quote from the section), a claim-based `verification` block (`claims`, `claimSupportRate`, and `verificationWarnings`), and a `warnings` list. A Cited Answer's citations reference Evidence Sections by their evidence id (`{RfcNumber}#{Section}`). The output is serialised to JSON by the `ask_rfc` MCP tool.
 _Avoid_: grounded response, cited response, LLM answer (implies the model answered without RFC grounding)
 
 **Golden Question**:

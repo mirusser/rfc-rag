@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - Initial standalone extraction from the Kubernetes MCP Guard monorepo.
-- Ten MCP tools: `search_rfc`, `get_rfc`, `get_rfc_section`, `get_rfc_toc`, `search_normative`, `search_abnf`, `find_updates_obsoletes`, `rfc_stats`, `get_rfc_metadata`, `list_indexed_rfcs`.
+- Search/retrieval MCP tools: `search_rfc`, `get_rfc`, `get_rfc_full`, `get_rfc_section`, `get_rfc_toc`, `search_normative`, `search_abnf`, `find_updates_obsoletes`, `rfc_stats`, `get_rfc_metadata`, `list_indexed_rfcs`.
 - Hybrid search combining pgvector cosine similarity and PostgreSQL full-text search with reciprocal rank fusion.
 - Incremental SHA256-based indexing (subsequent starts complete in seconds).
 - Docker Compose setup with pgvector PostgreSQL sidecar.

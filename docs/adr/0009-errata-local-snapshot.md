@@ -8,4 +8,4 @@ RFC errata is ingested from a local JSON snapshot specified by the `ErrataJsonPa
 - **Local JSON snapshot (current)** — deterministic, fast (no network round-trip), works offline, and a plain file is trivially diffable in version control. The snapshot must be refreshed manually to pick up new errata.
 - **Git submodule tracking** — automates snapshot updates via `git submodule update`, but adds a submodule dependency, complicates the clone workflow, and the errata data is small enough that diff-and-commit is simpler.
 
-Local JSON snapshot is chosen for determinism and offline capability. The file is checked into the repo, so all deployments see the same errata state until an explicit refresh updates it.
+Local JSON snapshot is chosen for determinism and offline capability. The file is supplied locally, for example via `make fetch-errata`, so each deployment sees its configured snapshot until an explicit refresh updates it.

@@ -4,4 +4,4 @@ Hybrid retrieval runs entirely inside a single PostgreSQL database: pgvector (HN
 
 ## Consequences
 
-- HNSW post-filtering limits apply (on pgvector < 0.8 a `WHERE` clause can underfill the vector arm); accepted and mitigated by the candidate overscan plus the exactly-filtered lexical arm. See the Task 3 note in `docs/plans/2026-06-10-hardening-plan.md`.
+- HNSW post-filtering limits apply (on pgvector < 0.8 a `WHERE` clause can underfill the vector arm); accepted and mitigated by the candidate overscan plus the exactly-filtered lexical arm. See the Task 3 note in `docs/plans/archive/2026-06-10-hardening-plan.md`.

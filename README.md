@@ -51,7 +51,7 @@ flowchart TB
 
     subgraph index["🔍 Indexing Pipeline"]
         Parser["🔧 RfcParser\nsection splitter · metadata · ABNF · normative keywords"]
-        Embed["🧠 Embedding Generator\nOpenRouter · text-embedding-3-small"]
+        Embed["🧠 Embedding Generator\nOpenRouter · openai/text-embedding-3-small"]
     end
 
     subgraph store["🗄️ PostgreSQL + pgvector"]
@@ -89,7 +89,7 @@ flowchart TB
     Tools <-->|"MCP stdio"| Clients
 ```
 
-The parser extracts sections, metadata, normative keywords, and ABNF grammar blocks from RFC text files. Section text is embedded via OpenRouter (`text-embedding-3-small`, 1536-dim) and stored alongside `tsvector` for full-text search. Hybrid search fuses vector cosine similarity with lexical full-text scores using Reciprocal Rank Fusion (RRF). A separate MCP stdio server exposes 12 tools for AI agents.
+The parser extracts sections, metadata, normative keywords, and ABNF grammar blocks from RFC text files. Section text is embedded via OpenRouter (`openai/text-embedding-3-small`, 1536-dim) and stored alongside `tsvector` for full-text search. Hybrid search fuses vector cosine similarity with lexical full-text scores using Reciprocal Rank Fusion (RRF). A separate MCP stdio server exposes up to 12 tools for AI agents.
 
 ## ⚡ Quick Start
 
@@ -117,7 +117,7 @@ Full configuration guide: [configuration.md](/docs/configuration.md)
 | Tool | Purpose |
 |---|---|
 | `search_rfc` | Hybrid search (vector + full-text) with RRF fusion. Supports `normative_keyword` filtering. |
-| `ask_rfc` | Ask a natural-language question about RFCs. Runs hybrid search, assembles evidence, and generates a cited answer with optional errata enrichment. |
+| `ask_rfc` | Ask a natural-language question about RFCs. Runs hybrid search, assembles evidence, and generates a cited answer with optional errata enrichment. Registered only when chat configuration is enabled. |
 | `get_rfc` | RFC metadata, table of contents, and section preview |
 | `get_rfc_full` | Full concatenated text of an RFC (use sparingly) |
 | `get_rfc_section` | Specific section with child expansion for nested subsections |
@@ -177,6 +177,8 @@ rfc_rag.rfc_sections           — primary search unit (vectors + FTS)
 rfc_rag.indexed_rfcs           — SHA256 tracking for incremental indexing
 rfc_rag.rfc_abnf_blocks        — extracted ABNF grammar blocks
 rfc_rag.normative_occurrences  — pre-extracted normative keywords
+rfc_rag.index_manifest         — latest index provenance and counts
+rfc_rag.rfc_errata             — optional RFC Editor errata snapshot data
 rfc_rag.schema_migrations      — applied migration tracking
 ```
 
@@ -202,8 +204,8 @@ dotnet test tests/RfcRag.Tests/ --filter "Category=RetrievalQuality"
 |---|---|
 | .NET | .NET 10 |
 | PostgreSQL | 15+ with pgvector 0.5+ |
-| MCP transport | stdio (ModelContextProtocol 1.3.0) |
-| Embeddings | OpenRouter (`text-embedding-3-small`, 1536-dim) |
+| MCP transport | stdio (ModelContextProtocol 1.4.0) |
+| Embeddings | OpenRouter (`openai/text-embedding-3-small`, 1536-dim) |
 | Platforms | linux/amd64, linux/arm64 |
 | Docker | Compose v2, standalone |
 

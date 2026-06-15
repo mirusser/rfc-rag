@@ -1,3 +1,3 @@
-# Default embedding model is text-embedding-3-small at 1536 dimensions
+# Default embedding model is openai/text-embedding-3-small at 1536 dimensions
 
 `rfc_sections.embedding` is `vector(1536)`, matching `openai/text-embedding-3-small` served via OpenRouter — chosen for its price/quality balance at ~9,800-RFC corpus scale, with 1536 dimensions keeping HNSW index size and memory modest. The dimension is enforced at startup: a mismatch between the column and `RfcRagOptions.EmbeddingDimensions` fails boot with corrective guidance, and switching models goes through the explicit `--reset-embeddings` path only (column altered to the new dimension, every vector re-generated). That re-embed of the whole corpus costs real wall-clock time and API spend — which is why the model choice is an architectural decision, not just a config default.
