@@ -43,11 +43,8 @@ internal static class CitationVerifier
         List<ClaimVerification> claims = [];
         List<AnswerWarning> warnings = [];
 
-        foreach (string claim in rawClaims.Select(rawClaim => rawClaim.Trim()))
+        foreach (string claim in rawClaims.Select(rawClaim => rawClaim.Trim()).Where(claim => claim.Length > 0))
         {
-            if (claim.Length == 0)
-                continue;
-
             // Extract citation markers from the claim
             MatchCollection citationMatches = CitationMarker.Matches(claim);
             List<string> claimEvidenceIds = [];

@@ -126,13 +126,10 @@ internal sealed partial class EmbeddingService(
                 $"Embedding provider returned {result.Count} embeddings for a batch of {batch.Length} inputs.");
         }
 
-        foreach (var embedding in result)
+        foreach (var embedding in result.Where(embedding => embedding.Vector.Length != embeddingDimensions))
         {
-            if (embedding.Vector.Length != embeddingDimensions)
-            {
-                throw new InvalidOperationException(
-                    $"Embedding provider returned dimension {embedding.Vector.Length}, expected {embeddingDimensions}.");
-            }
+            throw new InvalidOperationException(
+                $"Embedding provider returned dimension {embedding.Vector.Length}, expected {embeddingDimensions}.");
         }
 
         batchCounter.Add(1, new KeyValuePair<string, object?>(TagOutcome, OutcomeOk));

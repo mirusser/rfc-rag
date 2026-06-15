@@ -233,12 +233,12 @@ internal sealed class SearchService(
         var words = sectionText.Split(new[] { ' ', '\n', '\r', '\t', '(', ')', '{', '}', ',', '.', ':', ';', '[', ']' },
             StringSplitOptions.RemoveEmptyEntries);
 
-        foreach (string word in words)
+        foreach (string word in words.Where(word =>
+                     word.Length >= 2 &&
+                     char.IsUpper(word[0]) &&
+                     word.All(c => char.IsLetterOrDigit(c) || c == '_')))
         {
-            if (word.Length >= 2 && char.IsUpper(word[0]) && word.All(c => char.IsLetterOrDigit(c) || c == '_'))
-            {
-                typeNames.Add(word);
-            }
+            typeNames.Add(word);
         }
 
         if (sectionHeading is not null)

@@ -389,12 +389,7 @@ internal sealed partial class RfcParser
             // Count rule definition lines in this section.
             // Only sections with at least 1 rule line are grammar sections;
             // this captures single-rule subsections such as "request-line = method SP ...".
-            int ruleCount = 0;
-            foreach (string line in lines)
-            {
-                if (ruleRegex.IsMatch(line))
-                    ruleCount++;
-            }
+            int ruleCount = lines.Count(line => ruleRegex.IsMatch(line));
 
             if (ruleCount < 1)
                 continue;
@@ -512,23 +507,19 @@ internal sealed partial class RfcParser
         var cddlTypeRuleRegex = CddlTypeRuleRegex();
         var asn1Regex = Asn1Regex();
 
-        foreach (RfcSection section in sections)
+        foreach (string line in sections.SelectMany(section => section.Text.Split('\n')))
         {
-            string[] lines = section.Text.Split('\n');
-            foreach (string line in lines)
+            if (cddlGroupRegex.IsMatch(line) || cddlTypeRuleRegex.IsMatch(line))
             {
-                if (cddlGroupRegex.IsMatch(line) || cddlTypeRuleRegex.IsMatch(line))
-                {
-                    cddlLines++;
-                    continue;
-                }
-                if (abnfRuleRegex.IsMatch(line))
-                    abnfLines++;
-                if (tlsStructRegex.IsMatch(line) || tlsEnumRegex.IsMatch(line) || tlsSelectRegex.IsMatch(line))
-                    tlsLines++;
-                if (asn1Regex.IsMatch(line))
-                    asn1Lines++;
+                cddlLines++;
+                continue;
             }
+            if (abnfRuleRegex.IsMatch(line))
+                abnfLines++;
+            if (tlsStructRegex.IsMatch(line) || tlsEnumRegex.IsMatch(line) || tlsSelectRegex.IsMatch(line))
+                tlsLines++;
+            if (asn1Regex.IsMatch(line))
+                asn1Lines++;
         }
 
         int totalGrammarLines = abnfLines + tlsLines + cddlLines + asn1Lines;

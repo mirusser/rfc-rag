@@ -14,13 +14,15 @@ internal static class RfcSourceResolver
         mirrorPath = ExpandPath(mirrorPath);
 
         var txtByNumber = new Dictionary<int, string>();
-        foreach (string path in Directory.EnumerateFiles(mirrorPath, "rfc*.txt", SearchOption.AllDirectories))
+        foreach (var source in Directory
+                     .EnumerateFiles(mirrorPath, "rfc*.txt", SearchOption.AllDirectories)
+                     .Select(path => (Path: path, HasNumber: TryParseRfcNumber(path, out int number), Number: number))
+                     .Where(source => source.HasNumber))
         {
-            if (!TryParseRfcNumber(path, out int number)) continue;
-            if (!txtByNumber.TryGetValue(number, out string? existing) ||
-                StringComparer.Ordinal.Compare(path, existing) < 0)
+            if (!txtByNumber.TryGetValue(source.Number, out string? existing) ||
+                StringComparer.Ordinal.Compare(source.Path, existing) < 0)
             {
-                txtByNumber[number] = path;
+                txtByNumber[source.Number] = source.Path;
             }
         }
 
@@ -36,13 +38,13 @@ internal static class RfcSourceResolver
         foreach (var source in Directory
                      .EnumerateFiles(mirrorPath, "rfc*.xml", SearchOption.AllDirectories)
                      .Select(path => (Path: path, HasNumber: TryParseRfcNumber(path, out int number), Number: number))
-                     .Where(source => source.HasNumber && !txtByNumber.ContainsKey(source.Number)))
+                     .Where(source =>
+                         source.HasNumber &&
+                         !txtByNumber.ContainsKey(source.Number) &&
+                         (!xmlByNumber.TryGetValue(source.Number, out string? existing) ||
+                          StringComparer.Ordinal.Compare(source.Path, existing) < 0)))
         {
-            if (!xmlByNumber.TryGetValue(source.Number, out string? existing) ||
-                StringComparer.Ordinal.Compare(source.Path, existing) < 0)
-            {
-                xmlByNumber[source.Number] = source.Path;
-            }
+            xmlByNumber[source.Number] = source.Path;
         }
 
         foreach (var kv in xmlByNumber)

@@ -65,6 +65,7 @@ jobs:
         uses: github/codeql-action/init@7211b7c8077ea37d8641b6271f6a365a22a5fbfa  # v4
         with:
           languages: ${{ matrix.language }}
+          config-file: ./.github/codeql/codeql-config.yml
           queries: security-extended,security-and-quality
 
       - name: Restore dependencies

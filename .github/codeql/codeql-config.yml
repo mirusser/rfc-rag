@@ -1,0 +1,5 @@
+name: RFC RAG CodeQL configuration
+
+paths-ignore:
+  - '**/bin/**'
+  - '**/obj/**'
