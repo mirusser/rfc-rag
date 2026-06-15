@@ -16,12 +16,12 @@ COMPOSE_OUT="rfc-rag.yaml"
 ENV_OUT=".env.rfc-rag"
 
 echo "Downloading RFC RAG compose file..."
-curl -fsSL "$REPO_RAW/deploy/compose/release/rfc-rag.yaml" -o "$COMPOSE_OUT"
+curl -fsSL --proto-redir =https "$REPO_RAW/deploy/compose/release/rfc-rag.yaml" -o "$COMPOSE_OUT"
 echo "  -> $COMPOSE_OUT"
 
 if [[ ! -f "$ENV_OUT" ]]; then
     echo "Downloading env template..."
-    curl -fsSL "$REPO_RAW/deploy/compose/rfc-rag.env.example" -o "$ENV_OUT"
+    curl -fsSL --proto-redir =https "$REPO_RAW/deploy/compose/rfc-rag.env.example" -o "$ENV_OUT"
     echo "  -> $ENV_OUT (created from example — edit before starting)"
 else
     echo "  -> $ENV_OUT already exists, skipping"

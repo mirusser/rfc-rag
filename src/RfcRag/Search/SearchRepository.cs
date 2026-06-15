@@ -125,7 +125,7 @@ internal sealed class SearchRepository(NpgsqlDataSource dataSource)
                     select id, row_number() over (order by ts_rank(search_vector, plainto_tsquery('english', @Query)) desc) as rank
                     from rfc_rag.rfc_sections
                     where plainto_tsquery('english', @Query) @@ search_vector
-                      {{(normativeKeyword is not null ? "and exists (select 1 from rfc_rag.normative_occurrences o where o.section_id = rfc_sections.id and o.keyword = upper(@NormativeKeyword))" : "")}}
+                      and (@NormativeKeyword = '' or exists (select 1 from rfc_rag.normative_occurrences o where o.section_id = rfc_sections.id and o.keyword = upper(@NormativeKeyword)))
                     order by ts_rank(search_vector, plainto_tsquery('english', @Query)) desc
                     limit @CandidateLimit
                 ),
@@ -133,7 +133,7 @@ internal sealed class SearchRepository(NpgsqlDataSource dataSource)
                     select id, row_number() over (order by embedding <=> cast(@Embedding as vector)) as rank
                     from rfc_rag.rfc_sections
                     where embedding is not null
-                      {{(normativeKeyword is not null ? "and exists (select 1 from rfc_rag.normative_occurrences o where o.section_id = rfc_sections.id and o.keyword = upper(@NormativeKeyword))" : "")}}
+                      and (@NormativeKeyword = '' or exists (select 1 from rfc_rag.normative_occurrences o where o.section_id = rfc_sections.id and o.keyword = upper(@NormativeKeyword)))
                     order by embedding <=> cast(@Embedding as vector)
                     limit @CandidateLimit
                 ),
@@ -142,7 +142,7 @@ internal sealed class SearchRepository(NpgsqlDataSource dataSource)
                         coalesce(lexical.id, vector.id) as id,
                         (coalesce(1.0 / (60 + lexical.rank), 0) + coalesce(1.0 / (60 + vector.rank), 0))::float8 as score
                     from lexical
-                    {{(normativeKeyword is not null ? "left" : "full")}} join vector on lexical.id = vector.id
+                    full join vector on lexical.id = vector.id
                 )
                 select
                     {{SearchResultProjection}},
@@ -192,7 +192,7 @@ internal sealed class SearchRepository(NpgsqlDataSource dataSource)
                     select id, row_number() over (order by ts_rank(search_vector, plainto_tsquery('english', @Query)) desc) as rank
                     from rfc_rag.rfc_sections
                     where plainto_tsquery('english', @Query) @@ search_vector
-                      {{(normativeKeyword is not null ? "and exists (select 1 from rfc_rag.normative_occurrences o where o.section_id = rfc_sections.id and o.keyword = upper(@NormativeKeyword))" : "")}}
+                      and (@NormativeKeyword = '' or exists (select 1 from rfc_rag.normative_occurrences o where o.section_id = rfc_sections.id and o.keyword = upper(@NormativeKeyword)))
                     order by ts_rank(search_vector, plainto_tsquery('english', @Query)) desc
                     limit @CandidateLimit
                 ),
@@ -200,7 +200,7 @@ internal sealed class SearchRepository(NpgsqlDataSource dataSource)
                     select id, row_number() over (order by embedding <=> cast(@Embedding as vector)) as rank
                     from rfc_rag.rfc_sections
                     where embedding is not null
-                      {{(normativeKeyword is not null ? "and exists (select 1 from rfc_rag.normative_occurrences o where o.section_id = rfc_sections.id and o.keyword = upper(@NormativeKeyword))" : "")}}
+                      and (@NormativeKeyword = '' or exists (select 1 from rfc_rag.normative_occurrences o where o.section_id = rfc_sections.id and o.keyword = upper(@NormativeKeyword)))
                     order by embedding <=> cast(@Embedding as vector)
                     limit @CandidateLimit
                 ),
@@ -211,7 +211,7 @@ internal sealed class SearchRepository(NpgsqlDataSource dataSource)
                         coalesce(vector.rank, 0) as "VectorRank",
                         (coalesce(1.0 / (60 + lexical.rank), 0) + coalesce(1.0 / (60 + vector.rank), 0))::float8 as "RrfScore"
                     from lexical
-                    {{(normativeKeyword is not null ? "left" : "full")}} join vector on lexical.id = vector.id
+                    full join vector on lexical.id = vector.id
                 )
                 select
                     {{SearchResultProjection}},
@@ -310,7 +310,7 @@ internal sealed class SearchRepository(NpgsqlDataSource dataSource)
                     from rfc_rag.normative_occurrences occurrences
                     join rfc_rag.rfc_sections rfc_sections on rfc_sections.id = occurrences.section_id
                     where occurrences.keyword = upper(@Keyword)
-                      {{(rfcNumbers is not null ? "and occurrences.rfc_number = any(@RfcNumbers)" : "")}}
+                      and (cardinality(@RfcNumbers) = 0 or occurrences.rfc_number = any(@RfcNumbers))
                     order by rfc_sections.id, occurrences.line_offset
                 ) ranked
                 order by "Score" desc, "RfcNumber", "Section"
@@ -347,7 +347,7 @@ internal sealed class SearchRepository(NpgsqlDataSource dataSource)
                     join rfc_rag.rfc_sections rfc_sections on rfc_sections.id = blocks.section_id
                     where (plainto_tsquery('english', @Query) @@ blocks.search_vector
                        or blocks.abnf_text ilike '%' || @Query || '%')
-                      {{(rfcNumbers is not null ? "and blocks.rfc_number = any(@RfcNumbers)" : "")}}
+                      and (cardinality(@RfcNumbers) = 0 or blocks.rfc_number = any(@RfcNumbers))
                     order by rfc_sections.id, "Score" desc
                 ) ranked
                 order by "Score" desc, "RfcNumber", "Section"
