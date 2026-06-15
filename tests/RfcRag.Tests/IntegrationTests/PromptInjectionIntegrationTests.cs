@@ -116,7 +116,7 @@ public sealed class PromptInjectionIntegrationTests(PromptInjectionFixture fixtu
         var askService = BuildAskService(fakeClient);
 
         await askService.AskAsync(
-            "What does RFC 9998 say about security?",
+            "What does RFC 9998 say in the instruction override text?",
             limit: 5,
             cancellationToken: TestContext.Current.CancellationToken);
 

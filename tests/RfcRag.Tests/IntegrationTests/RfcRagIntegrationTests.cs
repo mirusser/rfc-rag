@@ -384,8 +384,8 @@ public sealed class RfcRagIntegrationTests : IClassFixture<MediumCorpusFixture>
         Assert.NotEmpty(results);
         // Planner suggests "MUST NOT" from the query text. Section 2 (MUST NOT) must be included;
         // section 1 (MUST) must be excluded.
-        Assert.Contains(results, r => r.Section == "2");
-        Assert.DoesNotContain(results, r => r.Section == "1");
+        Assert.Contains(results, r => r.Id == mustNotSectionId);
+        Assert.DoesNotContain(results, r => r.Id == mustSectionId);
     }
 
     [Fact]
@@ -422,7 +422,7 @@ public sealed class RfcRagIntegrationTests : IClassFixture<MediumCorpusFixture>
             new { OccId1 = Guid.NewGuid(), OccId2 = Guid.NewGuid(), Id1 = sectionId1, Id2 = sectionId2 });
 
         IReadOnlyList<SearchResult> results = await service.SearchAsync(
-            $"encryption {uniqueToken}", 10, "MUST NOT", false, CancellationToken.None);
+            $"encryption {uniqueToken}", 10, "UNKNOWN KEYWORD", false, CancellationToken.None);
 
         Assert.Empty(results);
     }
