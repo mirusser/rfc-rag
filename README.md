@@ -115,7 +115,7 @@ Full configuration guide: [configuration.md](/docs/configuration.md)
 ### 🔎 Search & Retrieval
 
 | Tool | Purpose |
-|---|---|---|
+|---|---|
 | `search_rfc` | Hybrid search (vector + full-text) with RRF fusion. Supports `normative_keyword` filtering. |
 | `ask_rfc` | Ask a natural-language question about RFCs. Runs hybrid search, assembles evidence, and generates a cited answer with optional errata enrichment. |
 | `get_rfc` | RFC metadata, table of contents, and section preview |
