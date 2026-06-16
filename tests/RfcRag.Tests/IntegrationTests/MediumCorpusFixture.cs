@@ -74,15 +74,16 @@ public sealed class MediumCorpusFixture : IAsyncLifetime
     ];
 
     private PostgreSqlContainer? container;
-    private readonly string rfcMirrorPath;
 
     public MediumCorpusFixture()
     {
-        rfcMirrorPath = Path.Join(Directory.GetCurrentDirectory(), "TestData");
+        RfcMirrorPath = Path.Join(Directory.GetCurrentDirectory(), "TestData");
     }
 
     public NpgsqlDataSource DataSource { get; private set; } = null!;
     public ISearchService SearchService { get; private set; } = null!;
+    internal EmbeddingService EmbeddingService { get; private set; } = null!;
+    public string RfcMirrorPath { get; }
     public int IndexedCount { get; private set; }
 
     /// <summary>
@@ -97,10 +98,13 @@ public sealed class MediumCorpusFixture : IAsyncLifetime
         container = new PostgreSqlBuilder(PostgresImage).Build();
         await container.StartAsync(TestContext.Current.CancellationToken);
 
-        DataSource = NpgsqlDataSource.Create(container.GetConnectionString());
+        var dataSourceBuilder = new NpgsqlDataSourceBuilder(container.GetConnectionString());
+        dataSourceBuilder.UseVector();
+        DataSource = dataSourceBuilder.Build();
         await RfcRagMigrationRunner.ApplyAsync(DataSource, CancellationToken.None);
+        await DataSource.ReloadTypesAsync(CancellationToken.None);
 
-        var embeddingService = new EmbeddingService(
+        EmbeddingService = new EmbeddingService(
             new SemanticFakeEmbeddingGenerator(),
             new EmbeddingRetryPolicy(TimeProvider.System),
             batchSize: 20,
@@ -110,7 +114,7 @@ public sealed class MediumCorpusFixture : IAsyncLifetime
 
         var options = Options.Create(new RfcRagOptions
         {
-            RfcMirrorPath = rfcMirrorPath,
+            RfcMirrorPath = RfcMirrorPath,
             PostgresConnectionString = container.GetConnectionString(),
             EmbeddingBatchSize = 20,
             EmbeddingDimensions = 1536,
@@ -123,7 +127,7 @@ public sealed class MediumCorpusFixture : IAsyncLifetime
             new IndexingRepository(DataSource),
             new RfcParser(),
             new RfcXmlParser(),
-            embeddingService,
+            EmbeddingService,
             options,
             NullLogger<RfcIndexer>.Instance);
 
@@ -136,7 +140,7 @@ public sealed class MediumCorpusFixture : IAsyncLifetime
 
         var repository = new SearchRepository(DataSource);
         var metadataRepository = new MetadataRepository(DataSource);
-        SearchService = new SearchService(repository, metadataRepository, embeddingService, options);
+        SearchService = new SearchService(repository, metadataRepository, EmbeddingService, options);
     }
 
     public async ValueTask DisposeAsync()

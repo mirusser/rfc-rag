@@ -1,3 +1,5 @@
 # Hand-written SQL via Dapper; no ORM, no EF migrations
 
 Data access is hand-written SQL through Dapper/Npgsql, and schema changes are plain `.sql` files applied by a custom checksummed runner (`schema_migrations` tracks filename + SHA-256). EF Core is the default .NET path and was deliberately not taken: the queries that carry this project — RRF fusion CTEs, pgvector operators, `tsquery`/GIN matching — are exactly the ones an ORM obscures, and the schema is still small enough that the abstraction would cost more than it saves. This is deliberate: do not introduce an ORM to "modernize" it; new queries follow the existing raw-SQL house style (parameterized, conditional interpolation for optional predicates).
+
+The Microsoft.Extensions.VectorData Postgres connector is permitted only as a read path over the existing `rfc_rag.rfc_sections` table. It must not create or migrate schema; do not call `EnsureCollectionExistsAsync`. Dapper/Npgsql remains the write path and the default hybrid retrieval path.

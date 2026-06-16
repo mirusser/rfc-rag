@@ -8,6 +8,7 @@ using RfcRag.Settings;
 using RfcRag.Tests.Fakes;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Microsoft.SemanticKernel.Connectors.PgVector;
 using Npgsql;
 using Testcontainers.PostgreSql;
 
@@ -24,6 +25,7 @@ public sealed class RetrievalQualityFixture : IAsyncLifetime
     private string? tempRfcDir;
 
     public ISearchService SearchService { get; private set; } = null!;
+    public ISearchService VectorDataSearchService { get; private set; } = null!;
 
 
     public NpgsqlDataSource DataSource =>
@@ -34,8 +36,11 @@ public sealed class RetrievalQualityFixture : IAsyncLifetime
         container = new PostgreSqlBuilder(PostgresImage).Build();
         await container.StartAsync(TestContext.Current.CancellationToken);
 
-        dataSource = NpgsqlDataSource.Create(container.GetConnectionString());
+        var dataSourceBuilder = new NpgsqlDataSourceBuilder(container.GetConnectionString());
+        dataSourceBuilder.UseVector();
+        dataSource = dataSourceBuilder.Build();
         await RfcRagMigrationRunner.ApplyAsync(dataSource, CancellationToken.None);
+        await dataSource.ReloadTypesAsync(CancellationToken.None);
 
         tempRfcDir = CreateTempRfcDirectory();
         await IndexRfcsAsync(dataSource, tempRfcDir);
@@ -51,6 +56,26 @@ public sealed class RetrievalQualityFixture : IAsyncLifetime
             PostgresConnectionString = container.GetConnectionString(),
         });
         SearchService = new SearchService(repository, metadataRepository, embeddingService, searchOptions);
+
+        var vectorDataSearch = new VectorDataSearch(
+            new PostgresCollection<Guid, RfcSectionRecord>(
+                dataSource,
+                "rfc_sections",
+                ownsDataSource: false,
+                new PostgresCollectionOptions { Schema = "rfc_rag" }),
+            embeddingService);
+        var vectorDataSearchOptions = Options.Create(new RfcRagOptions
+        {
+            RfcMirrorPath = tempRfcDir,
+            PostgresConnectionString = container.GetConnectionString(),
+            VectorDataSearchEnabled = true,
+        });
+        VectorDataSearchService = new SearchService(
+            repository,
+            metadataRepository,
+            embeddingService,
+            vectorDataSearchOptions,
+            vectorDataSearch);
     }
 
     public async ValueTask DisposeAsync()
@@ -153,7 +178,7 @@ public sealed class RetrievalQualityTests(RetrievalQualityFixture fixture) : ICl
     }
 
     [Fact]
-    public async Task GoldenQuestions_TestdataCorpus_MeetsBaselineThresholds()
+    public async Task GoldenQuestions_TestdataCorpus_MeasuresHybridAndVectorDataModes()
     {
         string fixturePath = Path.Join("eval", "golden_questions.json");
         string json = await File.ReadAllTextAsync(fixturePath, CancellationToken.None);
@@ -167,11 +192,39 @@ public sealed class RetrievalQualityTests(RetrievalQualityFixture fixture) : ICl
 
         Assert.True(scorableQuestions.Length >= 10, "Expected at least 10 scorable testdata questions.");
 
+        RetrievalModeMetrics hybridMetrics = await MeasureGoldenQuestionsAsync(
+            fixture.SearchService,
+            scorableQuestions,
+            CancellationToken.None);
+        RetrievalModeMetrics vectorDataMetrics = await MeasureGoldenQuestionsAsync(
+            fixture.VectorDataSearchService,
+            scorableQuestions,
+            CancellationToken.None);
+
+        // Thresholds measured from SemanticFakeEmbeddingGenerator baseline (docs/eval/reports/baseline-testdata.json).
+        // Do not lower without a measured regression justification.
+        Assert.True(hybridMetrics.Aggregate.HitAt10 >= 0.90,
+            $"hybrid hit@10={hybridMetrics.Aggregate.HitAt10:F3} is below the 0.90 baseline threshold.");
+        Assert.True(hybridMetrics.Aggregate.Mrr >= 0.75,
+            $"hybrid MRR={hybridMetrics.Aggregate.Mrr:F3} is below the 0.75 baseline threshold.");
+
+        // VectorData is additive pure-vector retrieval. It is measured for visibility, but not
+        // required to match the hybrid SQL retrieval baseline.
+        Assert.Equal(scorableQuestions.Length, vectorDataMetrics.QueriesRun);
+        Assert.InRange(vectorDataMetrics.Aggregate.HitAt10, 0.0, 1.0);
+        Assert.InRange(vectorDataMetrics.Aggregate.Mrr, 0.0, 1.0);
+    }
+
+    private static async Task<RetrievalModeMetrics> MeasureGoldenQuestionsAsync(
+        ISearchService searchService,
+        GoldenQuestion[] scorableQuestions,
+        CancellationToken cancellationToken)
+    {
         var results = new List<RetrievalQueryResult>();
         foreach (var question in scorableQuestions)
         {
-            IReadOnlyList<SearchResult> searchResults = await fixture.SearchService
-                .SearchAsync(question.Question, limit: 10, normativeKeyword: null, includeObsolete: question.IncludeObsolete, CancellationToken.None);
+            IReadOnlyList<SearchResult> searchResults = await searchService
+                .SearchAsync(question.Question, limit: 10, normativeKeyword: null, includeObsolete: question.IncludeObsolete, cancellationToken);
 
             int[] rankedRfcs = searchResults.Select(r => r.RfcNumber).Distinct().ToArray();
 
@@ -187,13 +240,10 @@ public sealed class RetrievalQualityTests(RetrievalQualityFixture fixture) : ICl
                 Error: null));
         }
 
-        var agg = RetrievalMetrics.Aggregate(results);
+        RetrievalAggregateMetrics aggregate = RetrievalMetrics.Aggregate(results);
 
-        // Thresholds measured from SemanticFakeEmbeddingGenerator baseline (docs/eval/reports/baseline-testdata.json).
-        // Do not lower without a measured regression justification.
-        Assert.True(agg.HitAt10 >= 0.90,
-            $"hit@10={agg.HitAt10:F3} is below the 0.90 baseline threshold.");
-        Assert.True(agg.Mrr >= 0.75,
-            $"MRR={agg.Mrr:F3} is below the 0.75 baseline threshold.");
+        return new RetrievalModeMetrics(aggregate, results.Count);
     }
+
+    private sealed record class RetrievalModeMetrics(RetrievalAggregateMetrics Aggregate, int QueriesRun);
 }

@@ -226,4 +226,14 @@ public sealed class RfcRagOptionsValidatorTests
         Assert.False(result.Succeeded);
         Assert.True(result.Failures!.Skip(2).Any());
     }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Validate_VectorDataSearchEnabled_BothValues_Succeed(bool value)
+    {
+        var options = ValidOptions with { VectorDataSearchEnabled = value };
+        var result = validator.Validate(null, options);
+        Assert.True(result.Succeeded);
+    }
 }

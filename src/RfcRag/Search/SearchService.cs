@@ -4,7 +4,8 @@ internal sealed class SearchService(
     SearchRepository searchRepository,
     MetadataRepository metadataRepository,
     EmbeddingService embeddingService,
-    IOptions<RfcRagOptions> options) : ISearchService
+    IOptions<RfcRagOptions> options,
+    IVectorDataSearch? vectorDataSearch = null) : ISearchService
 {
 
     public async Task<IReadOnlyList<SearchResult>> SearchAsync(
@@ -16,56 +17,69 @@ internal sealed class SearchService(
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(query);
 
-        // Normalize whitespace-only keyword to null so the SQL predicate is not applied
         QueryPlan? queryPlan = options.Value.QueryPlannerEnabled ? QueryPlanner.Plan(query) : null;
-        string? keyword = string.IsNullOrWhiteSpace(normativeKeyword)
-            ? queryPlan?.SuggestedNormativeKeyword
-            : normativeKeyword;
-
-        // Explicit includeObsolete parameter overrides the plan's historical-intent detection
-        bool effectiveIncludeObsolete = includeObsolete || (queryPlan?.IncludeObsolete ?? false);
-
-        IReadOnlyList<float[]> embeddings = await embeddingService.GenerateEmbeddingsAsync(
-            [query],
-            cancellationToken).ConfigureAwait(false);
 
         IReadOnlyList<SearchResult> results;
         IReadOnlyDictionary<int, RfcRelationsBatch> rfcStatuses;
 
-        if (options.Value.RerankerEnabled)
+        if (options.Value.VectorDataSearchEnabled && vectorDataSearch is not null)
         {
-            IReadOnlyList<HybridCandidate> candidates = await searchRepository.SearchHybridWideCandidatesAsync(
-                query,
-                embeddings[0],
-                limit,
-                keyword,
-                cancellationToken).ConfigureAwait(false);
-
-            IReadOnlyList<int> candidateRfcNumbers = candidates.Select(c => c.RfcNumber).Distinct().ToList();
-            rfcStatuses = candidateRfcNumbers.Count > 0
-                ? await metadataRepository.GetRelationsBatchAsync(candidateRfcNumbers, cancellationToken).ConfigureAwait(false)
-                : new Dictionary<int, RfcRelationsBatch>();
-
-            // Pass effectiveIncludeObsolete so the reranker suppresses the penalty when requested
-            QueryPlan? planForReranker = effectiveIncludeObsolete && queryPlan is not null
-                ? queryPlan with { IncludeObsolete = true }
-                : queryPlan;
-
-            results = DeterministicReranker.Rerank(query, candidates, planForReranker, rfcStatuses, limit);
-        }
-        else
-        {
-            results = await searchRepository.SearchHybridAsync(
-                query,
-                embeddings[0],
-                limit,
-                keyword,
-                cancellationToken).ConfigureAwait(false);
+            results = await vectorDataSearch.SearchAsync(query, limit, cancellationToken).ConfigureAwait(false);
 
             IReadOnlyList<int> resultRfcNumbers = results.Select(r => r.RfcNumber).Distinct().ToList();
             rfcStatuses = resultRfcNumbers.Count > 0
                 ? await metadataRepository.GetRelationsBatchAsync(resultRfcNumbers, cancellationToken).ConfigureAwait(false)
                 : new Dictionary<int, RfcRelationsBatch>();
+        }
+        else
+        {
+            // Normalize whitespace-only keyword to null so the SQL predicate is not applied
+            string? keyword = string.IsNullOrWhiteSpace(normativeKeyword)
+                ? queryPlan?.SuggestedNormativeKeyword
+                : normativeKeyword;
+
+            // Explicit includeObsolete parameter overrides the plan's historical-intent detection
+            bool effectiveIncludeObsolete = includeObsolete || (queryPlan?.IncludeObsolete ?? false);
+
+            IReadOnlyList<float[]> embeddings = await embeddingService.GenerateEmbeddingsAsync(
+                [query],
+                cancellationToken).ConfigureAwait(false);
+
+            if (options.Value.RerankerEnabled)
+            {
+                IReadOnlyList<HybridCandidate> candidates = await searchRepository.SearchHybridWideCandidatesAsync(
+                    query,
+                    embeddings[0],
+                    limit,
+                    keyword,
+                    cancellationToken).ConfigureAwait(false);
+
+                IReadOnlyList<int> candidateRfcNumbers = candidates.Select(c => c.RfcNumber).Distinct().ToList();
+                rfcStatuses = candidateRfcNumbers.Count > 0
+                    ? await metadataRepository.GetRelationsBatchAsync(candidateRfcNumbers, cancellationToken).ConfigureAwait(false)
+                    : new Dictionary<int, RfcRelationsBatch>();
+
+                // Pass effectiveIncludeObsolete so the reranker suppresses the penalty when requested
+                QueryPlan? planForReranker = effectiveIncludeObsolete && queryPlan is not null
+                    ? queryPlan with { IncludeObsolete = true }
+                    : queryPlan;
+
+                results = DeterministicReranker.Rerank(query, candidates, planForReranker, rfcStatuses, limit);
+            }
+            else
+            {
+                results = await searchRepository.SearchHybridAsync(
+                    query,
+                    embeddings[0],
+                    limit,
+                    keyword,
+                    cancellationToken).ConfigureAwait(false);
+
+                IReadOnlyList<int> resultRfcNumbers = results.Select(r => r.RfcNumber).Distinct().ToList();
+                rfcStatuses = resultRfcNumbers.Count > 0
+                    ? await metadataRepository.GetRelationsBatchAsync(resultRfcNumbers, cancellationToken).ConfigureAwait(false)
+                    : new Dictionary<int, RfcRelationsBatch>();
+            }
         }
 
         results = EnrichWithStatus(results, rfcStatuses);

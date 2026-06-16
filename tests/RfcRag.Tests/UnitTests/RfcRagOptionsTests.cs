@@ -51,4 +51,16 @@ public sealed class RfcRagOptionsTests
 
         Assert.True(options.QueryPlannerEnabled);
     }
+
+    [Fact]
+    public void VectorDataSearchEnabled_DefaultValue_IsFalse()
+    {
+        var options = new RfcRagOptions
+        {
+            RfcMirrorPath = string.Empty,
+            PostgresConnectionString = string.Empty,
+        };
+
+        Assert.False(options.VectorDataSearchEnabled);
+    }
 }

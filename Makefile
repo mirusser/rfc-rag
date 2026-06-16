@@ -1,3 +1,4 @@
+SHELL := /bin/bash
 .PHONY: help quickstart quickstart-down quickstart-logs build test eval eval-answers fetch-errata docker-build smoke-test pull tool-install tool-update
 
 TAG ?= latest
@@ -22,10 +23,16 @@ test:  ## Run all tests
 	./scripts/run-all-tests.sh
 
 eval:  ## Run retrieval eval against the indexed RFC mirror (requires indexed DB and RfcMirrorPath)
-	dotnet run --project src/RfcRag/ -- --eval docs/eval/golden_questions.json --corpus all
+	set -a && source .env.rfc-rag && set +a && \
+		RfcRag__PostgresConnectionString="Host=127.0.0.1;Port=$${PG_BIND_PORT:-5433};Database=$${PG_DATABASE:-rfc_rag};Username=$${PG_USER:-rfc_rag};Password=$${PG_PASSWORD:-rfc-rag-dev-password}" \
+		RfcRag__RfcMirrorPath="$${RFC_MIRROR_HOST_PATH}" \
+		dotnet run --project src/RfcRag/ -- --eval docs/eval/golden_questions.json --corpus all
 
 eval-answers:  ## Run real-model answer evaluation over golden questions
-	dotnet run --project src/RfcRag/ -- --eval docs/eval/golden_questions.json --answers --corpus all
+	set -a && source .env.rfc-rag && set +a && \
+		RfcRag__PostgresConnectionString="Host=127.0.0.1;Port=$${PG_BIND_PORT:-5433};Database=$${PG_DATABASE:-rfc_rag};Username=$${PG_USER:-rfc_rag};Password=$${PG_PASSWORD:-rfc-rag-dev-password}" \
+		RfcRag__RfcMirrorPath="$${RFC_MIRROR_HOST_PATH}" \
+		dotnet run --project src/RfcRag/ -- --eval docs/eval/golden_questions.json --answers --corpus all
 
 fetch-errata: ## Download RFC Editor errata snapshot
 	curl -L https://www.rfc-editor.org/errata.json -o $(ERRATA_JSON_PATH)

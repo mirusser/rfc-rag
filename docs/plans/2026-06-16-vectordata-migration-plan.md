@@ -220,8 +220,19 @@ not beating hybrid.
 **Acceptance criteria:**
 - [ ] `Category=RetrievalQuality` passes with the flag **off** (no regression to default).
 - [ ] A short results table (hybrid vs vector-only) is recorded in the eval reports / this plan.
+
+**A/B results (fill in after running `dotnet test --filter "Category=RetrievalQuality"` with each mode):**
+
+| Mode | Hit@1 | Hit@5 | Hit@10 | MRR | Baseline (ADR-0007) |
+|---|---|---|---|---|---|
+| Hybrid (flag off) | — | — | — | — | H@1 0.667 / H@5 0.917 / H@10 0.917 / MRR 0.762 |
+| VectorData pure-vector (flag on) | — | — | — | — | n/a (additive path; not required to match hybrid) |
+
+> Run: `RfcRag__VectorDataSearchEnabled=false dotnet test --filter "Category=RetrievalQuality"` and `RfcRag__VectorDataSearchEnabled=true dotnet test --filter "Category=RetrievalQuality"` against a seeded DB. Record results above and check both boxes.
+
 **Verification:** `dotnet test --filter "Category=RetrievalQuality"`; `make eval` for each mode.
 **Dependencies:** 7 · **Files:** `docs/eval/reports/*`, this plan · **Scope:** M
+
 
 #### Task 9: ADR amendments
 **Description:** **Amend** ADR-0003 (clarify: hybrid fusion stays in SQL; the connector is an additive

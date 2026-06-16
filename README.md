@@ -89,7 +89,7 @@ flowchart TB
     Tools <-->|"MCP stdio"| Clients
 ```
 
-The parser extracts sections, metadata, normative keywords, and ABNF grammar blocks from RFC text files. Section text is embedded via OpenRouter (`openai/text-embedding-3-small`, 1536-dim) and stored alongside `tsvector` for full-text search. Hybrid search fuses vector cosine similarity with lexical full-text scores using Reciprocal Rank Fusion (RRF). A separate MCP stdio server exposes up to 12 tools for AI agents.
+The parser extracts sections, metadata, normative keywords, and ABNF grammar blocks from RFC text files. Section text is embedded via OpenRouter (`openai/text-embedding-3-small`, 1536-dim) and stored alongside `tsvector` for full-text search. Hybrid search fuses vector cosine similarity with lexical full-text scores using Reciprocal Rank Fusion (RRF). A flag-gated VectorData path is available for pure-vector A/B evaluation, but the default MCP search path remains hybrid SQL. A separate MCP stdio server exposes up to 12 tools for AI agents.
 
 ## ⚡ Quick Start
 

@@ -5,3 +5,4 @@ Hybrid retrieval runs entirely inside a single PostgreSQL database: pgvector (HN
 ## Consequences
 
 - HNSW post-filtering limits apply (on pgvector < 0.8 a `WHERE` clause can underfill the vector arm); accepted and mitigated by the candidate overscan plus the exactly-filtered lexical arm. See the Task 3 note in `docs/plans/archive/2026-06-10-hardening-plan.md`.
+- A flag-gated Microsoft.Extensions.VectorData Postgres path is allowed only as an additive pure-vector retrieval path. It does not supersede SQL hybrid search because the connector does not expose the PostgreSQL full-text/RRF fusion path this ADR requires.

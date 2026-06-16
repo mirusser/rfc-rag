@@ -75,6 +75,7 @@ docker run --rm -i --network host \
 | `RfcRag__EvidenceBudgetChars` | `16000` | ≥ 1 | Maximum evidence text characters sent to the chat model |
 | `RfcRag__QueryPlannerEnabled` | `true` | `true` or `false` | Enables deterministic query planning for RFC/section references, protocol hints, and strong normative-intent filters. Disable for A/B retrieval evaluation |
 | `RfcRag__RerankerEnabled` | `true` | `true` or `false` | Enables deterministic reranking of the wider fused candidate set using signal weights (RFC number match, section match, heading terms, protocol hints, obsolete penalty). Disable for A/B comparison against baseline hybrid search |
+| `RfcRag__VectorDataSearchEnabled` | `false` | `true` or `false` | Enables the additive Microsoft.Extensions.VectorData Postgres path for pure-vector retrieval. Leave disabled for default hybrid SQL search; the connector path does not perform PostgreSQL full-text search or RRF fusion. |
 | `RfcRag__TraceDirectory` | *(not set)* | Local directory path | Optional directory for answer-generation JSONL trace files. When set, each `ask_rfc` call writes a trace line with stage timestamps and retrieval metadata. When unset, tracing is disabled entirely |
 | `OpenRouter__ApiKey` | *(required for OpenRouter)* | OpenRouter API key — not needed when `EmbeddingProvider=Local` |
 

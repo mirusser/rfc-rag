@@ -67,3 +67,9 @@ Examples of RFCs with null status from actual queries: 1945, 3875, 8677, 9111. E
 | 3 | Null status on some search results | `search_rfc` status field | ❌ |
 
 All three are data-quality issues in the **RFC text-header parser** — a secondary layer. The embedding pipeline, vector search, section retrieval, ABNF grammar extraction, and normative keyword search are unaffected and production-grade.
+
+## 4. VectorData connector is pure-vector only
+
+`RfcRag__VectorDataSearchEnabled=true` routes `search_rfc` through the Microsoft.Extensions.VectorData Postgres connector. This is an additive pure-vector retrieval path for A/B evaluation. The connector path does not perform PostgreSQL full-text search, normative keyword filtering, or SQL RRF fusion, so it is not a replacement for the default hybrid search pipeline.
+
+The connector is configured against the existing `rfc_rag.rfc_sections` table. Schema ownership remains with the checksummed migration runner; do not call `EnsureCollectionExistsAsync`, because that API can issue DDL against the migration-owned table.

@@ -107,6 +107,14 @@ public sealed record class RfcRagOptions
     public bool RerankerEnabled { get; init; } = true;
 
     /// <summary>
+    /// When true, retrieval uses the <c>Microsoft.Extensions.VectorData</c> pure-vector path
+    /// (Postgres HNSW cosine-distance search) instead of the default hybrid lexical+vector RRF
+    /// pipeline. Default is <c>false</c>; enable for A/B comparison or evaluation of the
+    /// standard VectorStore abstraction. The hybrid path is the production default.
+    /// </summary>
+    public bool VectorDataSearchEnabled { get; init; }
+
+    /// <summary>
     /// Optional directory for per-query JSONL trace files. When set, each call to
     /// <c>ask_rfc</c> produces a trace line with stage timestamps, candidate RFC numbers,
     /// and retrieval metadata. When unset, tracing is disabled.
