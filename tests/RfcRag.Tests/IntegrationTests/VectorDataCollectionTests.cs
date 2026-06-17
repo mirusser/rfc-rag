@@ -25,7 +25,7 @@ public sealed class VectorDataCollectionTests : IClassFixture<MediumCorpusFixtur
         dataSourceBuilder.UseVector();
         await using var dataSource = dataSourceBuilder.Build();
 
-        var collection = new PostgresCollection<Guid, RfcSectionRecord>(
+        using var collection = new PostgresCollection<Guid, RfcSectionRecord>(
             dataSource,
             "rfc_sections",
             ownsDataSource: false,

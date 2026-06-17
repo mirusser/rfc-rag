@@ -23,6 +23,7 @@ public sealed class RetrievalQualityFixture : IAsyncLifetime
     private PostgreSqlContainer? container;
     private NpgsqlDataSource? dataSource;
     private string? tempRfcDir;
+    private PostgresCollection<Guid, RfcSectionRecord>? vectorDataCollection;
 
     public ISearchService SearchService { get; private set; } = null!;
     public ISearchService VectorDataSearchService { get; private set; } = null!;
@@ -57,13 +58,12 @@ public sealed class RetrievalQualityFixture : IAsyncLifetime
         });
         SearchService = new SearchService(repository, metadataRepository, embeddingService, searchOptions);
 
-        var vectorDataSearch = new VectorDataSearch(
-            new PostgresCollection<Guid, RfcSectionRecord>(
-                dataSource,
-                "rfc_sections",
-                ownsDataSource: false,
-                new PostgresCollectionOptions { Schema = "rfc_rag" }),
-            embeddingService);
+        vectorDataCollection = new PostgresCollection<Guid, RfcSectionRecord>(
+            dataSource,
+            "rfc_sections",
+            ownsDataSource: false,
+            new PostgresCollectionOptions { Schema = "rfc_rag" });
+        var vectorDataSearch = new VectorDataSearch(vectorDataCollection, embeddingService);
         var vectorDataSearchOptions = Options.Create(new RfcRagOptions
         {
             RfcMirrorPath = tempRfcDir,
@@ -80,6 +80,7 @@ public sealed class RetrievalQualityFixture : IAsyncLifetime
 
     public async ValueTask DisposeAsync()
     {
+        vectorDataCollection?.Dispose();
         if (dataSource is not null)
             await dataSource.DisposeAsync();
         if (container is not null)
