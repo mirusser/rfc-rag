@@ -1,0 +1,2456 @@
+{
+  "name": "rfc-rag",
+  "description": "Local RAG MCP server for RFCs: semantic + full-text search with section-level precision. Note: this project has over 100 source files; consider scoping analysis to a subdirectory for faster results.",
+  "languages": [
+    "csharp",
+    "csproj",
+    "dockerfile",
+    "example",
+    "j2",
+    "json",
+    "makefile",
+    "markdown",
+    "props",
+    "runsettings",
+    "shell",
+    "slnx",
+    "sql",
+    "txt",
+    "unknown",
+    "yaml"
+  ],
+  "frameworks": [
+    "Dapper",
+    "Docker",
+    "GitHub Actions",
+    "Microsoft.Extensions.AI",
+    "ModelContextProtocol",
+    "Npgsql",
+    "OpenTelemetry",
+    "pgvector",
+    "Semantic Kernel",
+    "xUnit"
+  ],
+  "files": [
+    {
+      "path": ".agents/skills/ci-cd-architect/agents/openai.yaml",
+      "language": "yaml",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".agents/skills/ci-cd-architect/ci-cd-standard.md",
+      "language": "markdown",
+      "sizeLines": 965,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/ci-cd-architect/references/action-version-matrix.md",
+      "language": "markdown",
+      "sizeLines": 64,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/ci-cd-architect/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 474,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/ci-cd-architect/templates/auto-tag.yml.j2",
+      "language": "j2",
+      "sizeLines": 72,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".agents/skills/ci-cd-architect/templates/ci-cd-config.example.yaml",
+      "language": "yaml",
+      "sizeLines": 293,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".agents/skills/ci-cd-architect/templates/ci.yml.j2",
+      "language": "j2",
+      "sizeLines": 213,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".agents/skills/ci-cd-architect/templates/container-scan.yml.j2",
+      "language": "j2",
+      "sizeLines": 52,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".agents/skills/ci-cd-architect/templates/dependabot.yml.j2",
+      "language": "j2",
+      "sizeLines": 34,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".agents/skills/ci-cd-architect/templates/dependency-scan.yml.j2",
+      "language": "j2",
+      "sizeLines": 65,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".agents/skills/ci-cd-architect/templates/docs-validation.yml.j2",
+      "language": "j2",
+      "sizeLines": 191,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".agents/skills/ci-cd-architect/templates/dotnet-ci.yml.j2",
+      "language": "j2",
+      "sizeLines": 222,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".agents/skills/ci-cd-architect/templates/integration-tests.yml.j2",
+      "language": "j2",
+      "sizeLines": 51,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".agents/skills/ci-cd-architect/templates/keycloak-tests.yml.j2",
+      "language": "j2",
+      "sizeLines": 45,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".agents/skills/ci-cd-architect/templates/publish.yml.j2",
+      "language": "j2",
+      "sizeLines": 118,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".agents/skills/ci-cd-architect/templates/safety-e2e.yml.j2",
+      "language": "j2",
+      "sizeLines": 57,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".agents/skills/ci-cd-architect/templates/semgrep-scheduled.yml.j2",
+      "language": "j2",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".agents/skills/ci-cd-architect/templates/semgrep.yml.j2",
+      "language": "j2",
+      "sizeLines": 99,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".agents/skills/ci-cd-architect/templates/sonar.yml.j2",
+      "language": "j2",
+      "sizeLines": 88,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".agents/skills/code-standards/agents/openai.yaml",
+      "language": "yaml",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".agents/skills/code-standards/references/async-and-cancellation.md",
+      "language": "markdown",
+      "sizeLines": 21,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/code-standards/references/collections.md",
+      "language": "markdown",
+      "sizeLines": 26,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/code-standards/references/dependency-injection.md",
+      "language": "markdown",
+      "sizeLines": 21,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/code-standards/references/formatting.md",
+      "language": "markdown",
+      "sizeLines": 23,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/code-standards/references/http-clients-and-resilience.md",
+      "language": "markdown",
+      "sizeLines": 25,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/code-standards/references/json-and-serialization.md",
+      "language": "markdown",
+      "sizeLines": 23,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/code-standards/references/logging.md",
+      "language": "markdown",
+      "sizeLines": 24,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/code-standards/references/magic-strings.md",
+      "language": "markdown",
+      "sizeLines": 45,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/code-standards/references/metrics-and-observability.md",
+      "language": "markdown",
+      "sizeLines": 14,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/code-standards/references/naming.md",
+      "language": "markdown",
+      "sizeLines": 52,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/code-standards/references/primary-constructors.md",
+      "language": "markdown",
+      "sizeLines": 32,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/code-standards/references/records-and-dtos.md",
+      "language": "markdown",
+      "sizeLines": 14,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/code-standards/references/resilience-testing.md",
+      "language": "markdown",
+      "sizeLines": 15,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/code-standards/references/review-checklist.md",
+      "language": "markdown",
+      "sizeLines": 15,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/code-standards/references/scope-of-abstractions.md",
+      "language": "markdown",
+      "sizeLines": 13,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/code-standards/references/time-timers-deterministic-tests.md",
+      "language": "markdown",
+      "sizeLines": 18,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/code-standards/references/type-organization.md",
+      "language": "markdown",
+      "sizeLines": 20,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/code-standards/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 165,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/create-custom-agent/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 276,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/dotnet-a2a-agent/references/API_REFERENCE.md",
+      "language": "markdown",
+      "sizeLines": 131,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/dotnet-a2a-agent/references/EXAMPLES.md",
+      "language": "markdown",
+      "sizeLines": 220,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/dotnet-a2a-agent/references/SERVER_HOSTING.md",
+      "language": "markdown",
+      "sizeLines": 79,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/dotnet-a2a-agent/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 128,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/dotnet-agent-workflows/references/EXAMPLES.md",
+      "language": "markdown",
+      "sizeLines": 127,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/dotnet-agent-workflows/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 107,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/grill-with-docs/ADR-FORMAT.md",
+      "language": "markdown",
+      "sizeLines": 46,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/grill-with-docs/agents/openai.yaml",
+      "language": "yaml",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".agents/skills/grill-with-docs/CONTEXT-FORMAT.md",
+      "language": "markdown",
+      "sizeLines": 76,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/grill-with-docs/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 87,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/improve-codebase-architecture/agents/openai.yaml",
+      "language": "yaml",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".agents/skills/improve-codebase-architecture/DEEPENING.md",
+      "language": "markdown",
+      "sizeLines": 37,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/improve-codebase-architecture/INTERFACE-DESIGN.md",
+      "language": "markdown",
+      "sizeLines": 44,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/improve-codebase-architecture/LANGUAGE.md",
+      "language": "markdown",
+      "sizeLines": 53,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/improve-codebase-architecture/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 71,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/jetbrains-refactor/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 60,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/Modern-CSharp/manifest.json",
+      "language": "json",
+      "sizeLines": 6,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".agents/skills/Modern-CSharp/skills/modern-csharp/manifest.json",
+      "language": "json",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".agents/skills/Modern-CSharp/skills/modern-csharp/references/csharp-modern-features.md",
+      "language": "markdown",
+      "sizeLines": 198,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/Modern-CSharp/skills/modern-csharp/references/migration.md",
+      "language": "markdown",
+      "sizeLines": 733,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/Modern-CSharp/skills/modern-csharp/references/patterns.md",
+      "language": "markdown",
+      "sizeLines": 556,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/Modern-CSharp/skills/modern-csharp/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 119,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/planning-and-task-breakdown/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 223,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/analytical-queries.md",
+      "language": "markdown",
+      "sizeLines": 1151,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/anti-patterns.md",
+      "language": "markdown",
+      "sizeLines": 750,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/audit-logging.md",
+      "language": "markdown",
+      "sizeLines": 821,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/backup-recovery.md",
+      "language": "markdown",
+      "sizeLines": 822,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/bulk-operations.md",
+      "language": "markdown",
+      "sizeLines": 771,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/checklists-troubleshooting.md",
+      "language": "markdown",
+      "sizeLines": 136,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/cicd-integration.md",
+      "language": "markdown",
+      "sizeLines": 858,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/coding-standards-trivadis.md",
+      "language": "markdown",
+      "sizeLines": 1282,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/data-types.md",
+      "language": "markdown",
+      "sizeLines": 574,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/data-warehousing-medallion.md",
+      "language": "markdown",
+      "sizeLines": 2425,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/encryption.md",
+      "language": "markdown",
+      "sizeLines": 655,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/event-sourcing.md",
+      "language": "markdown",
+      "sizeLines": 768,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/full-text-search.md",
+      "language": "markdown",
+      "sizeLines": 836,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/indexes-constraints.md",
+      "language": "markdown",
+      "sizeLines": 696,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/jsonb-patterns.md",
+      "language": "markdown",
+      "sizeLines": 1341,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/memory-management-ops.md",
+      "language": "markdown",
+      "sizeLines": 39,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/migrations.md",
+      "language": "markdown",
+      "sizeLines": 1180,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/monitoring-observability.md",
+      "language": "markdown",
+      "sizeLines": 934,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/mvcc-transactions.md",
+      "language": "markdown",
+      "sizeLines": 38,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/oracle-migration-guide.md",
+      "language": "markdown",
+      "sizeLines": 753,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/partitioning.md",
+      "language": "markdown",
+      "sizeLines": 811,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/performance-tuning.md",
+      "language": "markdown",
+      "sizeLines": 908,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/plpgsql-table-api.md",
+      "language": "markdown",
+      "sizeLines": 889,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/postgis-patterns.md",
+      "language": "markdown",
+      "sizeLines": 525,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/process-architecture.md",
+      "language": "markdown",
+      "sizeLines": 46,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/queue-patterns.md",
+      "language": "markdown",
+      "sizeLines": 647,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/quick-reference.md",
+      "language": "markdown",
+      "sizeLines": 323,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/replication-ha.md",
+      "language": "markdown",
+      "sizeLines": 770,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/row-level-security.md",
+      "language": "markdown",
+      "sizeLines": 806,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/schema-architecture.md",
+      "language": "markdown",
+      "sizeLines": 654,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/schema-naming.md",
+      "language": "markdown",
+      "sizeLines": 280,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/session-management.md",
+      "language": "markdown",
+      "sizeLines": 752,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/storage-layout.md",
+      "language": "markdown",
+      "sizeLines": 41,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/testing-patterns.md",
+      "language": "markdown",
+      "sizeLines": 984,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/time-series.md",
+      "language": "markdown",
+      "sizeLines": 725,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/transaction-patterns.md",
+      "language": "markdown",
+      "sizeLines": 687,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/vector-search.md",
+      "language": "markdown",
+      "sizeLines": 702,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/wal-operations.md",
+      "language": "markdown",
+      "sizeLines": 42,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/references/window-functions.md",
+      "language": "markdown",
+      "sizeLines": 601,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/postgresql-skill/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 333,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/repo-onboarding/agents/openai.yaml",
+      "language": "yaml",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".agents/skills/repo-onboarding/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 69,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/run-local-sonarqube/agents/openai.yaml",
+      "language": "yaml",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".agents/skills/run-local-sonarqube/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 84,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/run-tests/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 103,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/sonar-local-remediaton/agents/openai.yaml",
+      "language": "yaml",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".agents/skills/sonar-local-remediaton/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 129,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/sonarcloud-remediation/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 113,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/stop-slop/references/examples.md",
+      "language": "markdown",
+      "sizeLines": 59,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/stop-slop/references/phrases.md",
+      "language": "markdown",
+      "sizeLines": 128,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/stop-slop/references/structures.md",
+      "language": "markdown",
+      "sizeLines": 134,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/stop-slop/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 68,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/tdd/agents/openai.yaml",
+      "language": "yaml",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".agents/skills/tdd/deep-modules.md",
+      "language": "markdown",
+      "sizeLines": 33,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/tdd/interface-design.md",
+      "language": "markdown",
+      "sizeLines": 31,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/tdd/mocking.md",
+      "language": "markdown",
+      "sizeLines": 59,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/tdd/refactoring.md",
+      "language": "markdown",
+      "sizeLines": 10,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/tdd/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 109,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/tdd/tests.md",
+      "language": "markdown",
+      "sizeLines": 61,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/to-prd/agents/openai.yaml",
+      "language": "yaml",
+      "sizeLines": 2,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".agents/skills/to-prd/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 74,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/verify-implementation/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 135,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/verify-readme-docs/agents/openai.yaml",
+      "language": "yaml",
+      "sizeLines": 4,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".agents/skills/verify-readme-docs/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 57,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/write-a-skill/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 117,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/writing-tests/SKILL.md",
+      "language": "markdown",
+      "sizeLines": 85,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".dockerignore",
+      "language": "unknown",
+      "sizeLines": 60,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/ci-cd-config.yaml",
+      "language": "yaml",
+      "sizeLines": 54,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".github/codeql/codeql-config.yml",
+      "language": "yaml",
+      "sizeLines": 5,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".github/dependabot.yml",
+      "language": "yaml",
+      "sizeLines": 24,
+      "fileCategory": "config"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "language": "yaml",
+      "sizeLines": 206,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/codeql.yml",
+      "language": "yaml",
+      "sizeLines": 80,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/dependency-scan.yml",
+      "language": "yaml",
+      "sizeLines": 66,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/publish.yml",
+      "language": "yaml",
+      "sizeLines": 121,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "language": "yaml",
+      "sizeLines": 111,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/semgrep-scheduled.yml",
+      "language": "yaml",
+      "sizeLines": 53,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/semgrep.yml",
+      "language": "yaml",
+      "sizeLines": 99,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".github/workflows/sonar.yml",
+      "language": "yaml",
+      "sizeLines": 213,
+      "fileCategory": "infra"
+    },
+    {
+      "path": ".understand-anything/.understandignore",
+      "language": "unknown",
+      "sizeLines": 96,
+      "fileCategory": "code"
+    },
+    {
+      "path": ".understand-anything/config.json",
+      "language": "json",
+      "sizeLines": 1,
+      "fileCategory": "config"
+    },
+    {
+      "path": "AGENTS.md",
+      "language": "markdown",
+      "sizeLines": 174,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "language": "markdown",
+      "sizeLines": 47,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "CONTEXT.md",
+      "language": "markdown",
+      "sizeLines": 130,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "language": "markdown",
+      "sizeLines": 25,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "coverlet.runsettings",
+      "language": "runsettings",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "deploy/compose/release/rfc-rag.yaml",
+      "language": "yaml",
+      "sizeLines": 56,
+      "fileCategory": "config"
+    },
+    {
+      "path": "deploy/compose/rfc-rag.env.example",
+      "language": "example",
+      "sizeLines": 58,
+      "fileCategory": "code"
+    },
+    {
+      "path": "deploy/compose/rfc-rag.yaml",
+      "language": "yaml",
+      "sizeLines": 55,
+      "fileCategory": "config"
+    },
+    {
+      "path": "Directory.Build.props",
+      "language": "props",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "Dockerfile",
+      "language": "dockerfile",
+      "sizeLines": 58,
+      "fileCategory": "infra"
+    },
+    {
+      "path": "docs/adr/0001-txt-canonical-xml-fallback.md",
+      "language": "markdown",
+      "sizeLines": 8,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/adr/0002-sections-as-retrieval-unit.md",
+      "language": "markdown",
+      "sizeLines": 3,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/adr/0003-single-postgres-hybrid-search.md",
+      "language": "markdown",
+      "sizeLines": 8,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/adr/0004-raw-sql-dapper-no-orm.md",
+      "language": "markdown",
+      "sizeLines": 5,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/adr/0005-embedding-model-dimension-lock-in.md",
+      "language": "markdown",
+      "sizeLines": 3,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/adr/0006-generation-optional-answering.md",
+      "language": "markdown",
+      "sizeLines": 11,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/adr/0007-deterministic-first-reranking.md",
+      "language": "markdown",
+      "sizeLines": 44,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/adr/0008-golden-eval-gates.md",
+      "language": "markdown",
+      "sizeLines": 11,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/adr/0009-errata-local-snapshot.md",
+      "language": "markdown",
+      "sizeLines": 11,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/adr/0010-vectordata-pure-vector-adapter.md",
+      "language": "markdown",
+      "sizeLines": 12,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/articles/i-got-my-ai-to-cite-the-specs.md",
+      "language": "markdown",
+      "sizeLines": 36,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/cli-mode-guide.md",
+      "language": "markdown",
+      "sizeLines": 43,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/configuration.md",
+      "language": "markdown",
+      "sizeLines": 117,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/eval/golden_questions.json",
+      "language": "json",
+      "sizeLines": 325,
+      "fileCategory": "config"
+    },
+    {
+      "path": "docs/eval/README.md",
+      "language": "markdown",
+      "sizeLines": 80,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/eval/reports/baseline-testdata.json",
+      "language": "json",
+      "sizeLines": 390,
+      "fileCategory": "config"
+    },
+    {
+      "path": "docs/eval/retrieval_queries.json",
+      "language": "json",
+      "sizeLines": 62,
+      "fileCategory": "config"
+    },
+    {
+      "path": "docs/known_quirks.md",
+      "language": "markdown",
+      "sizeLines": 75,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/normative-search.md",
+      "language": "markdown",
+      "sizeLines": 93,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/plans/2026-06-16-vectordata-migration-plan.md",
+      "language": "markdown",
+      "sizeLines": 284,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/plans/archive/2026-06-10-hardening-plan.md",
+      "language": "markdown",
+      "sizeLines": 391,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/plans/archive/2026-06-11-phase-4-answer-evaluation-remediation-plan.md",
+      "language": "markdown",
+      "sizeLines": 272,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/plans/archive/2026-06-11-production-improvements-implementation-plan.md",
+      "language": "markdown",
+      "sizeLines": 821,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/plans/archive/2026-06-11-production-improvements-roadmap.md",
+      "language": "markdown",
+      "sizeLines": 417,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/plans/archive/2026-06-12-phase6-verification-report.md",
+      "language": "markdown",
+      "sizeLines": 126,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/plans/archive/2026-06-13-implementation-remediation-plan.md",
+      "language": "markdown",
+      "sizeLines": 151,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/plans/archive/2026-06-13-implementation-verification-report.md",
+      "language": "markdown",
+      "sizeLines": 129,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/plans/archive/2026-06-13-phase7-remediation-plan.md",
+      "language": "markdown",
+      "sizeLines": 164,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/plans/archive/2026-06-13-verification-remediation-plan.md",
+      "language": "markdown",
+      "sizeLines": 436,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/releasing.md",
+      "language": "markdown",
+      "sizeLines": 70,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/trace-schema.md",
+      "language": "markdown",
+      "sizeLines": 73,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "Makefile",
+      "language": "makefile",
+      "sizeLines": 53,
+      "fileCategory": "infra"
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "sizeLines": 242,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "RfcRag.slnx",
+      "language": "slnx",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/install.sh",
+      "language": "shell",
+      "sizeLines": 47,
+      "fileCategory": "script"
+    },
+    {
+      "path": "scripts/run-all-tests.sh",
+      "language": "shell",
+      "sizeLines": 38,
+      "fileCategory": "script"
+    },
+    {
+      "path": "scripts/smoke-test-release.sh",
+      "language": "shell",
+      "sizeLines": 161,
+      "fileCategory": "script"
+    },
+    {
+      "path": "SECURITY.md",
+      "language": "markdown",
+      "sizeLines": 27,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "src/RfcRag/Answering/AnswerGenerator.cs",
+      "language": "csharp",
+      "sizeLines": 292,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Answering/AnsweringExtensions.cs",
+      "language": "csharp",
+      "sizeLines": 56,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Answering/AskService.cs",
+      "language": "csharp",
+      "sizeLines": 141,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Answering/CitationDiscipline.cs",
+      "language": "csharp",
+      "sizeLines": 62,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Answering/CitationVerifier.cs",
+      "language": "csharp",
+      "sizeLines": 126,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Answering/ContextAssembler.cs",
+      "language": "csharp",
+      "sizeLines": 409,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Answering/EvidencePack.cs",
+      "language": "csharp",
+      "sizeLines": 36,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Answering/EvidenceSection.cs",
+      "language": "csharp",
+      "sizeLines": 63,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Answering/EvidenceWarning.cs",
+      "language": "csharp",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Answering/GeneratedAnswer.cs",
+      "language": "csharp",
+      "sizeLines": 142,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Answering/IAskService.cs",
+      "language": "csharp",
+      "sizeLines": 22,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Cli/BenchmarkCommand.cs",
+      "language": "csharp",
+      "sizeLines": 120,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Cli/CliArgParser.cs",
+      "language": "csharp",
+      "sizeLines": 28,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Cli/CliCommand.cs",
+      "language": "csharp",
+      "sizeLines": 170,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Cli/CliCommandRouter.cs",
+      "language": "csharp",
+      "sizeLines": 95,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Cli/EvalCommand.cs",
+      "language": "csharp",
+      "sizeLines": 373,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Dockerfile",
+      "language": "dockerfile",
+      "sizeLines": 58,
+      "fileCategory": "infra"
+    },
+    {
+      "path": "src/RfcRag/Evaluation/AnswerEvaluationMetrics.cs",
+      "language": "csharp",
+      "sizeLines": 218,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Evaluation/EvalModels.cs",
+      "language": "csharp",
+      "sizeLines": 87,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Evaluation/RetrievalMetrics.cs",
+      "language": "csharp",
+      "sizeLines": 135,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/GlobalUsings.cs",
+      "language": "csharp",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Indexing/EmbeddingProviderBatchMismatchException.cs",
+      "language": "csharp",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Indexing/EmbeddingRetryPolicy.cs",
+      "language": "csharp",
+      "sizeLines": 96,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Indexing/EmbeddingService.cs",
+      "language": "csharp",
+      "sizeLines": 255,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Indexing/ErrataLoader.cs",
+      "language": "csharp",
+      "sizeLines": 168,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Indexing/IIndexerService.cs",
+      "language": "csharp",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Indexing/IndexedRfcData.cs",
+      "language": "csharp",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Indexing/IndexingExtensions.cs",
+      "language": "csharp",
+      "sizeLines": 52,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Indexing/IndexingRepository.cs",
+      "language": "csharp",
+      "sizeLines": 382,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Indexing/IndexManifest.cs",
+      "language": "csharp",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Indexing/MissingApiKeyEmbeddingGenerator.cs",
+      "language": "csharp",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Indexing/OpenAiEmbeddingGeneratorAdapter.cs",
+      "language": "csharp",
+      "sizeLines": 25,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Indexing/RfcIndexer.cs",
+      "language": "csharp",
+      "sizeLines": 267,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Indexing/RfcSourceResolver.cs",
+      "language": "csharp",
+      "sizeLines": 76,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Infrastructure/ITraceQueue.cs",
+      "language": "csharp",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Infrastructure/QueryTrace.cs",
+      "language": "csharp",
+      "sizeLines": 56,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Infrastructure/QueryTraceWriter.cs",
+      "language": "csharp",
+      "sizeLines": 72,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Infrastructure/RfcRagConventions.cs",
+      "language": "csharp",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Infrastructure/RfcRagMigrationRunner.cs",
+      "language": "csharp",
+      "sizeLines": 229,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Infrastructure/RfcRagStartupService.cs",
+      "language": "csharp",
+      "sizeLines": 133,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Infrastructure/ServiceCollectionExtensions.cs",
+      "language": "csharp",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Infrastructure/TraceBackgroundService.cs",
+      "language": "csharp",
+      "sizeLines": 50,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Infrastructure/TraceQueue.cs",
+      "language": "csharp",
+      "sizeLines": 47,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Migrations/0001-initial-rfc-rag-schema.sql",
+      "language": "sql",
+      "sizeLines": 89,
+      "fileCategory": "data"
+    },
+    {
+      "path": "src/RfcRag/Migrations/0002-add-metadata-fields.sql",
+      "language": "sql",
+      "sizeLines": 5,
+      "fileCategory": "data"
+    },
+    {
+      "path": "src/RfcRag/Migrations/0003-add-extended-metadata-fields.sql",
+      "language": "sql",
+      "sizeLines": 11,
+      "fileCategory": "data"
+    },
+    {
+      "path": "src/RfcRag/Migrations/0004-add-grammar-style.sql",
+      "language": "sql",
+      "sizeLines": 6,
+      "fileCategory": "data"
+    },
+    {
+      "path": "src/RfcRag/Migrations/0005-index-manifest.sql",
+      "language": "sql",
+      "sizeLines": 14,
+      "fileCategory": "data"
+    },
+    {
+      "path": "src/RfcRag/Migrations/0006-rfc-errata.sql",
+      "language": "sql",
+      "sizeLines": 13,
+      "fileCategory": "data"
+    },
+    {
+      "path": "src/RfcRag/Models/GrammarStyleConstants.cs",
+      "language": "csharp",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Models/NormativeOccurrence.cs",
+      "language": "csharp",
+      "sizeLines": 24,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Models/NormativeOccurrenceData.cs",
+      "language": "csharp",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Models/RfcAbnfBlock.cs",
+      "language": "csharp",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Models/RfcErratum.cs",
+      "language": "csharp",
+      "sizeLines": 64,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Models/RfcMetadata.cs",
+      "language": "csharp",
+      "sizeLines": 34,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Models/RfcRelationsBatch.cs",
+      "language": "csharp",
+      "sizeLines": 24,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Models/RfcSection.cs",
+      "language": "csharp",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Parsing/ParsingExtensions.cs",
+      "language": "csharp",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Parsing/RfcDocument.cs",
+      "language": "csharp",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Parsing/RfcParser.cs",
+      "language": "csharp",
+      "sizeLines": 626,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Parsing/RfcXmlParser.cs",
+      "language": "csharp",
+      "sizeLines": 170,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Program.cs",
+      "language": "csharp",
+      "sizeLines": 88,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/README.md",
+      "language": "markdown",
+      "sizeLines": 154,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "src/RfcRag/RfcRag.csproj",
+      "language": "csproj",
+      "sizeLines": 41,
+      "fileCategory": "config"
+    },
+    {
+      "path": "src/RfcRag/Search/DeterministicReranker.cs",
+      "language": "csharp",
+      "sizeLines": 119,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Search/HybridCandidate.cs",
+      "language": "csharp",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Search/ISearchService.cs",
+      "language": "csharp",
+      "sizeLines": 50,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Search/IVectorDataSearch.cs",
+      "language": "csharp",
+      "sizeLines": 6,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Search/MetadataRepository.cs",
+      "language": "csharp",
+      "sizeLines": 202,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Search/QueryPlan.cs",
+      "language": "csharp",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Search/QueryPlanner.cs",
+      "language": "csharp",
+      "sizeLines": 156,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Search/RfcSectionRecord.cs",
+      "language": "csharp",
+      "sizeLines": 34,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Search/RfcStatusBlock.cs",
+      "language": "csharp",
+      "sizeLines": 44,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Search/SearchExtensions.cs",
+      "language": "csharp",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Search/SearchRepository.cs",
+      "language": "csharp",
+      "sizeLines": 554,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Search/SearchResult.cs",
+      "language": "csharp",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Search/SearchService.cs",
+      "language": "csharp",
+      "sizeLines": 263,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Search/VectorDataSearch.cs",
+      "language": "csharp",
+      "sizeLines": 52,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Settings/ChatProvider.cs",
+      "language": "csharp",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Settings/EmbeddingProvider.cs",
+      "language": "csharp",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Settings/RfcParserType.cs",
+      "language": "csharp",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Settings/RfcRagOptions.cs",
+      "language": "csharp",
+      "sizeLines": 123,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Settings/RfcRagOptionsValidator.cs",
+      "language": "csharp",
+      "sizeLines": 60,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Tools/RfcAskTools.cs",
+      "language": "csharp",
+      "sizeLines": 45,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Tools/RfcRagTools.cs",
+      "language": "csharp",
+      "sizeLines": 250,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/RfcRag/Tools/ToolExceptionFilter.cs",
+      "language": "csharp",
+      "sizeLines": 37,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/Fakes/BatchEmptyEmbeddingGenerator.cs",
+      "language": "csharp",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/Fakes/FakeAskService.cs",
+      "language": "csharp",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/Fakes/FakeChatClient.cs",
+      "language": "csharp",
+      "sizeLines": 84,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/Fakes/FakeEmbeddingGenerator.cs",
+      "language": "csharp",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/Fakes/FakeSearchService.cs",
+      "language": "csharp",
+      "sizeLines": 124,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/Fakes/FakeTraceWriter.cs",
+      "language": "csharp",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/Fakes/FakeVectorDataSearch.cs",
+      "language": "csharp",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/Fakes/MisbehavingEmbeddingGenerator.cs",
+      "language": "csharp",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/Fakes/SemanticFakeEmbeddingGenerator.cs",
+      "language": "csharp",
+      "sizeLines": 84,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/Fakes/TrackingEmbeddingGenerator.cs",
+      "language": "csharp",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/Fakes/TransientEmptyEmbeddingGenerator.cs",
+      "language": "csharp",
+      "sizeLines": 39,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/IntegrationTests/AnswerQualityTests.cs",
+      "language": "csharp",
+      "sizeLines": 258,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/IntegrationTests/EmbeddingDimensionMigrationTests.cs",
+      "language": "csharp",
+      "sizeLines": 140,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/IntegrationTests/EmbeddingIntegrationTests.cs",
+      "language": "csharp",
+      "sizeLines": 169,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/IntegrationTests/EvalCommandTests.cs",
+      "language": "csharp",
+      "sizeLines": 189,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/IntegrationTests/LiveApiIndexingTests.cs",
+      "language": "csharp",
+      "sizeLines": 212,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/IntegrationTests/MediumCorpusFixture.cs",
+      "language": "csharp",
+      "sizeLines": 153,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/IntegrationTests/PromptInjectionIntegrationTests.cs",
+      "language": "csharp",
+      "sizeLines": 165,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/IntegrationTests/RetrievalQualityTests.cs",
+      "language": "csharp",
+      "sizeLines": 250,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/IntegrationTests/RfcRagIntegrationTests.cs",
+      "language": "csharp",
+      "sizeLines": 837,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/IntegrationTests/VectorDataCollectionTests.cs",
+      "language": "csharp",
+      "sizeLines": 56,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/IntegrationTests/VectorDataSearchIntegrationTests.cs",
+      "language": "csharp",
+      "sizeLines": 119,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/Program.cs",
+      "language": "csharp",
+      "sizeLines": 7,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/README.md",
+      "language": "markdown",
+      "sizeLines": 43,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/RfcRag.Tests/RfcRag.Tests.csproj",
+      "language": "csproj",
+      "sizeLines": 43,
+      "fileCategory": "config"
+    },
+    {
+      "path": "tests/RfcRag.Tests/TestData/badfile.txt",
+      "language": "txt",
+      "sizeLines": 1,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/RfcRag.Tests/TestData/rfc1035.txt",
+      "language": "txt",
+      "sizeLines": 3077,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/RfcRag.Tests/TestData/rfc2119.txt",
+      "language": "txt",
+      "sizeLines": 171,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/RfcRag.Tests/TestData/rfc3986.txt",
+      "language": "txt",
+      "sizeLines": 3419,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/RfcRag.Tests/TestData/rfc5234.txt",
+      "language": "txt",
+      "sizeLines": 899,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/RfcRag.Tests/TestData/rfc5681.txt",
+      "language": "txt",
+      "sizeLines": 1011,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/RfcRag.Tests/TestData/rfc793.txt",
+      "language": "txt",
+      "sizeLines": 5247,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/RfcRag.Tests/TestData/rfc8174.txt",
+      "language": "txt",
+      "sizeLines": 227,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/RfcRag.Tests/TestData/rfc822.txt",
+      "language": "txt",
+      "sizeLines": 2901,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/RfcRag.Tests/TestData/rfc8446.txt",
+      "language": "txt",
+      "sizeLines": 8963,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/RfcRag.Tests/TestData/rfc9000.txt",
+      "language": "txt",
+      "sizeLines": 8485,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/RfcRag.Tests/TestData/rfc9052.txt",
+      "language": "txt",
+      "sizeLines": 3603,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/RfcRag.Tests/TestData/rfc9110.txt",
+      "language": "txt",
+      "sizeLines": 10785,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/RfcRag.Tests/TestData/rfc9293.txt",
+      "language": "txt",
+      "sizeLines": 5576,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/RfcRag.Tests/TestData/rfc9998-injection.txt",
+      "language": "txt",
+      "sizeLines": 66,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/RfcRag.Tests/TestData/rfc9999.txt",
+      "language": "txt",
+      "sizeLines": 28,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/AnswerEvaluationEvidenceMetricsTests.cs",
+      "language": "csharp",
+      "sizeLines": 120,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/AnswerEvaluationMetricsTests.cs",
+      "language": "csharp",
+      "sizeLines": 414,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/AnswerGeneratorTests.cs",
+      "language": "csharp",
+      "sizeLines": 413,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/AskServiceTests.cs",
+      "language": "csharp",
+      "sizeLines": 276,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/BenchmarkCommandTests.cs",
+      "language": "csharp",
+      "sizeLines": 98,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/CitationVerifierTests.cs",
+      "language": "csharp",
+      "sizeLines": 550,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/CliCommandTests.cs",
+      "language": "csharp",
+      "sizeLines": 367,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/ContextAssemblerTests.cs",
+      "language": "csharp",
+      "sizeLines": 589,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/DeterministicRerankerTests.cs",
+      "language": "csharp",
+      "sizeLines": 317,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/EmbeddingRetryPolicyTests.cs",
+      "language": "csharp",
+      "sizeLines": 231,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/EmbeddingServiceTests.cs",
+      "language": "csharp",
+      "sizeLines": 231,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/ErrataLoaderTests.cs",
+      "language": "csharp",
+      "sizeLines": 60,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/PromptInjectionTests.cs",
+      "language": "csharp",
+      "sizeLines": 146,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/QueryPlannerTests.cs",
+      "language": "csharp",
+      "sizeLines": 100,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/QueryTraceWriterTests.cs",
+      "language": "csharp",
+      "sizeLines": 208,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/RetrievalMetricsTests.cs",
+      "language": "csharp",
+      "sizeLines": 252,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/RfcParserTests.cs",
+      "language": "csharp",
+      "sizeLines": 531,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/RfcRagOptionsTests.cs",
+      "language": "csharp",
+      "sizeLines": 66,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/RfcRagOptionsValidatorTests.cs",
+      "language": "csharp",
+      "sizeLines": 239,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/RfcRagToolsTests.cs",
+      "language": "csharp",
+      "sizeLines": 731,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/RfcSourceResolverTests.cs",
+      "language": "csharp",
+      "sizeLines": 100,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/RfcStatusBlockTests.cs",
+      "language": "csharp",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/RfcXmlParserTests.cs",
+      "language": "csharp",
+      "sizeLines": 68,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/SearchRepositoryTests.cs",
+      "language": "csharp",
+      "sizeLines": 198,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/SearchServiceRoutingTests.cs",
+      "language": "csharp",
+      "sizeLines": 92,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/SearchServiceTests.cs",
+      "language": "csharp",
+      "sizeLines": 94,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/ToolExceptionFilterTests.cs",
+      "language": "csharp",
+      "sizeLines": 83,
+      "fileCategory": "code"
+    },
+    {
+      "path": "tests/RfcRag.Tests/UnitTests/VectorDataSearchTests.cs",
+      "language": "csharp",
+      "sizeLines": 33,
+      "fileCategory": "code"
+    }
+  ],
+  "totalFiles": 345,
+  "filteredByIgnore": 0,
+  "estimatedComplexity": "large",
+  "importMap": {
+    ".agents/skills/ci-cd-architect/agents/openai.yaml": [],
+    ".agents/skills/ci-cd-architect/ci-cd-standard.md": [],
+    ".agents/skills/ci-cd-architect/references/action-version-matrix.md": [],
+    ".agents/skills/ci-cd-architect/SKILL.md": [],
+    ".agents/skills/ci-cd-architect/templates/auto-tag.yml.j2": [],
+    ".agents/skills/ci-cd-architect/templates/ci-cd-config.example.yaml": [],
+    ".agents/skills/ci-cd-architect/templates/ci.yml.j2": [],
+    ".agents/skills/ci-cd-architect/templates/container-scan.yml.j2": [],
+    ".agents/skills/ci-cd-architect/templates/dependabot.yml.j2": [],
+    ".agents/skills/ci-cd-architect/templates/dependency-scan.yml.j2": [],
+    ".agents/skills/ci-cd-architect/templates/docs-validation.yml.j2": [],
+    ".agents/skills/ci-cd-architect/templates/dotnet-ci.yml.j2": [],
+    ".agents/skills/ci-cd-architect/templates/integration-tests.yml.j2": [],
+    ".agents/skills/ci-cd-architect/templates/keycloak-tests.yml.j2": [],
+    ".agents/skills/ci-cd-architect/templates/publish.yml.j2": [],
+    ".agents/skills/ci-cd-architect/templates/safety-e2e.yml.j2": [],
+    ".agents/skills/ci-cd-architect/templates/semgrep-scheduled.yml.j2": [],
+    ".agents/skills/ci-cd-architect/templates/semgrep.yml.j2": [],
+    ".agents/skills/ci-cd-architect/templates/sonar.yml.j2": [],
+    ".agents/skills/code-standards/agents/openai.yaml": [],
+    ".agents/skills/code-standards/references/async-and-cancellation.md": [],
+    ".agents/skills/code-standards/references/collections.md": [],
+    ".agents/skills/code-standards/references/dependency-injection.md": [],
+    ".agents/skills/code-standards/references/formatting.md": [],
+    ".agents/skills/code-standards/references/http-clients-and-resilience.md": [],
+    ".agents/skills/code-standards/references/json-and-serialization.md": [],
+    ".agents/skills/code-standards/references/logging.md": [],
+    ".agents/skills/code-standards/references/magic-strings.md": [],
+    ".agents/skills/code-standards/references/metrics-and-observability.md": [],
+    ".agents/skills/code-standards/references/naming.md": [],
+    ".agents/skills/code-standards/references/primary-constructors.md": [],
+    ".agents/skills/code-standards/references/records-and-dtos.md": [],
+    ".agents/skills/code-standards/references/resilience-testing.md": [],
+    ".agents/skills/code-standards/references/review-checklist.md": [],
+    ".agents/skills/code-standards/references/scope-of-abstractions.md": [],
+    ".agents/skills/code-standards/references/time-timers-deterministic-tests.md": [],
+    ".agents/skills/code-standards/references/type-organization.md": [],
+    ".agents/skills/code-standards/SKILL.md": [],
+    ".agents/skills/create-custom-agent/SKILL.md": [],
+    ".agents/skills/dotnet-a2a-agent/references/API_REFERENCE.md": [],
+    ".agents/skills/dotnet-a2a-agent/references/EXAMPLES.md": [],
+    ".agents/skills/dotnet-a2a-agent/references/SERVER_HOSTING.md": [],
+    ".agents/skills/dotnet-a2a-agent/SKILL.md": [],
+    ".agents/skills/dotnet-agent-workflows/references/EXAMPLES.md": [],
+    ".agents/skills/dotnet-agent-workflows/SKILL.md": [],
+    ".agents/skills/grill-with-docs/ADR-FORMAT.md": [],
+    ".agents/skills/grill-with-docs/agents/openai.yaml": [],
+    ".agents/skills/grill-with-docs/CONTEXT-FORMAT.md": [],
+    ".agents/skills/grill-with-docs/SKILL.md": [],
+    ".agents/skills/improve-codebase-architecture/agents/openai.yaml": [],
+    ".agents/skills/improve-codebase-architecture/DEEPENING.md": [],
+    ".agents/skills/improve-codebase-architecture/INTERFACE-DESIGN.md": [],
+    ".agents/skills/improve-codebase-architecture/LANGUAGE.md": [],
+    ".agents/skills/improve-codebase-architecture/SKILL.md": [],
+    ".agents/skills/jetbrains-refactor/SKILL.md": [],
+    ".agents/skills/Modern-CSharp/manifest.json": [],
+    ".agents/skills/Modern-CSharp/skills/modern-csharp/manifest.json": [],
+    ".agents/skills/Modern-CSharp/skills/modern-csharp/references/csharp-modern-features.md": [],
+    ".agents/skills/Modern-CSharp/skills/modern-csharp/references/migration.md": [],
+    ".agents/skills/Modern-CSharp/skills/modern-csharp/references/patterns.md": [],
+    ".agents/skills/Modern-CSharp/skills/modern-csharp/SKILL.md": [],
+    ".agents/skills/planning-and-task-breakdown/SKILL.md": [],
+    ".agents/skills/postgresql-skill/references/analytical-queries.md": [],
+    ".agents/skills/postgresql-skill/references/anti-patterns.md": [],
+    ".agents/skills/postgresql-skill/references/audit-logging.md": [],
+    ".agents/skills/postgresql-skill/references/backup-recovery.md": [],
+    ".agents/skills/postgresql-skill/references/bulk-operations.md": [],
+    ".agents/skills/postgresql-skill/references/checklists-troubleshooting.md": [],
+    ".agents/skills/postgresql-skill/references/cicd-integration.md": [],
+    ".agents/skills/postgresql-skill/references/coding-standards-trivadis.md": [],
+    ".agents/skills/postgresql-skill/references/data-types.md": [],
+    ".agents/skills/postgresql-skill/references/data-warehousing-medallion.md": [],
+    ".agents/skills/postgresql-skill/references/encryption.md": [],
+    ".agents/skills/postgresql-skill/references/event-sourcing.md": [],
+    ".agents/skills/postgresql-skill/references/full-text-search.md": [],
+    ".agents/skills/postgresql-skill/references/indexes-constraints.md": [],
+    ".agents/skills/postgresql-skill/references/jsonb-patterns.md": [],
+    ".agents/skills/postgresql-skill/references/memory-management-ops.md": [],
+    ".agents/skills/postgresql-skill/references/migrations.md": [],
+    ".agents/skills/postgresql-skill/references/monitoring-observability.md": [],
+    ".agents/skills/postgresql-skill/references/mvcc-transactions.md": [],
+    ".agents/skills/postgresql-skill/references/oracle-migration-guide.md": [],
+    ".agents/skills/postgresql-skill/references/partitioning.md": [],
+    ".agents/skills/postgresql-skill/references/performance-tuning.md": [],
+    ".agents/skills/postgresql-skill/references/plpgsql-table-api.md": [],
+    ".agents/skills/postgresql-skill/references/postgis-patterns.md": [],
+    ".agents/skills/postgresql-skill/references/process-architecture.md": [],
+    ".agents/skills/postgresql-skill/references/queue-patterns.md": [],
+    ".agents/skills/postgresql-skill/references/quick-reference.md": [],
+    ".agents/skills/postgresql-skill/references/replication-ha.md": [],
+    ".agents/skills/postgresql-skill/references/row-level-security.md": [],
+    ".agents/skills/postgresql-skill/references/schema-architecture.md": [],
+    ".agents/skills/postgresql-skill/references/schema-naming.md": [],
+    ".agents/skills/postgresql-skill/references/session-management.md": [],
+    ".agents/skills/postgresql-skill/references/storage-layout.md": [],
+    ".agents/skills/postgresql-skill/references/testing-patterns.md": [],
+    ".agents/skills/postgresql-skill/references/time-series.md": [],
+    ".agents/skills/postgresql-skill/references/transaction-patterns.md": [],
+    ".agents/skills/postgresql-skill/references/vector-search.md": [],
+    ".agents/skills/postgresql-skill/references/wal-operations.md": [],
+    ".agents/skills/postgresql-skill/references/window-functions.md": [],
+    ".agents/skills/postgresql-skill/SKILL.md": [],
+    ".agents/skills/repo-onboarding/agents/openai.yaml": [],
+    ".agents/skills/repo-onboarding/SKILL.md": [],
+    ".agents/skills/run-local-sonarqube/agents/openai.yaml": [],
+    ".agents/skills/run-local-sonarqube/SKILL.md": [],
+    ".agents/skills/run-tests/SKILL.md": [],
+    ".agents/skills/sonar-local-remediaton/agents/openai.yaml": [],
+    ".agents/skills/sonar-local-remediaton/SKILL.md": [],
+    ".agents/skills/sonarcloud-remediation/SKILL.md": [],
+    ".agents/skills/stop-slop/references/examples.md": [],
+    ".agents/skills/stop-slop/references/phrases.md": [],
+    ".agents/skills/stop-slop/references/structures.md": [],
+    ".agents/skills/stop-slop/SKILL.md": [],
+    ".agents/skills/tdd/agents/openai.yaml": [],
+    ".agents/skills/tdd/deep-modules.md": [],
+    ".agents/skills/tdd/interface-design.md": [],
+    ".agents/skills/tdd/mocking.md": [],
+    ".agents/skills/tdd/refactoring.md": [],
+    ".agents/skills/tdd/SKILL.md": [],
+    ".agents/skills/tdd/tests.md": [],
+    ".agents/skills/to-prd/agents/openai.yaml": [],
+    ".agents/skills/to-prd/SKILL.md": [],
+    ".agents/skills/verify-implementation/SKILL.md": [],
+    ".agents/skills/verify-readme-docs/agents/openai.yaml": [],
+    ".agents/skills/verify-readme-docs/SKILL.md": [],
+    ".agents/skills/write-a-skill/SKILL.md": [],
+    ".agents/skills/writing-tests/SKILL.md": [],
+    ".dockerignore": [],
+    ".github/ci-cd-config.yaml": [],
+    ".github/codeql/codeql-config.yml": [],
+    ".github/dependabot.yml": [],
+    ".github/workflows/ci.yml": [],
+    ".github/workflows/codeql.yml": [],
+    ".github/workflows/dependency-scan.yml": [],
+    ".github/workflows/publish.yml": [],
+    ".github/workflows/release.yml": [],
+    ".github/workflows/semgrep-scheduled.yml": [],
+    ".github/workflows/semgrep.yml": [],
+    ".github/workflows/sonar.yml": [],
+    ".understand-anything/.understandignore": [],
+    ".understand-anything/config.json": [],
+    "AGENTS.md": [],
+    "CHANGELOG.md": [],
+    "CONTEXT.md": [],
+    "CONTRIBUTING.md": [],
+    "coverlet.runsettings": [],
+    "deploy/compose/release/rfc-rag.yaml": [],
+    "deploy/compose/rfc-rag.env.example": [],
+    "deploy/compose/rfc-rag.yaml": [],
+    "Directory.Build.props": [],
+    "Dockerfile": [],
+    "docs/adr/0001-txt-canonical-xml-fallback.md": [],
+    "docs/adr/0002-sections-as-retrieval-unit.md": [],
+    "docs/adr/0003-single-postgres-hybrid-search.md": [],
+    "docs/adr/0004-raw-sql-dapper-no-orm.md": [],
+    "docs/adr/0005-embedding-model-dimension-lock-in.md": [],
+    "docs/adr/0006-generation-optional-answering.md": [],
+    "docs/adr/0007-deterministic-first-reranking.md": [],
+    "docs/adr/0008-golden-eval-gates.md": [],
+    "docs/adr/0009-errata-local-snapshot.md": [],
+    "docs/adr/0010-vectordata-pure-vector-adapter.md": [],
+    "docs/articles/i-got-my-ai-to-cite-the-specs.md": [],
+    "docs/cli-mode-guide.md": [],
+    "docs/configuration.md": [],
+    "docs/eval/golden_questions.json": [],
+    "docs/eval/README.md": [],
+    "docs/eval/reports/baseline-testdata.json": [],
+    "docs/eval/retrieval_queries.json": [],
+    "docs/known_quirks.md": [],
+    "docs/normative-search.md": [],
+    "docs/plans/2026-06-16-vectordata-migration-plan.md": [],
+    "docs/plans/archive/2026-06-10-hardening-plan.md": [],
+    "docs/plans/archive/2026-06-11-phase-4-answer-evaluation-remediation-plan.md": [],
+    "docs/plans/archive/2026-06-11-production-improvements-implementation-plan.md": [],
+    "docs/plans/archive/2026-06-11-production-improvements-roadmap.md": [],
+    "docs/plans/archive/2026-06-12-phase6-verification-report.md": [],
+    "docs/plans/archive/2026-06-13-implementation-remediation-plan.md": [],
+    "docs/plans/archive/2026-06-13-implementation-verification-report.md": [],
+    "docs/plans/archive/2026-06-13-phase7-remediation-plan.md": [],
+    "docs/plans/archive/2026-06-13-verification-remediation-plan.md": [],
+    "docs/releasing.md": [],
+    "docs/trace-schema.md": [],
+    "Makefile": [],
+    "README.md": [],
+    "RfcRag.slnx": [],
+    "scripts/install.sh": [],
+    "scripts/run-all-tests.sh": [],
+    "scripts/smoke-test-release.sh": [],
+    "SECURITY.md": [],
+    "src/RfcRag/Answering/AnswerGenerator.cs": [],
+    "src/RfcRag/Answering/AnsweringExtensions.cs": [],
+    "src/RfcRag/Answering/AskService.cs": [],
+    "src/RfcRag/Answering/CitationDiscipline.cs": [],
+    "src/RfcRag/Answering/CitationVerifier.cs": [],
+    "src/RfcRag/Answering/ContextAssembler.cs": [],
+    "src/RfcRag/Answering/EvidencePack.cs": [],
+    "src/RfcRag/Answering/EvidenceSection.cs": [],
+    "src/RfcRag/Answering/EvidenceWarning.cs": [],
+    "src/RfcRag/Answering/GeneratedAnswer.cs": [],
+    "src/RfcRag/Answering/IAskService.cs": [],
+    "src/RfcRag/Cli/BenchmarkCommand.cs": [],
+    "src/RfcRag/Cli/CliArgParser.cs": [],
+    "src/RfcRag/Cli/CliCommand.cs": [],
+    "src/RfcRag/Cli/CliCommandRouter.cs": [],
+    "src/RfcRag/Cli/EvalCommand.cs": [],
+    "src/RfcRag/Dockerfile": [],
+    "src/RfcRag/Evaluation/AnswerEvaluationMetrics.cs": [],
+    "src/RfcRag/Evaluation/EvalModels.cs": [],
+    "src/RfcRag/Evaluation/RetrievalMetrics.cs": [],
+    "src/RfcRag/GlobalUsings.cs": [],
+    "src/RfcRag/Indexing/EmbeddingProviderBatchMismatchException.cs": [],
+    "src/RfcRag/Indexing/EmbeddingRetryPolicy.cs": [],
+    "src/RfcRag/Indexing/EmbeddingService.cs": [],
+    "src/RfcRag/Indexing/ErrataLoader.cs": [],
+    "src/RfcRag/Indexing/IIndexerService.cs": [],
+    "src/RfcRag/Indexing/IndexedRfcData.cs": [],
+    "src/RfcRag/Indexing/IndexingExtensions.cs": [],
+    "src/RfcRag/Indexing/IndexingRepository.cs": [],
+    "src/RfcRag/Indexing/IndexManifest.cs": [],
+    "src/RfcRag/Indexing/MissingApiKeyEmbeddingGenerator.cs": [],
+    "src/RfcRag/Indexing/OpenAiEmbeddingGeneratorAdapter.cs": [],
+    "src/RfcRag/Indexing/RfcIndexer.cs": [],
+    "src/RfcRag/Indexing/RfcSourceResolver.cs": [],
+    "src/RfcRag/Infrastructure/ITraceQueue.cs": [],
+    "src/RfcRag/Infrastructure/QueryTrace.cs": [],
+    "src/RfcRag/Infrastructure/QueryTraceWriter.cs": [],
+    "src/RfcRag/Infrastructure/RfcRagConventions.cs": [],
+    "src/RfcRag/Infrastructure/RfcRagMigrationRunner.cs": [],
+    "src/RfcRag/Infrastructure/RfcRagStartupService.cs": [],
+    "src/RfcRag/Infrastructure/ServiceCollectionExtensions.cs": [],
+    "src/RfcRag/Infrastructure/TraceBackgroundService.cs": [],
+    "src/RfcRag/Infrastructure/TraceQueue.cs": [],
+    "src/RfcRag/Migrations/0001-initial-rfc-rag-schema.sql": [],
+    "src/RfcRag/Migrations/0002-add-metadata-fields.sql": [],
+    "src/RfcRag/Migrations/0003-add-extended-metadata-fields.sql": [],
+    "src/RfcRag/Migrations/0004-add-grammar-style.sql": [],
+    "src/RfcRag/Migrations/0005-index-manifest.sql": [],
+    "src/RfcRag/Migrations/0006-rfc-errata.sql": [],
+    "src/RfcRag/Models/GrammarStyleConstants.cs": [],
+    "src/RfcRag/Models/NormativeOccurrence.cs": [],
+    "src/RfcRag/Models/NormativeOccurrenceData.cs": [],
+    "src/RfcRag/Models/RfcAbnfBlock.cs": [],
+    "src/RfcRag/Models/RfcErratum.cs": [],
+    "src/RfcRag/Models/RfcMetadata.cs": [],
+    "src/RfcRag/Models/RfcRelationsBatch.cs": [],
+    "src/RfcRag/Models/RfcSection.cs": [],
+    "src/RfcRag/Parsing/ParsingExtensions.cs": [],
+    "src/RfcRag/Parsing/RfcDocument.cs": [],
+    "src/RfcRag/Parsing/RfcParser.cs": [],
+    "src/RfcRag/Parsing/RfcXmlParser.cs": [],
+    "src/RfcRag/Program.cs": [],
+    "src/RfcRag/README.md": [],
+    "src/RfcRag/RfcRag.csproj": [],
+    "src/RfcRag/Search/DeterministicReranker.cs": [],
+    "src/RfcRag/Search/HybridCandidate.cs": [],
+    "src/RfcRag/Search/ISearchService.cs": [],
+    "src/RfcRag/Search/IVectorDataSearch.cs": [],
+    "src/RfcRag/Search/MetadataRepository.cs": [],
+    "src/RfcRag/Search/QueryPlan.cs": [],
+    "src/RfcRag/Search/QueryPlanner.cs": [],
+    "src/RfcRag/Search/RfcSectionRecord.cs": [],
+    "src/RfcRag/Search/RfcStatusBlock.cs": [],
+    "src/RfcRag/Search/SearchExtensions.cs": [],
+    "src/RfcRag/Search/SearchRepository.cs": [],
+    "src/RfcRag/Search/SearchResult.cs": [],
+    "src/RfcRag/Search/SearchService.cs": [],
+    "src/RfcRag/Search/VectorDataSearch.cs": [],
+    "src/RfcRag/Settings/ChatProvider.cs": [],
+    "src/RfcRag/Settings/EmbeddingProvider.cs": [],
+    "src/RfcRag/Settings/RfcParserType.cs": [],
+    "src/RfcRag/Settings/RfcRagOptions.cs": [],
+    "src/RfcRag/Settings/RfcRagOptionsValidator.cs": [],
+    "src/RfcRag/Tools/RfcAskTools.cs": [],
+    "src/RfcRag/Tools/RfcRagTools.cs": [],
+    "src/RfcRag/Tools/ToolExceptionFilter.cs": [],
+    "tests/RfcRag.Tests/Fakes/BatchEmptyEmbeddingGenerator.cs": [],
+    "tests/RfcRag.Tests/Fakes/FakeAskService.cs": [],
+    "tests/RfcRag.Tests/Fakes/FakeChatClient.cs": [],
+    "tests/RfcRag.Tests/Fakes/FakeEmbeddingGenerator.cs": [],
+    "tests/RfcRag.Tests/Fakes/FakeSearchService.cs": [],
+    "tests/RfcRag.Tests/Fakes/FakeTraceWriter.cs": [],
+    "tests/RfcRag.Tests/Fakes/FakeVectorDataSearch.cs": [],
+    "tests/RfcRag.Tests/Fakes/MisbehavingEmbeddingGenerator.cs": [],
+    "tests/RfcRag.Tests/Fakes/SemanticFakeEmbeddingGenerator.cs": [],
+    "tests/RfcRag.Tests/Fakes/TrackingEmbeddingGenerator.cs": [],
+    "tests/RfcRag.Tests/Fakes/TransientEmptyEmbeddingGenerator.cs": [],
+    "tests/RfcRag.Tests/IntegrationTests/AnswerQualityTests.cs": [],
+    "tests/RfcRag.Tests/IntegrationTests/EmbeddingDimensionMigrationTests.cs": [],
+    "tests/RfcRag.Tests/IntegrationTests/EmbeddingIntegrationTests.cs": [],
+    "tests/RfcRag.Tests/IntegrationTests/EvalCommandTests.cs": [],
+    "tests/RfcRag.Tests/IntegrationTests/LiveApiIndexingTests.cs": [],
+    "tests/RfcRag.Tests/IntegrationTests/MediumCorpusFixture.cs": [],
+    "tests/RfcRag.Tests/IntegrationTests/PromptInjectionIntegrationTests.cs": [],
+    "tests/RfcRag.Tests/IntegrationTests/RetrievalQualityTests.cs": [],
+    "tests/RfcRag.Tests/IntegrationTests/RfcRagIntegrationTests.cs": [],
+    "tests/RfcRag.Tests/IntegrationTests/VectorDataCollectionTests.cs": [],
+    "tests/RfcRag.Tests/IntegrationTests/VectorDataSearchIntegrationTests.cs": [],
+    "tests/RfcRag.Tests/Program.cs": [],
+    "tests/RfcRag.Tests/README.md": [],
+    "tests/RfcRag.Tests/RfcRag.Tests.csproj": [],
+    "tests/RfcRag.Tests/TestData/badfile.txt": [],
+    "tests/RfcRag.Tests/TestData/rfc1035.txt": [],
+    "tests/RfcRag.Tests/TestData/rfc2119.txt": [],
+    "tests/RfcRag.Tests/TestData/rfc3986.txt": [],
+    "tests/RfcRag.Tests/TestData/rfc5234.txt": [],
+    "tests/RfcRag.Tests/TestData/rfc5681.txt": [],
+    "tests/RfcRag.Tests/TestData/rfc793.txt": [],
+    "tests/RfcRag.Tests/TestData/rfc8174.txt": [],
+    "tests/RfcRag.Tests/TestData/rfc822.txt": [],
+    "tests/RfcRag.Tests/TestData/rfc8446.txt": [],
+    "tests/RfcRag.Tests/TestData/rfc9000.txt": [],
+    "tests/RfcRag.Tests/TestData/rfc9052.txt": [],
+    "tests/RfcRag.Tests/TestData/rfc9110.txt": [],
+    "tests/RfcRag.Tests/TestData/rfc9293.txt": [],
+    "tests/RfcRag.Tests/TestData/rfc9998-injection.txt": [],
+    "tests/RfcRag.Tests/TestData/rfc9999.txt": [],
+    "tests/RfcRag.Tests/UnitTests/AnswerEvaluationEvidenceMetricsTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/AnswerEvaluationMetricsTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/AnswerGeneratorTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/AskServiceTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/BenchmarkCommandTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/CitationVerifierTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/CliCommandTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/ContextAssemblerTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/DeterministicRerankerTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/EmbeddingRetryPolicyTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/EmbeddingServiceTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/ErrataLoaderTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/PromptInjectionTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/QueryPlannerTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/QueryTraceWriterTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/RetrievalMetricsTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/RfcParserTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/RfcRagOptionsTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/RfcRagOptionsValidatorTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/RfcRagToolsTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/RfcSourceResolverTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/RfcStatusBlockTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/RfcXmlParserTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/SearchRepositoryTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/SearchServiceRoutingTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/SearchServiceTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/ToolExceptionFilterTests.cs": [],
+    "tests/RfcRag.Tests/UnitTests/VectorDataSearchTests.cs": []
+  }
+}

@@ -1,0 +1,96 @@
+# .understandignore — patterns for files/dirs to exclude from analysis
+# Syntax: same as .gitignore (globs, # comments, ! negation, trailing / for dirs)
+# Lines below are suggestions — uncomment to activate.
+# Use ! prefix to force-include something excluded by defaults.
+#
+# Built-in defaults (always excluded unless negated):
+#   node_modules/, .git/, dist/, build/, obj/, *.lock, *.min.js, etc.
+#
+
+# --- From .gitignore (uncomment to exclude) ---
+
+# bin/
+# TestResults/
+# coverage-report/
+# expected-*.txt
+# tests/RfcRag.Tests/TestData/*
+# !tests/RfcRag.Tests/TestData/badfile.txt
+# !tests/RfcRag.Tests/TestData/rfc2119.txt
+# !tests/RfcRag.Tests/TestData/rfc3986.txt
+# !tests/RfcRag.Tests/TestData/rfc8446.txt
+# !tests/RfcRag.Tests/TestData/rfc9000.txt
+# !tests/RfcRag.Tests/TestData/rfc9052.txt
+# !tests/RfcRag.Tests/TestData/rfc9110.txt
+# !tests/RfcRag.Tests/TestData/rfc9998-injection.txt
+# !tests/RfcRag.Tests/TestData/rfc9999.txt
+# !tests/RfcRag.Tests/TestData/rfc793.txt
+# !tests/RfcRag.Tests/TestData/rfc822.txt
+# !tests/RfcRag.Tests/TestData/rfc5234.txt
+# !tests/RfcRag.Tests/TestData/rfc8174.txt
+# !tests/RfcRag.Tests/TestData/rfc9293.txt
+# /deploy/generated
+# deploy/generated/*.env
+# *-generated.txt
+# generated-keys.txt
+# .env.rfc-rag
+# *.env
+# test-*.env
+# .kube/
+# .mcp.json
+# .mcp-approvals/
+# .mcp-dataprotection-keys/
+# .mcp-guardrails/
+# .mcp-logs/
+# .mcp-observer/
+# .mcp-remediation/
+# dataprotection-keys/
+# src/InfraGate.McpGateway/.mcp-guardrails/audit.jsonl
+# data/state_store.db/mem%3Ahealth.bin
+# data/state_store.db/mem%3Aindex%3Abm25.bin
+# .sonarqube/
+# .sonarqube-local/
+# .agents/Reports/sonarcloud-report.json
+# .agents/Reports/sonarcloud-report.zip
+# actions-runner/
+# .act/
+# InfraGate.sln.DotSettings.user
+# .antigravitycli/
+# .claude/
+# .claude.json
+# .claire/
+# .codegraph/
+# .codex/
+# .gemini/
+# .junie/
+# .omo/
+# .opencode/
+# .serena/
+# .agents/*
+# !.agents/skills/
+# docs/eval/reports/*.json
+# !docs/eval/reports/baseline-testdata.json
+
+# --- Detected directories (uncomment to exclude) ---
+
+# docs/
+# scripts/
+# tests/
+
+# --- Test file patterns (uncomment to exclude) ---
+
+# JS / TS
+# *.test.*
+# *.spec.*
+# *.snap
+# C# / .NET
+# **/*Tests.cs
+# **/*Test.cs
+# **/*Fixture.cs
+# **/*.Tests.csproj
+# Java / Kotlin
+# **/src/test/**
+# **/*Test.java
+# **/*IT.java
+# **/*Spec.kt
+# Go
+# **/*_test.go

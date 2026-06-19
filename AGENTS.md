@@ -95,6 +95,7 @@ Reusable skill definitions live in [.agents/skills/](.agents/skills/). Load the 
 - [sonar-local-remediaton](.agents/skills/sonar-local-remediaton/SKILL.md): consume the saved local SonarQube report and produce a remediation plan.
 - [sonarcloud-remediation](.agents/skills/sonarcloud-remediation/SKILL.md): consume SonarCloud CI findings and produce a remediation plan.
 - [repo-onboarding](.agents/skills/repo-onboarding/SKILL.md): orient agents in the repo before broad investigations, repo navigation, or unfamiliar work.
+- [understand-graph](.agents/skills/understand-graph/SKILL.md): use the Understand-Anything knowledge graph for architecture orientation, impact analysis, and semantic search — load before editing in unfamiliar areas or estimating change blast radius.
 - [tdd](.agents/skills/tdd/SKILL.md): test-first development — write failing tests before writing implementation code.
 - [grill-with-docs](.agents/skills/grill-with-docs/SKILL.md): cross-check code behavior against documentation and surface gaps.
 - [improve-codebase-architecture](.agents/skills/improve-codebase-architecture/SKILL.md): structural or architectural analysis and refactor proposals.
