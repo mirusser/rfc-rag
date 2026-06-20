@@ -85,21 +85,21 @@ When I correct you:
 
 ## Skills
 
-Reusable skill definitions live in [.agents/skills/](.agents/skills/). Load the relevant `SKILL.md` before starting work that matches its scope:
+Load the relevant global pi skill before starting work that matches its scope:
 
-- [code-standards](.agents/skills/code-standards/SKILL.md): coding conventions for this repo — apply when making, reviewing, or refactoring code.
-- [planning-and-task-breakdown](.agents/skills/planning-and-task-breakdown/SKILL.md): use for broad, vague, multi-step, or parallelizable work that needs ordered tasks with dependencies, acceptance criteria, and verification steps.
-- [writing-tests](.agents/skills/writing-tests/SKILL.md): adding or modifying tests — naming, project structure, InternalsVisibleTo setup for internal types, and verification.
-- [verify-readme-docs](.agents/skills/verify-readme-docs/SKILL.md): audit and minimally fix README files against actual code and tests.
-- [run-local-sonarqube](.agents/skills/run-local-sonarqube/SKILL.md): run local SonarQube Community Build analysis and ensure the agent-ingestible report is saved to disk.
-- [sonar-local-remediaton](.agents/skills/sonar-local-remediaton/SKILL.md): consume the saved local SonarQube report and produce a remediation plan.
-- [sonarcloud-remediation](.agents/skills/sonarcloud-remediation/SKILL.md): consume SonarCloud CI findings and produce a remediation plan.
-- [repo-onboarding](.agents/skills/repo-onboarding/SKILL.md): orient agents in the repo before broad investigations, repo navigation, or unfamiliar work.
-- [understand-graph](.agents/skills/understand-graph/SKILL.md): use the Understand-Anything knowledge graph for architecture orientation, impact analysis, and semantic search — load before editing in unfamiliar areas or estimating change blast radius.
-- [tdd](.agents/skills/tdd/SKILL.md): test-first development — write failing tests before writing implementation code.
-- [grill-with-docs](.agents/skills/grill-with-docs/SKILL.md): cross-check code behavior against documentation and surface gaps.
-- [improve-codebase-architecture](.agents/skills/improve-codebase-architecture/SKILL.md): structural or architectural analysis and refactor proposals.
-- [run-tests](.agents/skills/run-tests/SKILL.md): run the test suite, interpret failures, and validate fixes.
+- `code-standards`: coding conventions for this repo — apply when making, reviewing, or refactoring code.
+- `planning-and-task-breakdown`: use for broad, vague, multi-step, or parallelizable work that needs ordered tasks with dependencies, acceptance criteria, and verification steps.
+- `writing-tests`: adding or modifying tests — naming, project structure, InternalsVisibleTo setup for internal types, and verification.
+- `verify-readme-docs`: audit and minimally fix README files against actual code and tests.
+- `run-local-sonarqube`: run local SonarQube Community Build analysis and ensure the agent-ingestible report is saved to disk.
+- `sonar-local-remediaton`: consume the saved local SonarQube report and produce a remediation plan.
+- `sonarcloud-remediation`: consume SonarCloud CI findings and produce a remediation plan.
+- `repo-onboarding`: orient agents in the repo before broad investigations, repo navigation, or unfamiliar work.
+- `understand-graph`: use the Understand-Anything knowledge graph for architecture orientation, impact analysis, and semantic search — load before editing in unfamiliar areas or estimating change blast radius.
+- `tdd`: test-first development — write failing tests before writing implementation code.
+- `grill-with-docs`: cross-check code behavior against documentation and surface gaps.
+- `improve-codebase-architecture`: structural or architectural analysis and refactor proposals.
+- `run-tests`: run the test suite, interpret failures, and validate fixes.
 
 ## Codegraph
 
