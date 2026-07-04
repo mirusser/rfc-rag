@@ -7,7 +7,7 @@ namespace RfcRag.Parsing;
 /// Parses IETF RFC XML 2 format files (RFC 7991) into <see cref="RfcDocument"/>.
 /// Falls back to returning an empty document for malformed XML rather than throwing.
 /// </summary>
-internal sealed partial class RfcXmlParser
+internal sealed class RfcXmlParser
 {
     public async Task<RfcDocument> ParseAsync(string filePath, CancellationToken cancellationToken)
     {

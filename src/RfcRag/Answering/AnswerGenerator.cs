@@ -8,7 +8,7 @@ namespace RfcRag.Answering;
 /// Generates cited answers from evidence packs using an IChatClient.
 /// Handles prompt assembly, LLM invocation, and structured JSON response parsing.
 /// </summary>
-internal sealed partial class AnswerGenerator(IChatClient chatClient, IOptions<RfcRagOptions> options)
+internal sealed class AnswerGenerator(IChatClient chatClient, IOptions<RfcRagOptions> options)
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {

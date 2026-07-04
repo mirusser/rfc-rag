@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace RfcRag.Search;
 
-internal static partial class QueryPlanner
+internal static class QueryPlanner
 {
     private static readonly FrozenDictionary<string, int[]> ProtocolSeedRfcNumbers =
         new Dictionary<string, int[]>(StringComparer.OrdinalIgnoreCase)
