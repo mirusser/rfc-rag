@@ -73,3 +73,11 @@ All three are data-quality issues in the **RFC text-header parser** — a second
 `RfcRag__VectorDataSearchEnabled=true` routes `search_rfc` through the Microsoft.Extensions.VectorData Postgres connector. This is an additive pure-vector retrieval path for A/B evaluation. The connector path does not perform PostgreSQL full-text search, normative keyword filtering, or SQL RRF fusion, so it is not a replacement for the default hybrid search pipeline.
 
 The connector is configured against the existing `rfc_rag.rfc_sections` table. Schema ownership remains with the checksummed migration runner; do not call `EnsureCollectionExistsAsync`, because that API can issue DDL against the migration-owned table.
+
+## 5. One vector per section — no sub-chunking or token-budget guard
+
+**Symptom**: Retrieval quality can degrade for unusually long sections. The parser emits one `Section` per heading-delimited region, and each section is embedded as a single input — there is no sub-chunking of a long section and no check that its text fits the embedding model's context window (`openai/text-embedding-3-small` ≈ 8,191 tokens).
+
+**Root cause**: `RfcParser.SplitIntoSections` splits strictly on section headings; `EmbeddingService` embeds each section's full text verbatim. Most RFC sections are well under the token limit, so this is invisible across the vast majority of the corpus. The edge cases are (a) monolithic appendices and (b) old-format RFCs the parser splits coarsely, which can yield a single very large section.
+
+**Impact**: ⚠️ Rare. When a section exceeds the model's input limit, behavior depends on the embedding provider: most return a `400` (which `EmbeddingRetryPolicy` treats as fatal — non-retryable), some silently truncate (lossy embedding for that section). Full-text search over the same section is unaffected either way, so hybrid retrieval still surfaces long sections lexically. This is a latent limitation, not an observed corpus-wide failure — every core protocol RFC indexes and retrieves normally.
