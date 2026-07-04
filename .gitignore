@@ -88,3 +88,5 @@ InfraGate.sln.DotSettings.user
 # ── Eval reports (only testdata baseline is committed) ───────────────────────
 docs/eval/reports/*.json
 !docs/eval/reports/baseline-testdata.json
+
+backups/
