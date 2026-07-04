@@ -1,6 +1,6 @@
 # Releasing RFC RAG
 
-This file owns the release process for RFC RAG. Releases are marked **pre-release** while the project is experimental; do not mark a release as stable until the project exits the experimental phase.
+This file owns the release process for RFC RAG. Releases follow [Semantic Versioning](https://semver.org/); the `1.x` line is stable and published as full (non-pre-release) GitHub Releases. "Stable" refers to the SemVer contract of the CLI/MCP tool surface — see the **Boundaries** section in the README for deployment scope.
 
 ## Release Checklist
 
@@ -16,7 +16,7 @@ This file owns the release process for RFC RAG. Releases are marked **pre-releas
 6. Confirm `publish.yml` succeeds — GHCR image pushed (`ghcr.io/mirusser/rfc-rag:X.Y.Z`), Trivy scan passes, GitHub Release created.
 7. Confirm the GHCR package is set to **public** (Settings → Packages → rfc-rag → Change visibility).
 8. Confirm the GitHub Release includes correct image name and tag in its notes.
-9. Confirm the release is marked as **pre-release** (should be automatic; verify it).
+9. Confirm the release is marked as **latest** and not pre-release (should be automatic; verify it).
 10. Run the smoke test against the published tag:
     ```bash
     TAG=vX.Y.Z ./scripts/smoke-test-release.sh
@@ -32,9 +32,9 @@ This file owns the release process for RFC RAG. Releases are marked **pre-releas
 Paste this into GitHub Releases and fill in `VERSION` and the change sections:
 
 ```markdown
-## RFC RAG VERSION — Experimental Preview
+## RFC RAG VERSION
 
-This is an experimental release of RFC RAG.
+Stable release of RFC RAG.
 
 ### Images
 
@@ -44,7 +44,7 @@ GitHub Container Registry:
 
 ### Status
 
-Experimental. Not recommended for production workloads.
+Stable (SemVer). This is a local development and research tool — see the Boundaries section in the README for scope.
 
 ### Changes
 

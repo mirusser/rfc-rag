@@ -116,6 +116,6 @@ jobs:
         with:
           generate_release_notes: true
           make_latest: true
-          prerelease: true
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

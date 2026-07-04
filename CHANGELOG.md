@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-04
+
+### Changed
+
+- Exited the experimental phase — `1.x` releases are now published as full, stable GitHub Releases (no longer marked pre-release).
+
+### Fixed
+
+- Docker build now copies `Directory.Packages.props` into the build stage so `dotnet restore` resolves package versions under Central Package Management. The Docker smoke test was failing with `NU1015` after the move to centrally-managed package versions.
+
+### Added
+
+- Operational scripts: database backup/restore and an automated dependency-update script.
+
+## [1.0.1] - 2026-06-16
+
+### Added
+
+- Microsoft.Extensions.VectorData pure-vector Postgres adapter (ADR-0010): an additive, flag-gated (`RfcRag__VectorDataSearchEnabled`) pure-vector retrieval path for A/B evaluation. The default search path remains hybrid SQL. See `docs/known_quirks.md` §4.
+
+## [1.0.0] - 2026-06-15
+
 ### Added
 
 - Initial standalone extraction from the Kubernetes MCP Guard monorepo.
